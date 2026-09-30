@@ -10,7 +10,7 @@
 |---|---|---|
 | 0 | Diseño, economía y simulador | ✅ hecho |
 | 1 | Esqueleto, estado y tick | ✅ hecho |
-| 2 | Contenido completo como datos + simulador unificado | ⬜ |
+| 2 | Contenido completo como datos + simulador unificado | ✅ hecho |
 | 3 | Valle jugable: compras, mejoras y UI de granja | ⬜ |
 | 4 | Guardado, offline, exportar/importar | ⬜ |
 | 5 | Ascensión, ventajas y autocompra | ⬜ |
@@ -348,3 +348,20 @@ momento habrá que decidir entre (a) arreglar el tipado de `tools/sim` sin tocar
 `proyectos/.claude/launch.json` (la carpeta padre), no dentro de `cerditos/`.** Es donde ya
 vivían las configuraciones de los demás proyectos de este usuario; se añadió una entrada
 `"cerditos"` (`npm run dev` en el puerto 5183) siguiendo el mismo patrón.
+
+**2026-09-30 (hito 2) — se cumplió antes de lo previsto el riesgo anotado en el hito 1**:
+`tools/sim/content.ts` pasó a ser un adaptador que importa `src/content/index.ts`
+(`import { CONTENT } from '../../src/content/index.ts'`), así que `sim:typecheck` ya
+compilaba transitivamente los ficheros de `src/core/` (`num.ts`, `state.ts`, que usan
+`break_infinity.js`). Con los flags originales del hito 0 (`--module nodenext
+--moduleResolution nodenext`) esto daba errores de tipos (`Cannot use namespace 'Decimal' as
+a type`, etc.): la resolución `nodenext` trata `break_infinity.js` (sin `"type"` en su
+`package.json`) como CommonJS con reglas de interoperabilidad distintas a las de `bundler`,
+que es la resolución que ya usa el `tsconfig.json` raíz y con la que `npm run typecheck` sí
+compila `src/core` sin problemas. Se cambiaron los flags de `sim:typecheck` en
+`package.json` a `--module esnext --moduleResolution bundler` (alineados con el tsconfig
+raíz); con eso `sim:typecheck` vuelve a pasar limpio y ya no hace falta arreglar el tipado de
+`tools/sim` a mano como se planteaba como opción (a) en la nota anterior. Confirmado además
+que `npm run sim` reproduce **exactamente** (no solo ±1 visita) los hitos de 03 §9.3, y que
+`node tools/sim/tables.ts` produce las mismas tablas que 03 §8 (diff sin diferencias salvo
+espacios en blanco).

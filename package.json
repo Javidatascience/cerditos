@@ -14,7 +14,7 @@
     "sim:log": "node tools/sim/main.ts --profile casual --log",
     "sim:timeline": "node tools/sim/main.ts --profile casual --timeline",
     "sim:tables": "node tools/sim/tables.ts",
-    "sim:typecheck": "tsc --noEmit --strict --target ES2022 --module nodenext --moduleResolution nodenext --allowImportingTsExtensions --types node tools/sim/content.ts tools/sim/engine.ts tools/sim/strategy.ts tools/sim/main.ts tools/sim/tables.ts"
+    "sim:typecheck": "tsc --noEmit --strict --target ES2022 --module esnext --moduleResolution bundler --allowImportingTsExtensions --types node tools/sim/content.ts tools/sim/engine.ts tools/sim/strategy.ts tools/sim/main.ts tools/sim/tables.ts"
   },
   "engines": {
     "node": ">=22.18"

@@ -157,7 +157,7 @@ Bonos: +5 % por variedad a su mundo (cruces +3 % y leyendas +5 % a todos); set c
 
 ## 8. Constantes finales
 
-> Generado con `node tools/sim/tables.ts` a partir de `tools/sim/content.ts`. Los nombres de las mejoras por cerdito y los textos (`flavor`) se escriben al portar el contenido (hito 2).
+> Generado con `node tools/sim/tables.ts`. Desde el hito 2, la fuente de verdad es `src/content/` (mundos, ventajas y colección); `tools/sim/content.ts` es un adaptador que solo traduce esa forma a la que espera el motor del simulador. Los nombres de las mejoras por cerdito viven en `src/content/upgrades.ts` (una plantilla por umbral, no aparecen en esta tabla); los textos (`flavor`) están en cada fichero de contenido.
 
 #### El Valle (Bellotas) — mecánica `classic`
 - Crecimiento de coste: 1.15 · moneda inicial 15
