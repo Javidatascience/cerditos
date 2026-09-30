@@ -4,6 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "sim": "node tools/sim/main.ts",
     "sim:log": "node tools/sim/main.ts --profile casual --log",
     "sim:timeline": "node tools/sim/main.ts --profile casual --timeline",
@@ -15,6 +21,11 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  },
+  "dependencies": {
+    "break_infinity.js": "^2.2.0"
   }
 }

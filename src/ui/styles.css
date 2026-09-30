@@ -1,0 +1,121 @@
+/* Estilos mínimos del esqueleto (hito 1). Paleta y pulido visual completos en el hito 11
+   (docs/01-diseno-juego.md §3, docs/04-plan-implementacion.md hito 11). */
+
+:root {
+  --color-bg: #faf6ef;
+  --color-text: #3a2e26;
+  --color-accent: #c98a6b;
+  --color-accent-dark: #a86c50;
+  --color-border: #e3d5c4;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.app-header {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+}
+
+.currency-row {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.per-second-row {
+  color: var(--color-accent-dark);
+  font-size: 0.95rem;
+}
+
+.tap-button {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--color-accent);
+  color: #fff;
+  touch-action: manipulation;
+}
+
+.generator-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.generator-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+}
+
+.generator-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.generator-name {
+  font-weight: 600;
+}
+
+.generator-owned {
+  font-size: 0.85rem;
+  color: #6b5b4d;
+}
+
+.buy-button {
+  padding: 10px 14px;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-accent-dark);
+  color: #fff;
+  touch-action: manipulation;
+}
+
+.buy-button:disabled {
+  background: #c9bfb2;
+  color: #efe9e1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

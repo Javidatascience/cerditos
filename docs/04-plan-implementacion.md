@@ -9,7 +9,7 @@
 | # | Hito | Estado |
 |---|---|---|
 | 0 | Diseño, economía y simulador | ✅ hecho |
-| 1 | Esqueleto, estado y tick | ⬜ |
+| 1 | Esqueleto, estado y tick | ✅ hecho |
 | 2 | Contenido completo como datos + simulador unificado | ⬜ |
 | 3 | Valle jugable: compras, mejoras y UI de granja | ⬜ |
 | 4 | Guardado, offline, exportar/importar | ⬜ |
@@ -93,8 +93,8 @@
 **Objetivo**: el Valle completo se juega de principio a fin de una ronda (sin ascensión todavía): 8 cerditos, compra ×1/×10/máx, mejoras por cerdito y globales, multiplicadores.
 
 **Archivos**
-- Crear: `src/core/actions.ts`, `src/core/selectors.ts`, `src/ui/views/farmView.ts`, `src/ui/views/upgradesView.ts`, tests.
-- Modificar: `src/core/formulas.ts` (multiplicador global completo de 03 §3, aunque ventajas/colección aún valgan 1), `src/content/worlds/valle.ts` (8 cerditos), `src/ui/app.ts`, `src/ui/styles.css`.
+- Crear: `src/core/selectors.ts`, `src/ui/views/farmView.ts`, `src/ui/views/upgradesView.ts`, tests.
+- Modificar: `src/core/actions.ts` (ya existe desde el hito 1 con `tap`/`buyGenerator` ×1; añadir `amount: 1|10|'max'`, `buyUpgrade`, `setBuyAmount`), `src/core/formulas.ts` (multiplicador global completo de 03 §3, aunque ventajas/colección aún valgan 1), `src/content/worlds/valle.ts` (8 cerditos), `src/ui/app.ts`, `src/ui/styles.css`.
 
 **Tareas**
 1. `actions.ts`: `tap`, `buyGenerator(state, content, world, genId, amount: 1|10|'max')`, `buyUpgrade(state, content, world, upgradeId)`, `setBuyAmount`. Devuelven `boolean`/cantidad y nunca dejan moneda negativa. Actualizan `records.maxBought`.
@@ -319,4 +319,32 @@
 
 ## Desviaciones
 
-(Anotar aquí, con fecha, cualquier cambio respecto al plan y su motivo.)
+**2026-09-30 (hito 1) — `src/core/actions.ts` se crea en el hito 1, no en el hito 3.**
+El plan listaba `actions.ts` como archivo a "Crear" en el hito 3, pero la tarea 9 del hito 1
+("botón Rascar la barriga (+1)" y "comprar ×1") ya necesita mutar el estado, y la regla de
+CLAUDE.md es que solo `core/actions.ts` (junto a `tick.ts`/`offline.ts`) puede hacerlo. Se creó
+`actions.ts` ya en el hito 1 con dos funciones mínimas (`tap`, `buyGenerator` ×1). El hito 3
+lo **modifica** (no lo crea) para añadir `×10`/`máx`, `buyUpgrade` y `setBuyAmount` — su
+descripción de "Archivos" ya se ha corregido para decir "Modificar" en vez de "Crear".
+
+**2026-09-30 (hito 1) — `tsconfig.json` raíz incluye solo `src`, no `tools`.**
+El plan decía `include: ["src","tools"]`. Al activar `noUncheckedIndexedAccess` (pedido por el
+propio hito 1), `tools/sim/*.ts` —escrito en el hito 0 sin ese flag— generaba ~50 errores de
+tipo mecánicos (indexado de arrays/records sin comprobar `undefined`), sin relación con la
+lógica económica ya validada por el simulador. Arreglarlos todos habría sido un cambio grande
+y fuera del objetivo del hito. Se optó por mantener `tools/sim` fuera del `include` del
+tsconfig raíz y seguir comprobando sus tipos con el script independiente `sim:typecheck`
+(con sus propios flags, sin `noUncheckedIndexedAccess`) — que además es justo lo que ya
+describía CLAUDE.md, que lista `typecheck` y `sim:typecheck` como comandos separados.
+**Pendiente para cuando un hito futuro (5 o 7) añada un `parity.test.ts` que importe
+`tools/sim/engine.ts` desde `src/`**: ese archivo pasará a formar parte del programa de
+`npm run typecheck` en cuanto se importe (TypeScript sigue las importaciones aunque el
+fichero no esté en `include`), y volverá a fallar por `noUncheckedIndexedAccess`. En ese
+momento habrá que decidir entre (a) arreglar el tipado de `tools/sim` sin tocar su lógica, o
+(b) mover la lógica compartida a un módulo con tipos más estrictos que ambos (`core` y
+`tools/sim`) importen. No se ha resuelto ahora para no adelantar trabajo de otro hito.
+
+**2026-09-30 (hito 1) — `.claude/launch.json` para el navegador integrado está en
+`proyectos/.claude/launch.json` (la carpeta padre), no dentro de `cerditos/`.** Es donde ya
+vivían las configuraciones de los demás proyectos de este usuario; se añadió una entrada
+`"cerditos"` (`npm run dev` en el puerto 5183) siguiendo el mismo patrón.
