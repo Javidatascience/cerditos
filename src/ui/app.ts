@@ -12,6 +12,7 @@ import type { GameState } from '../core/state.ts';
 import { h, setText } from './dom.ts';
 import { formatNumber } from './format.ts';
 import { mountFarmView } from './views/farmView.ts';
+import { mountSettingsView } from './views/settingsView.ts';
 import { mountUpgradesView } from './views/upgradesView.ts';
 
 /** Una vista montada: `update` repinta a partir del estado, `destroy` limpia sus nodos. */
@@ -20,11 +21,14 @@ export interface View {
   destroy(): void;
 }
 
-/** Lo que cada vista necesita para leer contenido y pedir cambios de estado. */
+/** Lo que cada vista necesita para leer contenido, pedir cambios de estado y guardar. */
 export interface UiContext {
   content: Content;
-  /** Aplica una mutación del estado (vía core/actions.ts) y repinta. */
+  /** Aplica una mutación del estado (vía core/actions.ts o save/) y repinta. */
   dispatch(action: (state: GameState) => void): void;
+  /** Fuerza un guardado inmediato (02 §6: "tras ascender, tras importar"), fuera del guardado
+   * automático cada 10 s que lleva main.ts. */
+  requestSave(): void;
 }
 
 interface TabDef {
@@ -36,13 +40,14 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: 'farm', label: 'Granja', mount: mountFarmView },
   { id: 'upgrades', label: 'Mejoras', mount: mountUpgradesView },
+  { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
 ];
 
 export interface App {
   update(state: GameState): void;
 }
 
-export function mountApp(root: HTMLElement, content: Content, state: GameState): App {
+export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}): App {
   const worldNameText = document.createTextNode('');
   const currencyText = document.createTextNode('');
   const perSecondText = document.createTextNode('');
@@ -55,7 +60,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState):
     render();
   }
 
-  const ctx: UiContext = { content, dispatch };
+  const ctx: UiContext = { content, dispatch, requestSave };
 
   let activeTab = TABS[0]!.id;
   let activeView: View | null = null;
@@ -99,9 +104,10 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState):
 
   function render(): void {
     const header = headerView(state, content, state.activeWorld);
+    const notation = state.settings.notation;
     setText(worldNameText, header.worldName);
-    setText(currencyText, `${header.currencyName}: ${formatNumber(header.currency)}`);
-    setText(perSecondText, `+${formatNumber(header.perSecond)}/s`);
+    setText(currencyText, `${header.currencyName}: ${formatNumber(header.currency, notation)}`);
+    setText(perSecondText, `+${formatNumber(header.perSecond, notation)}/s`);
     activeView?.update(state);
   }
 

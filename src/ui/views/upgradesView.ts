@@ -28,10 +28,11 @@ export function mountUpgradesView(root: HTMLElement, ctx: UiContext): View {
   root.appendChild(container);
 
   function update(state: GameState): void {
+    const notation = state.settings.notation;
     const offers = upgradeViews(state, ctx.content, worldId);
     list.replaceChildren(
       ...offers.map((offer) => {
-        const buyButton = h('button', { className: 'buy-button' }, [formatNumber(offer.cost)]) as HTMLButtonElement;
+        const buyButton = h('button', { className: 'buy-button' }, [formatNumber(offer.cost, notation)]) as HTMLButtonElement;
         if (!offer.canAfford) buyButton.disabled = true;
         buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyUpgrade(s, ctx.content, worldId, offer.id)));
         return h('li', { className: 'upgrade-row' }, [

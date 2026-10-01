@@ -12,7 +12,7 @@
 | 1 | Esqueleto, estado y tick | ✅ hecho |
 | 2 | Contenido completo como datos + simulador unificado | ✅ hecho |
 | 3 | Valle jugable: compras, mejoras y UI de granja | ✅ hecho |
-| 4 | Guardado, offline, exportar/importar | ⬜ |
+| 4 | Guardado, offline, exportar/importar | ✅ hecho |
 | 5 | Ascensión, ventajas y autocompra | ⬜ |
 | 6 | Colección y diario | ⬜ |
 | 7 | Multi-mundo y el Bosque (cadena) | ⬜ |
@@ -385,3 +385,28 @@ mismos hitos (diff línea a línea) y que `strategy.ts`/`main.ts`/`tables.ts` (q
 compilando y comportándose igual. `npm run typecheck`, `npm test` (79/79) y `npm run sim`
 pasan en verde con los ficheros de `tools/sim` ahora totalmente limpios bajo
 `noUncheckedIndexedAccess`.
+
+**2026-10-01 (hito 4) — `loadGame` ya anota en `state.journal` la caída al respaldo, aunque
+la vista del Diario sea del hito 6.** 02 §6 especifica "si al cargar el principal está
+corrupto, se usa el backup y se anota en el diario"; `GameState.journal` existe desde el
+hito 1, así que se ha podido cumplir la letra de esa frase ya, sin esperar a `journal.ts`/
+`journalView.ts`. Solo se añadió el `push` a la entrada existente del array; no se creó
+ninguna vista ni lógica nueva de diario (eso lo hace el hito 6 por completo). No se considera
+una invasión del hito 6 porque es una única línea en `storage.ts` (ya en el alcance de este
+hito) que usa una estructura de datos que ya existía.
+
+**2026-10-01 (hito 4) — aviso para quien verifique este hito a mano en el navegador:**
+durante la verificación manual se observó que recargar la página (`navigate()`/`reload()`)
+en el navegador integrado de esta sesión a veces no detiene el `setInterval` de guardado
+automático de la página anterior con la fiabilidad esperada: si se edita `localStorage` a
+mano entre una recarga y otra (para simular una ausencia larga, por ejemplo) y pasan varios
+segundos reales antes de que la recarga "se note", la página anterior puede sobrescribir el
+cambio antes de desaparecer, dando la falsa impresión de que `simulateOffline`/`loadGame` no
+funcionan. **No es un fallo del juego**: se verificó exhaustivamente importando los módulos
+directamente en la consola del navegador (`await import('/src/core/offline.ts')` etc., sin
+pasar por una recarga de página) y los números cuadraban exactamente en todos los casos; los
+123 tests automatizados (`serialize`, `migrations`, `normalize`, `transfer`, `offline`,
+`storage`) tampoco dependen de recargas y pasan todos. Para verificar escenarios de ausencia
+larga a mano en el futuro, mejor construir el `GameState` y llamar a `simulateOffline`/
+`loadGame` directamente por consola (como se hizo aquí) que fiarse de editar `localStorage`
+y recargar.

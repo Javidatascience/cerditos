@@ -3,7 +3,7 @@
 
 import type { Content } from '../content/types.ts';
 import { availableUpgrades, bulkCost, generatorCost, getGeneratorDef, getWorldDef, maxAffordable } from './formulas.ts';
-import type { GameState, GeneratorId, UpgradeId, WorldId } from './state.ts';
+import type { GameState, GeneratorId, Settings, UpgradeId, WorldId } from './state.ts';
 
 export type BuyAmount = 1 | 10 | 'max';
 
@@ -60,4 +60,9 @@ export function buyUpgrade(state: GameState, content: Content, worldId: WorldId,
 /** Cambia la cantidad por defecto de los botones de compra (×1 / ×10 / máx). */
 export function setBuyAmount(state: GameState, amount: BuyAmount): void {
   state.settings.buyAmount = amount;
+}
+
+/** Cambia la notación de los números (vista Ajustes, hito 4). */
+export function setNotation(state: GameState, notation: Settings['notation']): void {
+  state.settings.notation = notation;
 }

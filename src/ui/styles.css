@@ -258,6 +258,83 @@ button {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* Vista Ajustes */
+.settings-view h3 {
+  margin: 20px 0 8px;
+  font-size: 0.95rem;
+}
+
+.settings-view h3:first-child {
+  margin-top: 0;
+}
+
+.settings-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 8px;
+}
+
+.settings-status {
+  min-height: 1.2em;
+  font-size: 0.85rem;
+  color: var(--color-accent-dark);
+}
+
+.settings-textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px; /* evita el zoom automático de Safari al enfocar un input */
+  resize: vertical;
+}
+
+.settings-confirm {
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Resumen offline */
+.offline-summary-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(58, 46, 38, 0.35);
+}
+
+.offline-summary-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.offline-summary-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.offline-summary-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

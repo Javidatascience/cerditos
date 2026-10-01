@@ -77,15 +77,16 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   root.appendChild(container);
 
   function update(state: GameState): void {
+    const notation = state.settings.notation;
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
 
     const views = generatorViews(state, ctx.content, worldId);
     for (const row of rows) {
       const view = views.find((v) => v.id === row.genId);
       if (!view) continue;
-      setText(row.ownedText, `× ${formatNumber(view.owned)}`);
-      setText(row.prodText, `+${formatNumber(view.prodPerSec)}/s`);
-      const label = view.amountToBuy > 1 ? `Comprar ×${view.amountToBuy} (${formatNumber(view.nextCost)})` : `Comprar (${formatNumber(view.nextCost)})`;
+      setText(row.ownedText, `× ${formatNumber(view.owned, notation)}`);
+      setText(row.prodText, `+${formatNumber(view.prodPerSec, notation)}/s`);
+      const label = view.amountToBuy > 1 ? `Comprar ×${view.amountToBuy} (${formatNumber(view.nextCost, notation)})` : `Comprar (${formatNumber(view.nextCost, notation)})`;
       setText(row.costText, label);
       setDisabled(row.buyButton, !view.canAfford);
     }

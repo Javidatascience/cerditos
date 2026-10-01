@@ -76,11 +76,13 @@ export interface GameState {
   settings: Settings;
 }
 
-function createGeneratorState(): GeneratorState {
+export function createGeneratorState(): GeneratorState {
   return { bought: 0, owned: D(0) };
 }
 
-function createWorldState(world: WorldDef): WorldState {
+/** Exportado para que save/normalize.ts pueda crear el estado de un mundo nuevo (contenido
+ * añadido después de que exista un guardado) sin duplicar esta lógica. */
+export function createWorldState(world: WorldDef): WorldState {
   const generators: Record<GeneratorId, GeneratorState> = {};
   const maxBought: Record<GeneratorId, number> = {};
   for (const gen of world.generators) {
@@ -103,6 +105,16 @@ function createWorldState(world: WorldDef): WorldState {
     calmPenaltyUntil: -1,
     records: { maxBought, maxHarmony: 0 },
   };
+}
+
+/**
+ * Sustituye el contenido de `target` por el de `source`, conservando la referencia a
+ * `target` (para que la UI, que recibe `state` por referencia, vea el cambio sin necesitar
+ * que quien llama reasigne ninguna variable). Usado al importar una partida (save/transfer.ts)
+ * y al borrarla.
+ */
+export function replaceState(target: GameState, source: GameState): GameState {
+  return Object.assign(target, source);
 }
 
 /** Crea una partida nueva a partir del contenido. `now`: epoch ms, inyectado por quien llama (no lo lee el reloj del sistema aquí). */
