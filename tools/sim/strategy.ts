@@ -1,8 +1,12 @@
 // Estrategia "simple y razonable" de un jugador y del autocomprador.
 // No es óptima a propósito: representa a alguien que compra lo que mejor rinde
 // y asciende cuando la ronda deja de cundir.
+//
+// Las aserciones `!` (acceso a WORLD_BY_ID[id]/s.worlds[id] y a `[0]` tras ordenar un array no
+// vacío) son seguras por construcción, igual que en engine.ts — ver la nota al principio de
+// ese fichero y "Desviaciones" del hito 5 en docs/04-plan-implementacion.md.
 
-import { PERKS, WORLD_BY_ID, type WorldId } from './content.ts';
+import { PERKS, WORLD_BY_ID, type PerkDef, type WorldId } from './content.ts';
 import {
   ascend, availableUpgrades, buyGenerator, buyPerk, buyUpgrade, genCost, harmony, hasAutobuyGenerators,
   hasAutobuyUpgrades, income, perkAvailable, perkCost, plumasPending, valueRate,
@@ -25,20 +29,20 @@ function deltaValue(s: SimState, world: WorldId, apply: () => void, revert: () =
 }
 
 function candidates(s: SimState, world: WorldId, gens: boolean, upgrades: boolean): Candidate[] {
-  const def = WORLD_BY_ID[world];
-  const w = s.worlds[world];
+  const def = WORLD_BY_ID[world]!;
+  const w = s.worlds[world]!;
   const base = valueRate(s, world, CHAIN_HORIZON);
   const out: Candidate[] = [];
   if (gens) {
     for (let i = 0; i < def.generators.length; i++) {
-      const delta = deltaValue(s, world, () => { w.owned[i] += 1; }, () => { w.owned[i] -= 1; }, base);
+      const delta = deltaValue(s, world, () => { w.owned[i]! += 1; }, () => { w.owned[i]! -= 1; }, base);
       out.push({ kind: 'gen', gen: i, cost: genCost(s, world, i), delta });
     }
     if (def.mechanic === 'harmony') {
       const h = harmony(w);
       const lows = w.owned.map((n, i) => (n === h ? i : -1)).filter((i) => i >= 0);
       const cost = lows.reduce((sum, i) => sum + genCost(s, world, i), 0);
-      const delta = deltaValue(s, world, () => lows.forEach((i) => (w.owned[i] += 1)), () => lows.forEach((i) => (w.owned[i] -= 1)), base);
+      const delta = deltaValue(s, world, () => lows.forEach((i) => (w.owned[i]! += 1)), () => lows.forEach((i) => (w.owned[i]! -= 1)), base);
       out.push({ kind: 'bundle', gens: lows, cost, delta });
     }
   }
@@ -63,7 +67,7 @@ function execute(s: SimState, world: WorldId, c: Candidate): boolean {
     case 'gen': return buyGenerator(s, world, c.gen);
     case 'upgrade': return buyUpgrade(s, world, c.offer);
     case 'bundle': {
-      const w = s.worlds[world];
+      const w = s.worlds[world]!;
       if (c.cost > w.currency) return false;
       for (const g of c.gens) buyGenerator(s, world, g);
       return true;
@@ -73,9 +77,9 @@ function execute(s: SimState, world: WorldId, c: Candidate): boolean {
 
 /** En el Balneario solo se compra con la calma casi llena o dentro de la ventana ya penalizada. */
 function calmAllowsBuying(s: SimState, world: WorldId): boolean {
-  const def = WORLD_BY_ID[world];
+  const def = WORLD_BY_ID[world]!;
   if (def.mechanic !== 'calm') return true;
-  const w = s.worlds[world];
+  const w = s.worlds[world]!;
   return w.calm >= 0.95 || s.time < w.calmPenaltyUntil;
 }
 
@@ -83,11 +87,11 @@ function calmAllowsBuying(s: SimState, world: WorldId): boolean {
 export function greedyBuy(s: SimState, world: WorldId, gens: boolean, upgrades: boolean): number {
   let bought = 0;
   while (bought < MAX_BUYS_PER_STEP && calmAllowsBuying(s, world)) {
-    const w = s.worlds[world];
+    const w = s.worlds[world]!;
     const inc = income(s, world);
     const list = candidates(s, world, gens, upgrades);
     if (list.length === 0) break;
-    let best = list[0];
+    let best = list[0]!;
     let bestScore = score(best, w.currency, inc);
     for (const c of list) {
       const sc = score(c, w.currency, inc);
@@ -109,18 +113,21 @@ export function autobuy(s: SimState, world: WorldId): void {
 
 const PERK_PRIORITY = ['capataz', 'encargada'];
 
+function cheapestPerk(s: SimState, perks: PerkDef[]): PerkDef {
+  return [...perks].sort((a, b) => perkCost(s, a) - perkCost(s, b))[0]!;
+}
+
 export function buyPerks(s: SimState, world: WorldId): void {
   for (;;) {
     const avail = PERKS.filter((p) => p.world === world && perkAvailable(s, p));
     if (avail.length === 0) return;
     const prio = avail.filter((p) => PERK_PRIORITY.some((id) => p.id.endsWith('.' + id)));
     const pool = prio.length > 0 ? prio : avail;
-    pool.sort((a, b) => perkCost(s, a) - perkCost(s, b));
-    const pick = pool[0];
-    if (perkCost(s, pick) > s.worlds[world].plumas) {
+    const pick = cheapestPerk(s, pool);
+    if (perkCost(s, pick) > s.worlds[world]!.plumas) {
       // Si la prioritaria no llega, probamos la más barata de todas.
       if (pool === prio) {
-        const cheapest = avail.sort((a, b) => perkCost(s, a) - perkCost(s, b))[0];
+        const cheapest = cheapestPerk(s, avail);
         if (!buyPerk(s, cheapest)) return;
         continue;
       }
@@ -142,7 +149,7 @@ const LONG_ROUND_MIN_GAIN = Number(process.env.SIM_LONG_ROUND_MIN_GAIN ?? 0.2);
 const snapshots = new Map<WorldId, { t: number; gain: number }>();
 
 export function maybeAscend(s: SimState, world: WorldId): boolean {
-  const w = s.worlds[world];
+  const w = s.worlds[world]!;
   const gain = plumasPending(s, world);
   if (gain < 1) return false;
   const snap = snapshots.get(world);

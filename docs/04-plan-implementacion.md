@@ -13,7 +13,7 @@
 | 2 | Contenido completo como datos + simulador unificado | ✅ hecho |
 | 3 | Valle jugable: compras, mejoras y UI de granja | ✅ hecho |
 | 4 | Guardado, offline, exportar/importar | ✅ hecho |
-| 5 | Ascensión, ventajas y autocompra | ⬜ |
+| 5 | Ascensión, ventajas y autocompra | ✅ hecho |
 | 6 | Colección y diario | ⬜ |
 | 7 | Multi-mundo y el Bosque (cadena) | ⬜ |
 | 8 | La Huerta (armonía) | ⬜ |
@@ -410,3 +410,35 @@ pasar por una recarga de página) y los números cuadraban exactamente en todos 
 larga a mano en el futuro, mejor construir el `GameState` y llamar a `simulateOffline`/
 `loadGame` directamente por consola (como se hizo aquí) que fiarse de editar `localStorage`
 y recargar.
+
+**2026-10-01 (hito 5) — `tools/sim/strategy.ts` necesitó el mismo arreglo de tipado que
+`engine.ts` en el hito 3.** `parity.test.ts` pasa a importar también `tools/sim/strategy.ts`
+(para reutilizar `playerAct`/`resetStrategyMemory` tal cual, sin reimplementar la estrategia
+del simulador en el lado `sim`), así que ese fichero entra en `npm run typecheck` y falló por
+los mismos motivos (`noUncheckedIndexedAccess`). Se arregló igual: solo aserciones `!` seguras
+por construcción, sin tocar lógica — confirmado con `npm run sim` dando los mismos resultados
+antes y después.
+
+**2026-10-01 (hito 5) — `core/autobuy.ts` exporta `greedyBuy` (no solo `runAutobuy`), para que
+`parity.test.ts` pueda reproducir fielmente al "jugador conectado" de
+`tools/sim/strategy.ts > playerAct`.** `playerAct` llama a `greedyBuy(s, world, true, true)`
+**sin comprobar** si el jugador simulado posee Capataz/Encargada (representa a una persona
+decidiendo comprar, no a la automatización); `runAutobuy`, en cambio, sí exige tener esas
+ventajas (es la autocompra real de cuando el jugador no está). El primer intento de este test
+usaba `runAutobuy` para el lado `core` y daba 0 ascensiones en 24 h porque, sin Capataz,
+nunca compraba nada — el fallo reveló la diferencia de diseño a tiempo. `greedyBuy` queda
+exportada con un comentario explicando por qué existen las dos funciones.
+
+**2026-10-01 (hito 5) — no se tocó `core/tick.ts`.** El plan decía "Modificar
+core/tick.ts/offline.ts (autocompra en cada tick y trozo)", pero `advance()` debe seguir
+siendo pura (02 §4: "si no hay autocompradores, advance es exacta"); mezclar la autocompra ahí
+dentro rompería esa invariante. `offline.ts` sí se modificó (cada trozo ya hace
+`advance()` + `runAutobuyForAllWorlds()`); el tick "normal" de cada 250 ms vive en `main.ts`
+(no en `core/`), así que ahí es donde se añadió la llamada a `runAutobuyForAllWorlds()` tras
+`advance()`. `tick.ts` sigue exactamente igual que en el hito 1.
+
+**2026-10-01 (hito 5) — se añadió un ajuste de Capataz/Encargada (activar/pausar) en la vista
+Ajustes**, no prevista explícitamente en la lista de archivos del hito pero pedida por la
+propia tarea 3 ("Ajuste autobuyEnabled para pausarla"): sin una forma de cambiar ese ajuste
+desde la UI, el campo `settings.autobuyEnabled` (que ya existía desde el hito 1) quedaría sin
+ningún uso real.

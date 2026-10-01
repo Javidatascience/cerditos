@@ -11,7 +11,9 @@ import { headerView } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import { h, setText } from './dom.ts';
 import { formatNumber } from './format.ts';
+import { mountAscendView } from './views/ascendView.ts';
 import { mountFarmView } from './views/farmView.ts';
+import { mountPerksView } from './views/perksView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 import { mountUpgradesView } from './views/upgradesView.ts';
 
@@ -40,6 +42,8 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: 'farm', label: 'Granja', mount: mountFarmView },
   { id: 'upgrades', label: 'Mejoras', mount: mountUpgradesView },
+  { id: 'ascend', label: 'Volar', mount: mountAscendView },
+  { id: 'perks', label: 'Ventajas', mount: mountPerksView },
   { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
 ];
 

@@ -1,7 +1,7 @@
 // Vista "Ajustes": notación de números, exportar/importar la partida como texto y borrarla.
 // Ver docs/01-diseno-juego.md §10, docs/02-arquitectura.md §6 y §9 (aviso de iOS).
 
-import { setNotation } from '../../core/actions.ts';
+import { setAutobuyEnabled, setNotation } from '../../core/actions.ts';
 import { createInitialState, replaceState } from '../../core/state.ts';
 import type { GameState } from '../../core/state.ts';
 import { normalize } from '../../save/normalize.ts';
@@ -27,6 +27,20 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
         n === 'es' ? 'Normal' : 'Científica',
       ]) as HTMLButtonElement;
       notationButtons.set(n, btn);
+      return btn;
+    }),
+  );
+
+  // --- Autocompra (Capataz/Encargada) ---
+  const autobuyButtons = new Map<boolean, HTMLButtonElement>();
+  const autobuyRow = h(
+    'div',
+    { className: 'amount-row' },
+    [true, false].map((enabled) => {
+      const btn = h('button', { className: 'amount-button', onclick: () => ctx.dispatch((state) => setAutobuyEnabled(state, enabled)) }, [
+        enabled ? 'Activada' : 'En pausa',
+      ]) as HTMLButtonElement;
+      autobuyButtons.set(enabled, btn);
       return btn;
     }),
   );
@@ -104,6 +118,10 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     h('h3', {}, ['Números']),
     notationRow,
 
+    h('h3', {}, ['Capataz y Encargada']),
+    h('p', { className: 'settings-hint' }, ['Compran cerditos y mejoras por ti cuando las tienes. Puedes pausarlas si prefieres decidir tú cada compra.']),
+    autobuyRow,
+
     h('h3', {}, ['Guardar partida en texto']),
     h('p', { className: 'settings-hint' }, [
       'Genera un código y guárdalo donde quieras (una nota, un mensaje a ti mismo) para recuperar la partida en otro dispositivo.',
@@ -140,6 +158,7 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
   function update(state: GameState): void {
     latestState = state;
     for (const [n, btn] of notationButtons) setClass(btn, 'active', n === state.settings.notation);
+    for (const [enabled, btn] of autobuyButtons) setClass(btn, 'active', enabled === state.settings.autobuyEnabled);
   }
 
   return { update, destroy: () => container.remove() };

@@ -2,7 +2,7 @@
 // llamar a formulas.ts directamente desde ui/. Ver docs/02-arquitectura.md §4 y §8.
 
 import { generatorUpgradeName } from '../content/upgrades.ts';
-import type { Content, GeneratorDef, WorldDef } from '../content/types.ts';
+import type { Content, GeneratorDef, PerkDef, WorldDef } from '../content/types.ts';
 import {
   availableUpgrades,
   bulkCost,
@@ -13,12 +13,19 @@ import {
   getWorldDef,
   globalMultiplier,
   maxAffordable,
+  perkAvailable,
+  perkCost,
+  perkCostGrowthDelta,
+  perkCostMultiplier,
+  perkLevel,
+  perPlumaBonusRate,
+  plumasPending,
   productionPerSecond,
   type UpgradeOffer,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
 import type { BuyAmount } from './actions.ts';
-import type { GameState, WorldId, WorldState } from './state.ts';
+import type { GameState, PerkId, WorldId, WorldState } from './state.ts';
 
 export interface HeaderView {
   worldName: string;
@@ -57,6 +64,8 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
   if (!worldState) return [];
   const m = globalMultiplier(state, content, worldId);
   const amount = state.settings.buyAmount;
+  const costDelta = perkCostGrowthDelta(state, content, worldId);
+  const costMult = perkCostMultiplier(state, content, worldId);
 
   return world.generators.map((gen) => {
     const genState = worldState.generators[gen.id];
@@ -64,8 +73,8 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
     const bought = genState?.bought ?? 0;
     const genMult = generatorMultiplier(world, worldState, gen);
 
-    const amountToBuy = amount === 'max' ? maxAffordable(world, gen, bought, worldState.currency) : amount;
-    const nextCost = amountToBuy > 0 ? bulkCost(world, gen, bought, amountToBuy) : generatorCost(world, gen, bought);
+    const amountToBuy = amount === 'max' ? maxAffordable(world, gen, bought, worldState.currency, costDelta, costMult) : amount;
+    const nextCost = amountToBuy > 0 ? bulkCost(world, gen, bought, amountToBuy, costDelta, costMult) : generatorCost(world, gen, bought, costDelta, costMult);
 
     return {
       id: gen.id,
@@ -164,6 +173,116 @@ export function purchasedUpgradeViews(state: GameState, content: Content, worldI
     }
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Ascensión (hito 5, 01 §5)
+// ---------------------------------------------------------------------------
+
+export interface AscendView {
+  plumas: Decimal;
+  plumasTotal: Decimal;
+  /** Plumas que se ganarían ascendiendo ahora mismo. */
+  pendingGain: number;
+  /** Bono pasivo actual: 1 + tasa·plumasTotal. */
+  currentBonusMultiplier: number;
+  /** El mismo bono si se ascendiera ahora ("tu producción pasaría de ×A a ×B"). */
+  nextBonusMultiplier: number;
+  canAscend: boolean;
+}
+
+export function ascendView(state: GameState, content: Content, worldId: WorldId): AscendView {
+  const worldState = state.worlds[worldId];
+  if (!worldState) {
+    return { plumas: D(0), plumasTotal: D(0), pendingGain: 0, currentBonusMultiplier: 1, nextBonusMultiplier: 1, canAscend: false };
+  }
+  const pendingGain = plumasPending(state, content, worldId);
+  const rate = perPlumaBonusRate(state, content, worldId);
+  const plumasTotal = worldState.plumasTotal.toNumber();
+  return {
+    plumas: worldState.plumas,
+    plumasTotal: worldState.plumasTotal,
+    pendingGain,
+    currentBonusMultiplier: 1 + rate * plumasTotal,
+    nextBonusMultiplier: 1 + rate * (plumasTotal + pendingGain),
+    canAscend: pendingGain > 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Árbol de ventajas permanentes (hito 5, 01 §6)
+// ---------------------------------------------------------------------------
+
+export interface PerkView {
+  id: PerkId;
+  name: string;
+  flavor: string;
+  level: number;
+  maxLevel: number | null;
+  maxed: boolean;
+  cost: Decimal;
+  /** Nombres de las ventajas que todavía faltan por tener (vacío si no está bloqueada). */
+  missingRequirements: string[];
+  /** Puede comprarse ya: no bloqueada, no al máximo y hay plumas suficientes. */
+  purchasable: boolean;
+  currentEffectText: string;
+  /** Efecto si se compra un nivel más; `null` si ya está al máximo. */
+  nextEffectText: string | null;
+}
+
+function perkEffectValueText(perk: PerkDef, level: number): string {
+  const e = perk.effect;
+  switch (e.kind) {
+    case 'prodMult':
+      return `×${(e.perLevel ** level).toFixed(2)} producción`;
+    case 'costMult':
+      return `×${(e.perLevel ** level).toFixed(2)} coste de los cerditos`;
+    case 'upgradeCostMult':
+      return `×${(e.perLevel ** level).toFixed(2)} coste de las mejoras`;
+    case 'startCurrency':
+      return `×${Math.round(e.perLevel ** level)} moneda inicial`;
+    case 'plumaMult':
+      return `+${Math.round(e.perLevel * level * 100)} % plumas al ascender`;
+    case 'crossProd':
+      return `+${Math.round(e.perLevel * level * 100)} % producción en los demás mundos`;
+    case 'costGrowthDelta':
+      return `el coste de los cerditos crece ${(e.perLevel * level).toFixed(4)} menos`;
+    case 'perPlumaBonus':
+      return `+${Math.round(e.perLevel * level * 100)} % extra en el bono de plumas`;
+    case 'autobuyGenerators':
+      return level > 0 ? 'compra cerditos sola' : 'inactiva';
+    case 'autobuyUpgrades':
+      return level > 0 ? 'compra mejoras sola' : 'inactiva';
+  }
+}
+
+export function perkViews(state: GameState, content: Content, worldId: WorldId): PerkView[] {
+  const worldState = state.worlds[worldId];
+  return content.perks
+    .filter((perk) => perk.world === worldId)
+    .map((perk) => {
+      const level = worldState?.perks[perk.id] ?? 0;
+      const maxed = perk.maxLevel !== null && level >= perk.maxLevel;
+      const cost = perkCost(perk, level);
+      const missingRequirements = perk.requires
+        .filter((reqId) => perkLevel(state, content, reqId) <= 0)
+        .map((reqId) => content.perks.find((p) => p.id === reqId)?.name ?? reqId);
+      const canAfford = (worldState?.plumas ?? D(0)).gte(cost);
+
+      return {
+        id: perk.id,
+        name: perk.name,
+        flavor: perk.flavor,
+        level,
+        maxLevel: perk.maxLevel,
+        maxed,
+        cost,
+        missingRequirements,
+        purchasable: !maxed && missingRequirements.length === 0 && canAfford,
+        currentEffectText: perkEffectValueText(perk, level),
+        nextEffectText: maxed ? null : perkEffectValueText(perk, level + 1),
+      };
+    });
 }
 
 // Re-exportado para los tests que quieran forzar un BuyAmount sin importar actions.ts.

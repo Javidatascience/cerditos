@@ -335,6 +335,49 @@ button {
   color: var(--color-text-muted);
 }
 
+/* Vista Volar */
+.ascend-plumas {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+/* Vista Ventajas */
+.perk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.perk-row-locked {
+  opacity: 0.6;
+}
+
+.perk-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.perk-locked {
+  font-size: 0.8rem;
+  color: var(--color-accent-dark);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

@@ -3,6 +3,7 @@
 // §4-§6 y docs/01-diseno-juego.md §10.
 
 import { CONTENT } from './content/index.ts';
+import { runAutobuyForAllWorlds } from './core/autobuy.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { mountApp } from './ui/app.ts';
@@ -52,6 +53,7 @@ setInterval(() => {
     simulateOffline(state, CONTENT, dt);
   } else {
     advance(state, CONTENT, dt);
+    runAutobuyForAllWorlds(state, CONTENT);
   }
   app.update(state);
 }, TICK_MS);
