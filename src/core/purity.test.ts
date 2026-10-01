@@ -34,4 +34,9 @@ describe('src/core es lógica pura', () => {
       expect(content).not.toMatch(pattern);
     }
   });
+
+  it.each(files.map((f) => [f] as const))('%s no importa nada de src/ui/', (file) => {
+    const content = readFileSync(file, 'utf-8');
+    expect(content).not.toMatch(/from\s+['"][.\w/]*\/ui\//);
+  });
 });

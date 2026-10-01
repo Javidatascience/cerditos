@@ -11,7 +11,7 @@
 | 0 | Diseño, economía y simulador | ✅ hecho |
 | 1 | Esqueleto, estado y tick | ✅ hecho |
 | 2 | Contenido completo como datos + simulador unificado | ✅ hecho |
-| 3 | Valle jugable: compras, mejoras y UI de granja | ⬜ |
+| 3 | Valle jugable: compras, mejoras y UI de granja | ✅ hecho |
 | 4 | Guardado, offline, exportar/importar | ⬜ |
 | 5 | Ascensión, ventajas y autocompra | ⬜ |
 | 6 | Colección y diario | ⬜ |
@@ -365,3 +365,23 @@ raíz); con eso `sim:typecheck` vuelve a pasar limpio y ya no hace falta arregla
 que `npm run sim` reproduce **exactamente** (no solo ±1 visita) los hitos de 03 §9.3, y que
 `node tools/sim/tables.ts` produce las mismas tablas que 03 §8 (diff sin diferencias salvo
 espacios en blanco).
+
+**2026-10-01 (hito 3) — se resolvió la "landmine" anotada en el hito 2: `tools/sim/engine.ts`
+se arregló para `noUncheckedIndexedAccess`, sin tocar su lógica.** El `parity.test.ts` que
+pide este hito importa `tools/sim/engine.ts` y `tools/sim/content.ts` desde
+`src/core/parity.test.ts`, así que esos ficheros pasan a formar parte del programa de
+`npm run typecheck` (TypeScript sigue las importaciones aunque el fichero no esté en
+`include`) y se comprueban con los flags estrictos del tsconfig raíz. Confirmado: eran
+exactamente los ~90 errores de `engine.ts` previstos (indexado de `s.worlds[id]`,
+`WORLD_BY_ID[id]` y arrays por posición sin comprobar `undefined`), y ninguno en
+`content.ts` (el adaptador del hito 2 ya los tenía controlados). Se optó por la opción (a) de
+la nota del hito 2: se añadieron aserciones `!` en cada acceso señalado (todas seguras por
+construcción: los ids de mundo siempre vienen de `WORLDS`, los índices siempre recorren
+`0..length-1` del array que indexan) y se introdujeron dos helpers internos (`world(s, id)`,
+`def(id)`) para no repetir el patrón `s.worlds[id]!`/`WORLD_BY_ID[id]!` por todo el fichero.
+Sin cambios de comportamiento: verificado que `npm run sim` sigue dando exactamente los
+mismos hitos (diff línea a línea) y que `strategy.ts`/`main.ts`/`tables.ts` (que no importa
+`parity.test.ts`, así que no entran en `npm run typecheck`, pero sí en `sim:typecheck`) siguen
+compilando y comportándose igual. `npm run typecheck`, `npm test` (79/79) y `npm run sim`
+pasan en verde con los ficheros de `tools/sim` ahora totalmente limpios bajo
+`noUncheckedIndexedAccess`.

@@ -44,3 +44,8 @@ export function setClass(el: HTMLElement, className: string, on: boolean): void 
   if (on) el.classList.add(className);
   else el.classList.remove(className);
 }
+
+/** Pone una propiedad de `style` inline solo si cambia (p. ej. el ancho de una barra de progreso). */
+export function setStyleProp(el: HTMLElement, prop: string, value: string): void {
+  if (el.style.getPropertyValue(prop) !== value) el.style.setProperty(prop, value);
+}

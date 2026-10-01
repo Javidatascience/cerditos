@@ -1,12 +1,14 @@
-/* Estilos mínimos del esqueleto (hito 1). Paleta y pulido visual completos en el hito 11
+/* Estilos del hito 3 (Valle jugable). Paleta y pulido visual completos en el hito 11
    (docs/01-diseno-juego.md §3, docs/04-plan-implementacion.md hito 11). */
 
 :root {
   --color-bg: #faf6ef;
   --color-text: #3a2e26;
+  --color-text-muted: #6b5b4d;
   --color-accent: #c98a6b;
   --color-accent-dark: #a86c50;
   --color-border: #e3d5c4;
+  --color-surface: #ffffff;
   color-scheme: light;
 }
 
@@ -28,19 +30,38 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-#app {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 16px;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+button {
+  font: inherit;
+  cursor: pointer;
 }
 
+.hidden {
+  display: none !important;
+}
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cabecera fija (02 §8): mundo activo, moneda y producción/s. */
 .app-header {
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.world-name {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .currency-row {
@@ -53,10 +74,42 @@ body {
   font-size: 0.95rem;
 }
 
+.view-container {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+/* Navegación inferior fija (02 §8). */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-button {
+  flex: 1;
+  padding: 12px 8px;
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  touch-action: manipulation;
+}
+
+.nav-button.active {
+  color: var(--color-accent-dark);
+  font-weight: 600;
+}
+
+/* Vista Granja */
 .tap-button {
   width: 100%;
   padding: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   font-size: 1rem;
   border: none;
   border-radius: 12px;
@@ -65,7 +118,32 @@ body {
   touch-action: manipulation;
 }
 
-.generator-list {
+.amount-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.amount-button {
+  flex: 1;
+  padding: 8px;
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  touch-action: manipulation;
+}
+
+.amount-button.active {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  color: #fff;
+}
+
+.generator-list,
+.upgrade-list,
+.purchased-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -74,31 +152,49 @@ body {
   gap: 8px;
 }
 
-.generator-row {
+.generator-row,
+.upgrade-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 12px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
 }
 
-.generator-info {
+.generator-info,
+.upgrade-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-.generator-name {
+.generator-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.generator-name,
+.upgrade-name {
   font-weight: 600;
 }
 
-.generator-owned {
+.generator-flavor {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.generator-prod,
+.upgrade-effect {
   font-size: 0.85rem;
-  color: #6b5b4d;
+  color: var(--color-accent-dark);
 }
 
 .buy-button {
+  flex-shrink: 0;
   padding: 10px 14px;
   min-height: 44px;
   border: none;
@@ -111,6 +207,55 @@ body {
 .buy-button:disabled {
   background: #c9bfb2;
   color: #efe9e1;
+  cursor: default;
+}
+
+/* Barra fina de progreso hacia la próxima compra pendiente (01 §11: nada que rebote ni gire). */
+.pending-purchase {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.progress-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-border);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-bar-inner {
+  height: 100%;
+  background: var(--color-accent);
+  width: 0%;
+  transition: width 150ms ease-out;
+}
+
+/* Vista Mejoras */
+.upgrade-empty {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.purchased-toggle {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.purchased-row {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
 }
 
 @media (prefers-reduced-motion: reduce) {
