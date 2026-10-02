@@ -749,6 +749,14 @@ textarea:focus-visible {
   color: var(--color-on-button);
 }
 
+/* Logros de un cerdito que aún no has tenido: borrosos */
+.achievement-gen-locked {
+  filter: blur(4px);
+  opacity: 0.7;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* Álbum y logros: icono a la izquierda del texto */
 .album-card {
   position: relative;

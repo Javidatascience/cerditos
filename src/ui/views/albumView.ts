@@ -95,9 +95,11 @@ export function mountAlbumView(root: HTMLElement, ctx: UiContext): View {
           const own = views.filter((a) => a.generator?.worldId === world.id && a.generator.genId === gen.id).sort((a, b) => a.generator!.count - b.generator!.count);
           const done = own.filter((a) => a.owned).length;
           const next = own.find((a) => !a.owned);
-          return h('li', { className: 'album-card achievement-gen' }, [
+          // Sin ningún cerdito de este tipo (nunca) la ficha se ve borrosa y sin nombre.
+          const seen = own.some((a) => a.owned);
+          return h('li', { className: seen ? 'album-card achievement-gen' : 'album-card achievement-gen achievement-gen-locked', 'aria-hidden': seen ? 'false' : 'true' }, [
             generatorIcon(world.id, index, gen.id),
-            h('span', { className: 'upgrade-name' }, [`${gen.name} (${done}/${own.length})`]),
+            h('span', { className: 'upgrade-name' }, [seen ? `${gen.name} (${done}/${own.length})` : '??? (0/' + own.length + ')']),
             h('span', { className: 'chip-row' }, own.map((a) => h('span', { className: a.owned ? 'chip chip-done' : 'chip' }, [String(a.generator!.count)]))),
             next ? reqLine(next.requirement, format) : h('span', { className: 'album-req album-req-done' }, ['Todos conseguidos']),
           ]);
