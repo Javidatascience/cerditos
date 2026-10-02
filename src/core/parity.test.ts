@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { ascend, buyGenerator, buyPerk } from './actions.ts';
-import { greedyBuy } from './autobuy.ts';
+import { greedyBuy } from './greedy.ts';
 import { generatorCost, getWorldDef, perkAvailable, perkCost, perkLevel, plumasPending } from './formulas.ts';
 import { D } from './num.ts';
 import { createInitialState, type GameState } from './state.ts';
@@ -194,10 +194,9 @@ describe('paridad core/tools-sim con calma (Balneario, 1 h)', () => {
 // reutiliza código real del juego: core/autobuy.ts > greedyBuy (exportada para este test) es
 // la misma función, con el mismo algoritmo, que tools/sim/strategy.ts > greedyBuy — aquí se
 // llama directamente con (gens=true, upgrades=true), igual que hace playerAct en tools/sim
-// para el jugador conectado (sin esperar a que posea Capataz/Encargada: eso solo gatea
-// runAutobuy, la compra automática de cuando el jugador NO está).
+// para el jugador conectado.
 
-const PERK_LOCAL_PRIORITY = ['capataz', 'encargada'];
+const PERK_LOCAL_PRIORITY: string[] = []; // sin ventajas prioritarias desde que se quitó la autocompra
 
 function coreBuyPerks(state: GameState, worldId: string): void {
   for (;;) {

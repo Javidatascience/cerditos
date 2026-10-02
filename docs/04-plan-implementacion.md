@@ -611,3 +611,21 @@ comprobación manual) y `.github/workflows/deploy.yml` (Pages en cada push a `ma
   de accesibilidad: no se puede agrandar con el gesto.
 - **Cerdito viajero**: ahora llega cada 1-2 min (al azar) y se queda **10 s** (con cuenta atrás en la tarjeta).
   Es una excepción más a la regla 2 (urgencia), decidida por el usuario; CLAUDE.md y docs/01 actualizados.
+
+**2026-10-02 (hito 12, tercera tanda: granja animada y fuera la autocompra)**
+- **Granja animada** (`ui/farmScene.ts`): canvas con la escena del mundo (establo y valla en el Valle, pinos y setas
+  en el Bosque, surcos en la Huerta, piscina en el Balneario), nubes que se desplazan y los cerditos paseando
+  (hasta 3 por tipo: 1 → 1, 10 → 2, 100+ → 3). Los sprites salen del mismo SVG de `ui/art.ts`. Al rascar sube un
+  "+N" (CSS). Ajuste nuevo **Efectos y animaciones** (`settings.effects`); con `prefers-reduced-motion` o la
+  pestaña oculta se dibuja una imagen fija y no hay bucle de animación.
+- **Aspecto de juego**: tarjetas con borde y relieve, botones gordos que se hunden (compra en verde, rascar en
+  naranja, contraste AA y variantes oscuras), la moneda en una píldora con su icono, barra inferior con iconos.
+- **Fuera la barra de "te falta X"** de la Granja (y el "??? — te falta"); queda solo "Hay más cerditos por descubrir".
+- **Fuera Capataz y Encargada** (demasiado potentes): sin autocompra en ningún sitio. `core/autobuy.ts` pasa a
+  `core/greedy.ts` y solo conserva `greedyBuy` (lo usan tests de paridad y el jugador simulado). Herramientas
+  heredadas pasa a requerir Abono. `normalize.ts` devuelve las plumas (5 + 20) a quien ya los tenía.
+- **Estado v3** (`CURRENT_VERSION` = 3, migración `v2ToV3`, fixture `v3.json`): `settings.autobuyEnabled` →
+  `settings.effects`.
+- **Simulador**: ya no autocompra fuera de las visitas. El ritmo casual se frena (Bosque ~5,0 d, Huerta ~14,1 d,
+  Colección 100 % ~34,7 d) y los rangos de "Desbloqueo Bosque" y "Desbloqueo Huerta" suben a 2-7 d y 7-18 d.
+  Ya no se cumple "3 visitas rinden como todo el día" (03 §10): ahora las visitas frecuentes sí compensan.

@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, GeneratorState, JournalEntry, Settings, WorldState } from '../core/state.ts';
 
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
 
 export interface SerializedGeneratorState {
   bought: number;

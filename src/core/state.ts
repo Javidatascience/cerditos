@@ -6,7 +6,7 @@ import { D, Decimal } from './num.ts';
 import type { Content, WorldDef } from '../content/types.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 
 export type WorldId = string;
 export type GeneratorId = string;
@@ -72,7 +72,8 @@ export interface JournalEntry {
 export interface Settings {
   notation: 'es' | 'cientifica';
   buyAmount: 1 | 10 | 'max';
-  autobuyEnabled: boolean;
+  /** Efectos y animaciones (granja animada, números que suben). Se ignora con prefers-reduced-motion. */
+  effects: boolean;
 }
 
 export interface GameState {
@@ -158,6 +159,6 @@ export function createInitialState(content: Content, now: number): GameState {
     taps: 0,
     buff: null,
     journal: [],
-    settings: { notation: 'es', buyAmount: 1, autobuyEnabled: true },
+    settings: { notation: 'es', buyAmount: 1, effects: true },
   };
 }

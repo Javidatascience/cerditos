@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CONTENT } from '../content/index.ts';
 import { D } from '../core/num.ts';
 import { createInitialState } from '../core/state.ts';
 import type { Content, WorldDef } from '../content/types.ts';
@@ -109,5 +110,19 @@ describe('normalize', () => {
     normalize(state, content(w1));
     normalize(state, content(w1));
     expect(state.worlds['w1']!.currency.toNumber()).toBe(42);
+  });
+});
+
+describe('ventajas eliminadas (Capataz y Encargada)', () => {
+  it('se descartan y se devuelven sus plumas', () => {
+    const state = createInitialState(CONTENT, 0);
+    const valle = state.worlds['valle']!;
+    valle.perks['valle.capataz'] = 1;
+    valle.perks['valle.encargada'] = 1;
+    valle.plumas = D(3);
+    normalize(state, CONTENT);
+    expect(valle.perks['valle.capataz']).toBeUndefined();
+    expect(valle.perks['valle.encargada']).toBeUndefined();
+    expect(valle.plumas.toNumber()).toBe(3 + 5 + 20);
   });
 });

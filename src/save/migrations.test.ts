@@ -21,7 +21,7 @@ describe('migrate', () => {
   it('v1 → v2 añade visitante, logros, rascados, cesta y cerditos descubiertos', () => {
     const data = migrate(loadFixture('v1.json'));
     const state = data.state;
-    expect(state.version).toBe(2);
+    expect(state.version).toBe(CURRENT_VERSION);
     expect(state.buff).toBeNull();
     expect(state.achievements).toEqual({});
     expect(state.taps).toBe(0);
@@ -30,10 +30,18 @@ describe('migrate', () => {
     expect(state.worlds['valle']!.basketSince).toBe(state.time);
   });
 
-  it('v2.json carga sin cambios', () => {
+  it('v2 → v3 quita autobuyEnabled y añade effects', () => {
     const data = migrate(loadFixture('v2.json'));
-    expect(data.version).toBe(2);
+    expect(data.version).toBe(3);
+    expect(data.state.settings).toMatchObject({ effects: true });
+    expect('autobuyEnabled' in data.state.settings).toBe(false);
     expect(data.state.worlds['valle']!.revealed).toBeGreaterThanOrEqual(1);
+  });
+
+  it('v3.json carga sin cambios', () => {
+    const data = migrate(loadFixture('v3.json'));
+    expect(data.version).toBe(3);
+    expect(data.state.settings.effects).toBe(true);
   });
 
   it('rechaza un guardado de una versión más nueva que el juego', () => {

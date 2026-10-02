@@ -1,12 +1,10 @@
 // Cálculo offline: lo que ha pasado mientras el jugador no estaba, con el mismo tick del
 // juego (advance), troceado. Ver docs/02-arquitectura.md §5 y docs/01-diseno-juego.md §10.
 //
-// Cada trozo hace advance() + runAutobuy() (Capataz/Encargada compran también mientras el
-// jugador no estaba). Sin autocompradores el resultado es exacto, trocee como trocee; con
-// ellos, comprar cada 15 s en vez de cada 250 ms pierde una fracción pequeña (02 §5).
+// Cada trozo hace advance(). Ya no hay autocompra: mientras no estás, la granja solo produce.
+// Como solo hay producción (sin compras de por medio), el resultado es exacto, trocee como trocee.
 
 import type { Content } from '../content/types.ts';
-import { runAutobuyForAllWorlds } from './autobuy.ts';
 import { D, Decimal } from './num.ts';
 import type { GameState } from './state.ts';
 import { advance } from './tick.ts';
@@ -46,7 +44,6 @@ export function simulateOffline(state: GameState, content: Content, seconds: num
 
   for (let i = 0; i < chunks; i++) {
     advance(state, content, chunkSeconds);
-    runAutobuyForAllWorlds(state, content);
   }
 
   const earnedByWorld: Record<string, Decimal> = {};

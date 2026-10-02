@@ -11,7 +11,7 @@ import { claimVisitor, setActiveWorld, VISITOR_BOOST } from '../core/actions.ts'
 import { headerView, visitorInjectionValue, worldTabs } from '../core/selectors.ts';
 import type { GameState, WorldId } from '../core/state.ts';
 import { h, setClass, setText } from './dom.ts';
-import { WORLD_EMOJI, worldBanner } from './art.ts';
+import { CURRENCY_EMOJI, WORLD_EMOJI, worldBanner } from './art.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
 import { mountAlbumView } from './views/albumView.ts';
@@ -41,15 +41,16 @@ export interface UiContext {
 interface TabDef {
   id: string;
   label: string;
+  icon: string;
   mount: (root: HTMLElement, ctx: UiContext) => View;
 }
 
 const TABS: TabDef[] = [
-  { id: 'farm', label: 'Granja', mount: mountFarmView },
-  { id: 'fly', label: 'Volar', mount: mountFlyView },
-  { id: 'album', label: 'Álbum', mount: mountAlbumView },
-  { id: 'journal', label: 'Diario', mount: mountJournalView },
-  { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
+  { id: 'farm', label: 'Granja', icon: '🏡', mount: mountFarmView },
+  { id: 'fly', label: 'Volar', icon: '🪶', mount: mountFlyView },
+  { id: 'album', label: 'Álbum', icon: '📖', mount: mountAlbumView },
+  { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
+  { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
 ];
 
 export interface App {
@@ -59,6 +60,7 @@ export interface App {
 export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}, visitor: VisitorScheduler | null = null): App {
   const worldNameText = document.createTextNode('');
   const currencyText = document.createTextNode('');
+  const currencyNameText = document.createTextNode('');
   const perSecondText = document.createTextNode('');
 
   const viewContainer = h('div', { className: 'view-container' });
@@ -93,7 +95,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     'nav',
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
     TABS.map((t) => {
-      const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [t.label]) as HTMLButtonElement;
+      const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [t.icon]), h('span', { className: 'nav-label' }, [t.label])]) as HTMLButtonElement;
       navButtons.set(t.id, btn);
       return btn;
     }),
@@ -134,7 +136,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     bannerSlot,
     h('div', { className: 'header-text' }, [
       h('div', { className: 'world-name' }, [worldNameText]),
-      h('div', { className: 'currency-row' }, [currencyText]),
+      h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [currencyText]), h('span', { className: 'currency-name' }, [currencyNameText])]),
       h('div', { className: 'per-second-row' }, [perSecondText]),
     ]),
   ]);
@@ -207,7 +209,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const headerData = headerView(state, content, state.activeWorld);
     const notation = state.settings.notation;
     setText(worldNameText, headerData.worldName);
-    setText(currencyText, `${headerData.currencyName}: ${formatNumber(headerData.currency, notation)}`);
+    setText(currencyText, `${CURRENCY_EMOJI[state.activeWorld] ?? '🪙'} ${formatNumber(headerData.currency, notation)}`);
+    setText(currencyNameText, headerData.currencyName);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
     setText(perSecondText, `+${formatNumber(headerData.perSecond, notation)}/s${buff}`);
     activeView?.update(state);

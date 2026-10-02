@@ -8,8 +8,7 @@
 
 import { PERKS, WORLD_BY_ID, type PerkDef, type WorldId } from './content.ts';
 import {
-  ascend, availableUpgrades, buyGenerator, buyPerk, buyUpgrade, genCost, harmony, hasAutobuyGenerators,
-  hasAutobuyUpgrades, income, perkAvailable, perkCost, plumasPending, valueRate,
+  ascend, availableUpgrades, buyGenerator, buyPerk, buyUpgrade, genCost, harmony, income, perkAvailable, perkCost, plumasPending, valueRate,
   type SimState, type UpgradeOffer,
 } from './engine.ts';
 
@@ -104,14 +103,7 @@ export function greedyBuy(s: SimState, world: WorldId, gens: boolean, upgrades: 
   return bought;
 }
 
-/** Lo que hace el autocomprador (ventajas Capataz / Encargada) cuando el jugador no está. */
-export function autobuy(s: SimState, world: WorldId): void {
-  const g = hasAutobuyGenerators(s, world);
-  const u = hasAutobuyUpgrades(s, world);
-  if (g || u) greedyBuy(s, world, g, u);
-}
-
-const PERK_PRIORITY = ['capataz', 'encargada'];
+const PERK_PRIORITY: string[] = [];
 
 function cheapestPerk(s: SimState, perks: PerkDef[]): PerkDef {
   return [...perks].sort((a, b) => perkCost(s, a) - perkCost(s, b))[0]!;

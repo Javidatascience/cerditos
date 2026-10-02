@@ -6,10 +6,11 @@
 // cambiar de mundo.
 
 import { buyGenerator, buyRow, collectBasket, setBuyAmount, tap, tapValue, type BuyAmount } from '../../core/actions.ts';
-import { basketView, calmView, cheapestPendingPurchase, generatorViews, harmonyView, nextDiscovery } from '../../core/selectors.ts';
+import { basketView, calmView, generatorViews, harmonyView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { generatorIcon } from '../art.ts';
+import { mountFarmScene } from '../farmScene.ts';
 import { mountUpgradesList } from './upgradesList.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
@@ -31,9 +32,16 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   const world = ctx.content.worlds.find((w) => w.id === worldId);
   if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
 
+  const sceneSlot = h('div', { className: 'scene-slot' });
   const tapText = document.createTextNode('');
   const tapButton = h('button', { className: 'tap-button' }, [tapText]) as HTMLButtonElement;
-  tapButton.addEventListener('click', () => ctx.dispatch((state) => void tap(state, ctx.content, worldId)));
+  const scene = mountFarmScene(sceneSlot, ctx);
+  tapButton.addEventListener('click', () =>
+    ctx.dispatch((state) => {
+      const gained = tap(state, ctx.content, worldId);
+      scene.floatText(`+${formatNumber(gained, state.settings.notation)}`);
+    }),
+  );
 
   // Cesta de la granja: se llena sola (con tope) y "Recoger" la vacía.
   const basketText = document.createTextNode('');
@@ -105,14 +113,12 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
     h('p', { className: 'settings-hint' }, [calmNote]),
   ]);
 
-  const pendingText = document.createTextNode('');
-  const progressInner = h('div', { className: 'progress-bar-inner' });
-  const pendingBlock = h('div', { className: 'pending-purchase hidden' }, [h('div', { className: 'progress-bar', role: 'presentation' }, [progressInner]), h('p', {}, [pendingText])]);
+  const moreHint = h('p', { className: 'more-hint hidden' }, ['Hay más cerditos por descubrir.']);
 
   const upgradesSlot = h('div', { className: 'upgrades-slot' });
   const upgrades = mountUpgradesList(upgradesSlot, ctx);
 
-  const container = h('div', { className: 'farm-view' }, [tapButton, upgradesSlot, basketBlock, harmonyBlock, calmBlock, amountRow, list, pendingBlock]);
+  const container = h('div', { className: 'farm-view' }, [sceneSlot, tapButton, upgradesSlot, basketBlock, harmonyBlock, calmBlock, amountRow, list, moreHint]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -171,26 +177,14 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       );
     }
 
-    // Una sola barra de "te falta": si queda algún cerdito por descubrir, ese; si no, la próxima compra.
-    const discovery = nextDiscovery(state, ctx.content, worldId);
-    const pending = cheapestPendingPurchase(state, ctx.content, worldId);
-    if (discovery) {
-      const wait = discovery.etaSeconds === null ? '' : discovery.etaSeconds <= 0 ? ' — ya casi' : ` — te falta ${formatDuration(discovery.etaSeconds)}`;
-      setClass(pendingBlock, 'hidden', false);
-      setText(pendingText, `???${wait}. Hay más cerditos por descubrir.`);
-      setStyleProp(progressInner, 'width', `${(discovery.progress * 100).toFixed(1)}%`);
-    } else if (pending && pending.etaSeconds !== null) {
-      setClass(pendingBlock, 'hidden', false);
-      setText(pendingText, `${pending.name}: te faltan ${formatDuration(pending.etaSeconds)}`);
-      setStyleProp(progressInner, 'width', `${(pending.progress * 100).toFixed(1)}%`);
-    } else {
-      setClass(pendingBlock, 'hidden', true);
-    }
+    setClass(moreHint, 'hidden', !views.some((v) => v.reveal !== 'visible'));
+    scene.update(state);
   }
 
   return {
     update,
     destroy: () => {
+      scene.destroy();
       upgrades.destroy();
       container.remove();
     },

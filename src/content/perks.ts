@@ -38,7 +38,6 @@ function perksForWorld(world: WorldId): PerkDef[] {
       kind: 'prodMult',
       perLevel: 1.1,
     }),
-    p('capataz', 'Capataz', 'Se encarga de comprar cerditos mientras tú no miras.', 1, 5, 1, [], { kind: 'autobuyGenerators' }),
     p('comienzo', 'Buen comienzo', 'Empieza cada ronda con la despensa ya llena.', 5, 3 * scale, 3, ['abono'], {
       kind: 'startCurrency',
       perLevel: 25,
@@ -47,9 +46,6 @@ function perksForWorld(world: WorldId): PerkDef[] {
       kind: 'costMult',
       perLevel: 0.93,
     }),
-    p('encargada', 'Encargada de mejoras', 'Compra las mejoras por ti, sin que tengas que estar pendiente.', 1, 20, 1, ['capataz'], {
-      kind: 'autobuyUpgrades',
-    }),
     p(
       'mejoras',
       'Herramientas heredadas',
@@ -57,7 +53,7 @@ function perksForWorld(world: WorldId): PerkDef[] {
       3,
       12 * scale,
       3,
-      ['encargada'],
+      ['abono'],
       { kind: 'upgradeCostMult', perLevel: 0.75 },
     ),
     p('vuelo', 'Plumas al viento', 'Cada vuelo deja un poco más de plumas en el suelo.', 5, 25 * scale, 2.5, ['ahorro'], {

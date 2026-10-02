@@ -1,17 +1,16 @@
-// Autocompra: lo que hacen las ventajas Capataz (cerditos) y Encargada (mejoras) en cada
-// tick y en cada trozo del offline. Misma regla que tools/sim/strategy.ts > greedyBuy/autobuy
-// (03 §4), para que el juego automático y el simulado coincidan.
+// Compra "voraz": compra una y otra vez el candidato de mejor puntuación mientras sea asequible
+// (tiempo hasta poder pagarlo + tiempo en amortizarlo, 03 §4). Es la misma regla que
+// tools/sim/strategy.ts > greedyBuy. El juego ya NO tiene autocompra para el jugador (se quitaron
+// Capataz y Encargada: eran demasiado potentes); esta función solo la usan los tests de paridad
+// con el simulador y el jugador simulado.
 //
-// Incluye ya el "paquete de fila" de la armonía y la condición de calma aunque la Huerta y el
-// Balneario no sean jugables hasta los hitos 8-9 (pedido explícitamente por el hito 5): el
-// código simplemente no se ejercita todavía porque esos mundos están bloqueados.
+// Incluye el "paquete de fila" de la armonía y la condición de calma.
 
 import { buyGenerator, buyRow, buyUpgrade, rowBundleCost } from './actions.ts';
 import {
   availableUpgrades,
   generatorCost,
   getWorldDef,
-  hasPerkEffect,
   perkCostGrowthDelta,
   totalCostMultiplier,
   productionPerSecond,
@@ -122,11 +121,8 @@ function calmAllowsBuying(state: GameState, content: Content, worldId: WorldId):
 }
 
 /**
- * Compra repetidamente el candidato de mejor puntuación mientras sea asequible. Exportada
- * (sin estar detrás de Capataz/Encargada) para que parity.test.ts pueda reproducir la compra
- * "manual" del jugador conectado de tools/sim/strategy.ts > playerAct, que llama a
- * greedyBuy(gens=true, upgrades=true) directamente — `runAutobuy`, más abajo, es solo la
- * versión gated que de verdad usa el juego cuando el jugador no está.
+ * Compra repetidamente el candidato de mejor puntuación mientras sea asequible. Permite a
+ * parity.test.ts reproducir la compra del jugador conectado de tools/sim/strategy.ts > playerAct.
  */
 export function greedyBuy(state: GameState, content: Content, worldId: WorldId, includeGenerators: boolean, includeUpgrades: boolean): number {
   let bought = 0;
@@ -151,22 +147,4 @@ export function greedyBuy(state: GameState, content: Content, worldId: WorldId, 
     bought++;
   }
   return bought;
-}
-
-/** Lo que hacen Capataz/Encargada en `worldId` cuando el jugador no está interactuando. */
-export function runAutobuy(state: GameState, content: Content, worldId: WorldId): void {
-  if (!state.settings.autobuyEnabled) return;
-  const worldState = state.worlds[worldId];
-  if (!worldState || !worldState.unlocked) return;
-
-  const canBuyGenerators = hasPerkEffect(state, content, worldId, 'autobuyGenerators');
-  const canBuyUpgrades = hasPerkEffect(state, content, worldId, 'autobuyUpgrades');
-  if (!canBuyGenerators && !canBuyUpgrades) return;
-
-  greedyBuy(state, content, worldId, canBuyGenerators, canBuyUpgrades);
-}
-
-/** Ejecuta runAutobuy en todos los mundos del contenido (lo llaman tick.ts y offline.ts). */
-export function runAutobuyForAllWorlds(state: GameState, content: Content): void {
-  for (const world of content.worlds) runAutobuy(state, content, world.id);
 }

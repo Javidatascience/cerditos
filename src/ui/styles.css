@@ -15,6 +15,16 @@
   --color-surface: #ffffff;
   --color-overlay: var(--color-overlay);
   --world-accent: #8f5a3f;
+  --color-bg-2: #f3e9d6;
+  --color-shadow: rgba(58, 46, 38, 0.12);
+  --btn-green: #2b7a35;
+  --btn-green-dark: #1d5a26;
+  --btn-green-text: #ffffff;
+  --btn-orange: #a64a16;
+  --btn-orange-dark: #78340e;
+  --btn-orange-text: #ffffff;
+  --pill-bg: #fff3d6;
+  --pill-border: #e7c987;
   color-scheme: light;
 }
 
@@ -37,6 +47,16 @@
     --color-border: #433a33;
     --color-surface: #2a2420;
     --color-overlay: rgba(0, 0, 0, 0.55);
+    --color-bg-2: #2a221d;
+    --color-shadow: rgba(0, 0, 0, 0.35);
+    --btn-green: #6fc47a;
+    --btn-green-dark: #3f8d4a;
+    --btn-green-text: #12301a;
+    --btn-orange: #f0a36b;
+    --btn-orange-dark: #b9683a;
+    --btn-orange-text: #2a1405;
+    --pill-bg: #3a2f27;
+    --pill-border: #5b4a3a;
     color-scheme: dark;
   }
   :root[data-world='valle'] { --world-accent: #d99b78; }
@@ -775,3 +795,193 @@ textarea:focus-visible {
 .album-card-locked .pig-icon {
   filter: grayscale(1);
 }
+
+/* ------------------------------------------------------------------
+   Aspecto "de juego": tarjetas con relieve, botones gordos, moneda en
+   una píldora, barra inferior con iconos y la granja animada.
+   ------------------------------------------------------------------ */
+
+body {
+  background: linear-gradient(180deg, var(--color-bg), var(--color-bg-2)) fixed;
+}
+
+.generator-row,
+.upgrade-row,
+.perk-row,
+.basket-block,
+.harmony-block,
+.visitor-card,
+.album-card,
+.settings-confirm {
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 3px 0 var(--color-shadow);
+}
+
+.visitor-card {
+  border-color: var(--world-accent);
+}
+
+.generator-name,
+.upgrade-name {
+  font-weight: 800;
+}
+
+/* Botones gordos: se hunden al pulsarlos */
+.buy-button,
+.tap-button {
+  border: none;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.buy-button {
+  background: var(--btn-green);
+  color: var(--btn-green-text);
+  border-bottom: 4px solid var(--btn-green-dark);
+  border-radius: 12px;
+  min-height: 48px;
+}
+
+.buy-button:disabled {
+  background: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+  border-bottom-color: var(--color-border);
+}
+
+.tap-button {
+  background: var(--btn-orange);
+  color: var(--btn-orange-text);
+  border-bottom: 6px solid var(--btn-orange-dark);
+  border-radius: 18px;
+  padding: 16px;
+  font-size: 1.15rem;
+}
+
+.buy-button:active:not(:disabled),
+.tap-button:active {
+  transform: translateY(3px);
+  border-bottom-width: 2px;
+}
+
+.amount-button,
+.world-tab {
+  border-width: 2px;
+  border-bottom-width: 4px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.amount-button.active {
+  background: var(--btn-orange);
+  border-color: var(--btn-orange-dark);
+  color: var(--btn-orange-text);
+}
+
+/* Cabecera: la moneda en una píldora */
+.currency-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currency-pill {
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  border: 2px solid var(--pill-border);
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+
+.currency-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+/* Barras más gordas */
+.progress-bar {
+  height: 10px;
+  border-radius: 6px;
+}
+
+.progress-bar-inner {
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f2b27d, var(--color-accent));
+}
+
+/* Barra inferior con iconos */
+.nav-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 58px;
+  padding: 6px 2px;
+}
+
+.nav-icon {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.nav-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.nav-button.active,
+.nav-button[aria-current='page'] {
+  background: var(--pill-bg);
+  box-shadow: inset 0 3px 0 var(--world-accent);
+}
+
+/* Granja animada */
+.scene-slot {
+  margin-bottom: 12px;
+}
+
+.farm-scene {
+  position: relative;
+  height: 170px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 3px solid var(--color-border);
+  box-shadow: 0 4px 0 var(--color-shadow);
+}
+
+.farm-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.float-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.float-text {
+  position: absolute;
+  bottom: 28%;
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  animation: float-up 800ms ease-out forwards;
+}
+
+@keyframes float-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-70px);
+  }
+}
+

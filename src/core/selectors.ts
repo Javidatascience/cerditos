@@ -343,10 +343,6 @@ function perkEffectValueText(perk: PerkDef, level: number): string {
       return `el coste de los cerditos crece ${(e.perLevel * level).toFixed(4)} menos`;
     case 'perPlumaBonus':
       return `+${Math.round(e.perLevel * level * 100)} % extra en el bono de plumas`;
-    case 'autobuyGenerators':
-      return level > 0 ? 'compra cerditos sola' : 'inactiva';
-    case 'autobuyUpgrades':
-      return level > 0 ? 'compra mejoras sola' : 'inactiva';
   }
 }
 

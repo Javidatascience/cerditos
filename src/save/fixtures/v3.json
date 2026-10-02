@@ -1,0 +1,261 @@
+{
+  "format": "cerditos",
+  "version": 3,
+  "savedAt": 1700000010000,
+  "state": {
+    "version": 3,
+    "createdAt": 1700000000000,
+    "lastTickAt": 1700000000000,
+    "time": 0,
+    "activeWorld": "valle",
+    "worlds": {
+      "valle": {
+        "unlocked": true,
+        "currency": "57",
+        "runEarned": "0",
+        "lifetimeEarned": "0",
+        "generators": {
+          "lechon": {
+            "bought": 3,
+            "owned": "3"
+          },
+          "cerdita-rosa": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "duroc": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "pietrain": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "berkshire": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "mangalica": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "iberico": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "gran-blanco": {
+            "bought": 0,
+            "owned": "0"
+          }
+        },
+        "upgrades": {},
+        "plumas": "0",
+        "plumasTotal": "0",
+        "perks": {},
+        "ascensions": 0,
+        "runSeconds": 0,
+        "calm": 1,
+        "calmPenaltyUntil": -1,
+        "records": {
+          "maxBought": {
+            "lechon": 0,
+            "cerdita-rosa": 0,
+            "duroc": 0,
+            "pietrain": 0,
+            "berkshire": 0,
+            "mangalica": 0,
+            "iberico": 0,
+            "gran-blanco": 0
+          },
+          "maxHarmony": 0
+        },
+        "revealed": 1,
+        "basketSince": 0
+      },
+      "bosque": {
+        "unlocked": false,
+        "currency": "0",
+        "runEarned": "0",
+        "lifetimeEarned": "0",
+        "generators": {
+          "buscadora": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "madre-trufera": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "abuela-sabia": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "clan-del-roble": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "espiritu-del-bosque": {
+            "bought": 0,
+            "owned": "0"
+          }
+        },
+        "upgrades": {},
+        "plumas": "0",
+        "plumasTotal": "0",
+        "perks": {},
+        "ascensions": 0,
+        "runSeconds": 0,
+        "calm": 1,
+        "calmPenaltyUntil": -1,
+        "records": {
+          "maxBought": {
+            "buscadora": 0,
+            "madre-trufera": 0,
+            "abuela-sabia": 0,
+            "clan-del-roble": 0,
+            "espiritu-del-bosque": 0
+          },
+          "maxHarmony": 0
+        },
+        "revealed": 1,
+        "basketSince": 0
+      },
+      "huerta": {
+        "unlocked": false,
+        "currency": "0",
+        "runEarned": "0",
+        "lifetimeEarned": "0",
+        "generators": {
+          "hortelana": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "regador": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "escardadora": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "cuidador-de-tomates": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "pastora-de-gallinas": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "apicultor": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "jardinera-jefa": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "abuelo-del-huerto": {
+            "bought": 0,
+            "owned": "0"
+          }
+        },
+        "upgrades": {},
+        "plumas": "0",
+        "plumasTotal": "0",
+        "perks": {},
+        "ascensions": 0,
+        "runSeconds": 0,
+        "calm": 1,
+        "calmPenaltyUntil": -1,
+        "records": {
+          "maxBought": {
+            "hortelana": 0,
+            "regador": 0,
+            "escardadora": 0,
+            "cuidador-de-tomates": 0,
+            "pastora-de-gallinas": 0,
+            "apicultor": 0,
+            "jardinera-jefa": 0,
+            "abuelo-del-huerto": 0
+          },
+          "maxHarmony": 0
+        },
+        "revealed": 1,
+        "basketSince": 0
+      },
+      "balneario": {
+        "unlocked": false,
+        "currency": "0",
+        "runEarned": "0",
+        "lifetimeEarned": "0",
+        "generators": {
+          "banista": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "cerdita-del-barro": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "masajista": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "socorrista": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "termalista": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "maestra-de-sales": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "director-del-spa": {
+            "bought": 0,
+            "owned": "0"
+          },
+          "cerdo-zen": {
+            "bought": 0,
+            "owned": "0"
+          }
+        },
+        "upgrades": {},
+        "plumas": "0",
+        "plumasTotal": "0",
+        "perks": {},
+        "ascensions": 0,
+        "runSeconds": 0,
+        "calm": 1,
+        "calmPenaltyUntil": -1,
+        "records": {
+          "maxBought": {
+            "banista": 0,
+            "cerdita-del-barro": 0,
+            "masajista": 0,
+            "socorrista": 0,
+            "termalista": 0,
+            "maestra-de-sales": 0,
+            "director-del-spa": 0,
+            "cerdo-zen": 0
+          },
+          "maxHarmony": 0
+        },
+        "revealed": 1,
+        "basketSince": 0
+      }
+    },
+    "collection": {},
+    "journal": [],
+    "settings": {
+      "notation": "es",
+      "buyAmount": 1,
+      "effects": true
+    },
+    "achievements": {},
+    "taps": 0,
+    "buff": null
+  }
+}

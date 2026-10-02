@@ -46,7 +46,7 @@ producir moneda ──► comprar cerditos (generadores) ──► producir más
 - **Generadores**: razas de cerdito (8 por mundo, 5 en el Bosque). Cada compra encarece la siguiente (coste exponencial).
 - **Mejoras**: se habilitan al tener 10, 25, 50, 100… unidades de un cerdito y lo duplican. Más unas pocas mejoras globales (×1,5 a todo) que aparecen al acumular moneda en la ronda.
 - **Toque**: el botón "Rascar la barriga" da +1 de moneda. Solo sirve para arrancar los primeros segundos; no escala y no hay mejoras de toque (decisión anti-clic compulsivo).
-- **Automatización temprana**: la ventaja "Capataz" (la más barata del árbol, 5 plumas) compra cerditos sola; la "Encargada" compra mejoras. Así la partida no se convierte en una tarea: el jugador decide *qué* y *cuándo ascender*, no hace clics repetitivos.
+- **Sin autocompra** (decisión del usuario, 2026-10-02): se quitaron las ventajas Capataz y Encargada por ser demasiado potentes. Todas las compras las hace el jugador; mientras no está, la granja solo produce.
 
 ## 5. Ascensión ("Echar a volar")
 
@@ -65,14 +65,12 @@ Un árbol por mundo, pagado con las plumas de ese mundo. Misma forma en los cuat
 ```
                  Abono de calidad (∞) ─┬─ Buen comienzo (5)
                                        └─ Regateo en la feria (5) ── Plumas al viento (5) ── Hermandad de granjas (5) ─┬─ Establo ampliado (4)
- Capataz (1) ── Encargada de mejoras (1) ── Herramientas heredadas (3)                                               └─ Raíces profundas (5)
+ Herramientas heredadas (3, bajo Abono)                                               └─ Raíces profundas (5)
 ```
 
 | Ventaja | Niveles | Efecto por nivel | Para qué existe |
 |---|---|---|---|
 | Abono de calidad | ∞ | producción ×1,10 | Sumidero infinito de plumas; siempre hay algo que comprar |
-| Capataz | 1 | compra cerditos automáticamente | Quitar tareas repetitivas pronto |
-| Encargada de mejoras | 1 | compra mejoras automáticamente | Ídem |
 | Buen comienzo | 5 | moneda inicial ×25 | Que el arranque de cada ronda sea ágil |
 | Regateo en la feria | 5 | coste de cerditos ×0,93 | Palanca de coste, no solo de producción |
 | Herramientas heredadas | 3 | coste de mejoras ×0,75 | Ídem para mejoras |
@@ -136,7 +134,7 @@ Lo que **no** hacemos: convertir una moneda en otra, ni que las plumas de un mun
 
 ## 10. Progreso offline
 
-- Al volver, se calcula lo ocurrido durante la ausencia **con el mismo tick del juego**, troceado (02 §5), incluidos los autocompradores. Rendimiento offline = **100 %**, sin tope práctico (tope técnico: 30 días, para protegerse de relojes erróneos).
+- Al volver, se calcula lo ocurrido durante la ausencia **con el mismo tick del juego**, troceado (02 §5) (sin compras: no hay autocompra). Rendimiento offline = **100 %**, sin tope práctico (tope técnico: 30 días, para protegerse de relojes erróneos).
 - Se muestra un resumen sobrio al abrir: tiempo fuera, moneda ganada por mundo, variedades nuevas, compras automáticas. Un botón "Vale".
 - Motivo del 100 %: un rendimiento offline menor castiga no estar, que es justo lo que queremos evitar.
 

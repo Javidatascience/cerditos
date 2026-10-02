@@ -59,9 +59,7 @@ export type PerkEffect =
   | { kind: 'plumaMult'; perLevel: number }
   | { kind: 'crossProd'; perLevel: number }
   | { kind: 'costGrowthDelta'; perLevel: number }
-  | { kind: 'perPlumaBonus'; perLevel: number }
-  | { kind: 'autobuyGenerators' }
-  | { kind: 'autobuyUpgrades' };
+  | { kind: 'perPlumaBonus'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;

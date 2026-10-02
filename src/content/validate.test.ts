@@ -48,7 +48,7 @@ describe('validateContent', () => {
       baseCost: 1,
       costGrowth: 1,
       requires: ['w1.fantasma'],
-      effect: { kind: 'autobuyGenerators' },
+      effect: { kind: 'prodMult', perLevel: 1 },
     };
     content.perks = [perk];
     const errors = validateContent(content);
@@ -66,7 +66,7 @@ describe('validateContent', () => {
       baseCost: 1,
       costGrowth: 1,
       requires: ['w1.b'],
-      effect: { kind: 'autobuyGenerators' },
+      effect: { kind: 'prodMult', perLevel: 1 },
     };
     const b: PerkDef = {
       id: 'w1.b',
@@ -77,7 +77,7 @@ describe('validateContent', () => {
       baseCost: 1,
       costGrowth: 1,
       requires: ['w1.a'],
-      effect: { kind: 'autobuyUpgrades' },
+      effect: { kind: 'prodMult', perLevel: 1 },
     };
     content.perks = [a, b];
     const errors = validateContent(content);

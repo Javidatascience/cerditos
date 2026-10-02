@@ -36,7 +36,7 @@ out.push('| Ventaja | Mundo | Niveles | Coste base | Crecimiento | Requiere | Ef
 out.push('|---|---|---|---|---|---|---|');
 for (const p of PERKS) {
   const eff = p.effect;
-  const effText = 'perLevel' in eff ? `${eff.kind} ${eff.perLevel}` : eff.kind;
+  const effText = `${eff.kind} ${eff.perLevel}`;
   out.push(`| ${p.name} | ${p.world} | ${p.maxLevel ?? '∞'} | ${n(p.baseCost)} | ${p.costGrowth} | ${p.requires.map((r) => r.split('.')[1]).join(', ') || '—'} | ${effText} |`);
 }
 

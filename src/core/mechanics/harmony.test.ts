@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../../content/index.ts';
 import { buyRow, rowBundleCost } from '../actions.ts';
-import { greedyBuy } from '../autobuy.ts';
+import { greedyBuy } from '../greedy.ts';
 import { globalMultiplier } from '../formulas.ts';
 import { D } from '../num.ts';
 import { harmonyView } from '../selectors.ts';

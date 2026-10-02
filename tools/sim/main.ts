@@ -4,7 +4,7 @@
 
 import { PERKS, VARIETIES, WORLDS, WORLD_BY_ID, type WorldId } from './content.ts';
 import { newSimState, produce, updateCollectionAndUnlocks, type SimEvent, type SimState } from './engine.ts';
-import { autobuy, playerAct, resetStrategyMemory } from './strategy.ts';
+import { playerAct, resetStrategyMemory } from './strategy.ts';
 
 // ---------------------------------------------------------------------------
 // Perfiles de jugador. t = 0 es el día 1 a las 08:00.
@@ -52,8 +52,8 @@ const TARGETS: Target[] = [
   { id: 'asc:valle:1', label: '1ª ascensión Valle', min: 0.5, max: 3, profiles: ['casual'] },
   { id: 'asc:valle:2', label: '2ª ascensión Valle', min: 1.5, max: 10, profiles: ['casual'] },
   { id: 'asc:valle:10', label: '10ª ascensión Valle', min: 24, max: 96, profiles: ['casual'] },
-  { id: 'unlock:bosque', label: 'Desbloqueo Bosque', min: 2 * 24, max: 5 * 24, profiles: ['casual'] },
-  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 14 * 24, profiles: ['casual'] },
+  { id: 'unlock:bosque', label: 'Desbloqueo Bosque', min: 2 * 24, max: 7 * 24, profiles: ['casual'] },
+  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 18 * 24, profiles: ['casual'] },
   { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 16 * 24, max: 30 * 24, profiles: ['casual'] },
   { id: 'collection:50', label: 'Colección 50 %', min: 10 * 24, max: 30 * 24, profiles: ['casual'] },
   { id: 'collection:100', label: 'Colección 100 %', min: 25 * 24, max: 75 * 24, profiles: ['casual'] },
@@ -106,8 +106,7 @@ function simulate(profile: Profile, days: number): RunResult {
     if (collectionCheck >= 30 || online) { updateCollectionAndUnlocks(s); collectionCheck = 0; }
     for (const def of WORLDS) {
       if (!s.worlds[def.id].unlocked) continue;
-      if (online) playerAct(s, def.id);
-      else autobuy(s, def.id);
+      if (online) playerAct(s, def.id); // sin autocompra: fuera de las visitas solo se produce
     }
     // Hitos a partir de los eventos nuevos
     for (; seenEvents < s.events.length; seenEvents++) {

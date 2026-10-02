@@ -7,6 +7,9 @@ const INK = '#3a2e26';
 
 export const WORLD_EMOJI: Record<string, string> = { valle: '🌾', bosque: '🌲', huerta: '🥕', balneario: '♨️' };
 
+/** Icono de la moneda de cada mundo (para la cabecera). */
+export const CURRENCY_EMOJI: Record<string, string> = { valle: '🌰', bosque: '🍄', huerta: '🎃', balneario: '🫧' };
+
 function node<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] {
   const el = document.createElementNS(SVG_NS, tag);
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
@@ -136,6 +139,23 @@ export function pigIcon(skin: string, accessory: Accessory = 'none', locked = fa
   return svg;
 }
 
+const spriteCache = new Map<string, HTMLImageElement>();
+
+/** Imagen (para el canvas de la granja animada) del cerdito `genId` del mundo, en caché. */
+export function generatorSprite(worldId: string, index: number, genId: string): HTMLImageElement {
+  const key = `${worldId}:${genId}`;
+  const cached = spriteCache.get(key);
+  if (cached) return cached;
+  const svg = generatorIcon(worldId, index, genId);
+  svg.setAttribute('xmlns', SVG_NS);
+  svg.setAttribute('width', '96');
+  svg.setAttribute('height', '96');
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+  spriteCache.set(key, image);
+  return image;
+}
+
 function pigColor(worldId: string, index: number): string {
   const palette = WORLD_PIGS[worldId] ?? FALLBACK_PIGS;
   return palette[index % palette.length] ?? '#f4c7c3';
@@ -166,7 +186,7 @@ const UPGRADE_EMOJI: Record<string, string> = {
 };
 
 const PERK_EMOJI: Record<string, string> = {
-  abono: '🌱', capataz: '👷', encargada: '📋', comienzo: '🎒', ahorro: '🏷️', mejoras: '🔧', vuelo: '🪶', puente: '🤝', establo: '🏠', raices: '🌳',
+  abono: '🌱', comienzo: '🎒', ahorro: '🏷️', mejoras: '🔧', vuelo: '🪶', puente: '🤝', establo: '🏠', raices: '🌳',
 };
 
 const ACHIEVEMENT_EMOJI = '🏅';

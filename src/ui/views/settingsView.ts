@@ -1,7 +1,7 @@
 // Vista "Ajustes": notación de números, exportar/importar la partida como texto y borrarla.
 // Ver docs/01-diseno-juego.md §10, docs/02-arquitectura.md §6 y §9 (aviso de iOS).
 
-import { setAutobuyEnabled, setNotation } from '../../core/actions.ts';
+import { setEffects, setNotation } from '../../core/actions.ts';
 import { createInitialState, replaceState } from '../../core/state.ts';
 import type { GameState } from '../../core/state.ts';
 import { normalize } from '../../save/normalize.ts';
@@ -31,16 +31,16 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     }),
   );
 
-  // --- Autocompra (Capataz/Encargada) ---
-  const autobuyButtons = new Map<boolean, HTMLButtonElement>();
-  const autobuyRow = h(
+  // --- Efectos y animaciones ---
+  const effectButtons = new Map<boolean, HTMLButtonElement>();
+  const effectRow = h(
     'div',
     { className: 'amount-row' },
     [true, false].map((enabled) => {
-      const btn = h('button', { className: 'amount-button', onclick: () => ctx.dispatch((state) => setAutobuyEnabled(state, enabled)) }, [
-        enabled ? 'Activada' : 'En pausa',
+      const btn = h('button', { className: 'amount-button', onclick: () => ctx.dispatch((state) => setEffects(state, enabled)) }, [
+        enabled ? 'Activados' : 'Apagados',
       ]) as HTMLButtonElement;
-      autobuyButtons.set(enabled, btn);
+      effectButtons.set(enabled, btn);
       return btn;
     }),
   );
@@ -118,9 +118,9 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     h('h3', {}, ['Números']),
     notationRow,
 
-    h('h3', {}, ['Capataz y Encargada']),
-    h('p', { className: 'settings-hint' }, ['Compran cerditos y mejoras por ti cuando las tienes. Puedes pausarlas si prefieres decidir tú cada compra.']),
-    autobuyRow,
+    h('h3', {}, ['Efectos y animaciones']),
+    h('p', { className: 'settings-hint' }, ['La granja animada y los números que suben al rascar. Si tu móvil pide reducir el movimiento, se apagan solos.']),
+    effectRow,
 
     h('h3', {}, ['Guardar partida en texto']),
     h('p', { className: 'settings-hint' }, [
@@ -161,7 +161,7 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
   function update(state: GameState): void {
     latestState = state;
     for (const [n, btn] of notationButtons) setClass(btn, 'active', n === state.settings.notation);
-    for (const [enabled, btn] of autobuyButtons) setClass(btn, 'active', enabled === state.settings.autobuyEnabled);
+    for (const [enabled, btn] of effectButtons) setClass(btn, 'active', enabled === state.settings.effects);
   }
 
   return { update, destroy: () => container.remove() };

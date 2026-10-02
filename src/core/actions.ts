@@ -171,9 +171,9 @@ export function setNotation(state: GameState, notation: Settings['notation']): v
   state.settings.notation = notation;
 }
 
-/** Pausa o reactiva Capataz/Encargada sin perder las ventajas ya compradas (hito 5). */
-export function setAutobuyEnabled(state: GameState, enabled: boolean): void {
-  state.settings.autobuyEnabled = enabled;
+/** Activa o apaga los efectos y animaciones (granja animada, números que suben). */
+export function setEffects(state: GameState, enabled: boolean): void {
+  state.settings.effects = enabled;
 }
 
 /**

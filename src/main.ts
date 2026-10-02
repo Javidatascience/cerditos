@@ -3,7 +3,6 @@
 // §4-§6 y docs/01-diseno-juego.md §10.
 
 import { CONTENT } from './content/index.ts';
-import { runAutobuyForAllWorlds } from './core/autobuy.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { registerPwa } from './pwa/register.ts';
@@ -57,7 +56,6 @@ setInterval(() => {
     simulateOffline(state, CONTENT, dt);
   } else {
     advance(state, CONTENT, dt);
-    runAutobuyForAllWorlds(state, CONTENT);
     visitor.tick(dt); // solo cuenta el tiempo con el juego abierto, nunca el offline
   }
   app.update(state);

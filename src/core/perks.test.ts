@@ -61,10 +61,11 @@ describe('perkAvailable', () => {
 
   it('una ventaja de nivel máximo deja de estar disponible al llegar a él', () => {
     const state = createInitialState(CONTENT, 0);
-    const capataz = getPerkDef(CONTENT, 'valle.capataz'); // maxLevel 1
-    expect(perkAvailable(state, CONTENT, capataz)).toBe(true);
-    state.worlds['valle']!.perks['valle.capataz'] = 1;
-    expect(perkAvailable(state, CONTENT, capataz)).toBe(false);
+    state.worlds['valle']!.perks['valle.abono'] = 1;
+    const comienzo = getPerkDef(CONTENT, 'valle.comienzo'); // maxLevel 5
+    expect(perkAvailable(state, CONTENT, comienzo)).toBe(true);
+    state.worlds['valle']!.perks['valle.comienzo'] = 5;
+    expect(perkAvailable(state, CONTENT, comienzo)).toBe(false);
   });
 
   it('una ventaja sin tope (Abono) sigue disponible en cualquier nivel', () => {
@@ -97,8 +98,9 @@ describe('buyPerk', () => {
 
   it('al nivel máximo no compra más', () => {
     const state = stateWithPlumas(1_000_000_000);
-    state.worlds['valle']!.perks['valle.capataz'] = 1;
-    expect(buyPerk(state, CONTENT, 'valle.capataz')).toBe(false);
+    state.worlds['valle']!.perks['valle.abono'] = 1;
+    state.worlds['valle']!.perks['valle.comienzo'] = 5;
+    expect(buyPerk(state, CONTENT, 'valle.comienzo')).toBe(false);
   });
 });
 
@@ -170,12 +172,5 @@ describe('efectos de las ventajas', () => {
     state.worlds['valle']!.perks['valle.raices'] = 1;
     const after = perPlumaBonusRate(state, CONTENT, 'valle');
     expect(after).toBeCloseTo(before + 0.01, 6);
-  });
-
-  it('autobuyGenerators/autobuyUpgrades: hasPerkEffect detecta si están compradas', () => {
-    const state = createInitialState(CONTENT, 0);
-    expect(hasPerkEffect(state, CONTENT, 'valle', 'autobuyGenerators')).toBe(false);
-    state.worlds['valle']!.perks['valle.capataz'] = 1;
-    expect(hasPerkEffect(state, CONTENT, 'valle', 'autobuyGenerators')).toBe(true);
   });
 });

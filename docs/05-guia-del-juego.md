@@ -16,16 +16,17 @@ Es un juego tranquilo: **no hay azar, nada caduca, nada te mete prisa**. Entrar 
 | **Pestañas de mundo** | Los mundos abiertos y, en gris, el siguiente con lo que falta para abrirlo. |
 | **Barra inferior** | Granja · Volar · Álbum · Diario · Ajustes. |
 
-- **Granja**: la lista de cerditos con su coste. Los botones ×1, ×10 y Máx cambian cuántos compras de golpe. Debajo, una barra fina te dice cuánto falta para la próxima compra.
+- **Granja**: la lista de cerditos con su coste. Los botones ×1, ×10 y Máx cambian cuántos compras de golpe.
 - **Rascar la barriga**: da **1 segundo de tu producción** (lo que da se ve en el botón; mínimo 1). Al principio solo arranca la granja; luego es un empujoncito.
 - **Cesta de la granja**: cada mundo va llenando una cesta con el 25 % de su producción (hasta 30 min). *Recoger* la vacía y la suma a tu moneda. No caduca.
+- **Granja animada**: arriba de la Granja ves el mundo en el que estás con tus cerditos paseando (hasta 3 de cada tipo). Al rascar sale el número ganado. Se puede apagar en Ajustes → *Efectos y animaciones*; si tu móvil pide reducir el movimiento, se apaga sola.
 - **Cerdito viajero**: cada 1-2 minutos (al azar, con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 de producción durante 60 s. Se queda 10 segundos: si no lo aceptas, se va.
 - **Cerditos por descubrir**: en cada mundo solo se ven los que ya has podido comprar; el siguiente aparece difuminado y un aviso dice que hay más. (En la Huerta se ven todos, porque la armonía los necesita.)
 - **Mejoras**: aparecen en la Granja, justo bajo "Rascar la barriga", cuando las puedes aprovechar (ver §3), con la imagen del cerdito al que mejoran. Las ya compradas no se listan.
 - **Volar**: tu ascensión (§4) y, debajo, el árbol de ventajas permanentes comprado con plumas (§5).
 - **Álbum**: las 28 variedades y cómo conseguir cada una (§7), y los **logros**: reconocimientos con su requisito visible y su progreso (no dan bonos). Hay uno por cada cerdito y cada cantidad (1, 15, 25, 50, 100, 150, 200, 250, 300, 350 y 400) y varios generales (vuelos, mundos, rascar, colección). Los generales se anotan en el Diario.
 - **Diario**: lo que ha ido pasando (variedades nuevas, mundos abiertos, vuelos). Nunca salta una ventana.
-- **Ajustes**: notación de números, autocompra, exportar/importar la partida como texto y borrarla.
+- **Ajustes**: notación de números, efectos y animaciones, exportar/importar la partida como texto y borrarla.
 
 ## 3. Cerditos y mejoras
 
@@ -49,8 +50,6 @@ Cada mundo tiene su árbol, pagado con **sus** plumas. Es el mismo en los cuatro
 | Ventaja | Niveles | Efecto por nivel |
 |---|---|---|
 | Abono de calidad | ∞ | producción ×1,10 (siempre hay algo que comprar) |
-| Capataz | 1 | compra cerditos automáticamente |
-| Encargada de mejoras | 1 | compra mejoras automáticamente |
 | Buen comienzo | 5 | moneda inicial ×25 al empezar la ronda |
 | Regateo en la feria | 5 | cerditos ×0,93 de coste |
 | Herramientas heredadas | 3 | mejoras ×0,75 de coste |
@@ -59,7 +58,7 @@ Cada mundo tiene su árbol, pagado con **sus** plumas. Es el mismo en los cuatro
 | Establo ampliado | 4 | el coste de los cerditos crece un poco menos |
 | Raíces profundas | 5 | +1 % extra al bono de cada pluma |
 
-Consejo: **Capataz** (5 plumas) y **Encargada** son lo primero. Con ellos la granja se compra sola y tú solo decides *cuándo ascender*. La autocompra se puede pausar en Ajustes.
+Consejo: no hay autocompra, así que cada visita sirve para gastar lo acumulado. **Abono de calidad** es siempre una buena inversión: sube la producción de todo.
 
 ## 6. Los cuatro mundos
 
@@ -86,7 +85,7 @@ Todos los mundos abiertos **producen a la vez**, también cuando no estás. Cada
 ### ♨️ El Balneario — *espera y compra en lote*
 - **Moneda**: pompas. **Se abre**: con 10.000 plumas de la Huerta.
 - **Mecánica: calma.** Los cerditos rinden hasta **×4** cuando nadie los molesta. La calma sube del 0 al 100 % en **30 minutos**; **comprar** la baja **a la mitad**, pero solo una vez por minuto (varias compras seguidas cuentan como una). Cada ronda empieza con la calma llena.
-- **Cómo jugarlo**: mejor visitas espaciadas y compras en lote que goteo constante. La pantalla avisa con una línea de texto *antes* de comprar y te dice cuánto dura la ventana en la que ya no molestas más. La autocompra solo compra con la calma casi llena.
+- **Cómo jugarlo**: mejor visitas espaciadas y compras en lote que goteo constante. La pantalla avisa con una línea de texto *antes* de comprar y te dice cuánto dura la ventana en la que ya no molestas más.
 - **Cerditos**: Bañista, Cerdita del barro, Masajista, Socorrista, Termalista, Maestra de sales, Director del spa, Cerdo zen.
 
 ### Cómo se ayudan los mundos
@@ -166,7 +165,7 @@ Un par de notas: el requisito "Ten N a la vez" se cuenta con el **máximo que ha
 
 ## 8. Cuando no estás
 
-- Al volver, el juego calcula lo que ha pasado con las mismas reglas, también la autocompra y la calma. Un resumen sobrio dice cuánto has estado fuera y lo ganado por mundo; un botón "Vale" lo cierra.
+- Al volver, el juego calcula lo que ha pasado con las mismas reglas, también la calma. Un resumen sobrio dice cuánto has estado fuera y lo ganado por mundo; un botón "Vale" lo cierra.
 - Tope técnico de 30 días fuera (para protegerse de relojes mal puestos). Fuera de eso, no hay penalización por ausencia.
 
 ## 9. Guardado

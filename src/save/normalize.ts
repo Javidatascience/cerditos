@@ -10,6 +10,9 @@ import { createGeneratorState, createWorldState } from '../core/state.ts';
 import type { Content, WorldDef } from '../content/types.ts';
 import type { GameState, WorldState } from '../core/state.ts';
 
+/** Ventajas que ya no existen y lo que costaron (nivel único, sin escalado). */
+const REMOVED_PERK_REFUNDS: Record<string, number> = { capataz: 5, encargada: 20 };
+
 function validUpgradeIdsFor(world: WorldDef): Set<string> {
   const ids = new Set<string>();
   for (const upgrade of world.globalUpgrades) ids.add(upgrade.id);
@@ -38,7 +41,13 @@ function normalizeWorldState(w: WorldState, world: WorldDef, content: Content): 
   for (const id of Object.keys(w.upgrades)) if (!validUpgradeIds.has(id)) delete w.upgrades[id];
 
   const validPerkIds = new Set(content.perks.filter((p) => p.world === world.id).map((p) => p.id));
-  for (const id of Object.keys(w.perks)) if (!validPerkIds.has(id)) delete w.perks[id];
+  for (const id of Object.keys(w.perks)) {
+    if (validPerkIds.has(id)) continue;
+    // Capataz y Encargada se eliminaron (autocompra): se devuelven las plumas que costaron.
+    const refund = REMOVED_PERK_REFUNDS[id.split('.')[1] ?? ''];
+    if (refund !== undefined && (w.perks[id] ?? 0) > 0) w.plumas = w.plumas.add(refund);
+    delete w.perks[id];
+  }
 }
 
 /** Muta y devuelve `state`. Seguro de llamar siempre, haya o no contenido nuevo. */

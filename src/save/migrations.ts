@@ -35,9 +35,21 @@ function v1ToV2(old: RawSave): RawSave {
   return { ...old, version: 2, state: { ...state, version: 2, worlds, achievements: {}, taps: 0, buff: null } };
 }
 
+/**
+ * v2 → v3 (granja animada, sin autocompra): el ajuste `autobuyEnabled` desaparece y aparece
+ * `effects` (efectos y animaciones, activado).
+ */
+function v2ToV3(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 3 };
+  const state = old['state'];
+  const { autobuyEnabled: _removed, ...settings } = (isPlainObject(state['settings']) ? state['settings'] : {}) as RawSave;
+  return { ...old, version: 3, state: { ...state, version: 3, settings: { ...settings, effects: true } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   1: v1ToV2,
+  2: v2ToV3,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

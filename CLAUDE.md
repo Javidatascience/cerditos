@@ -37,7 +37,7 @@ npm run sim:typecheck
 ## Reglas de código
 
 - **`src/core/` es lógica pura**: no importa `ui/`, no usa `window`/`document`/`localStorage`, ni `Date.now()` ni `Math.random()`. El tiempo entra como parámetro. Todo en `core` tiene tests.
-- **Solo `core/actions.ts`, `core/tick.ts`, `core/offline.ts` (y `autobuy.ts`) mutan el estado.** La UI llama a acciones mediante `dispatch` y lee valores de `core/selectors.ts`; nunca calcula costes ni producciones por su cuenta.
+- **Solo `core/actions.ts`, `core/tick.ts`, `core/offline.ts` mutan el estado.** (`greedy.ts` solo lo usan los tests y el simulador.) La UI llama a acciones mediante `dispatch` y lee valores de `core/selectors.ts`; nunca calcula costes ni producciones por su cuenta.
 - **Contenido = datos** en `src/content/`. El motor no menciona ninguna raza, mundo ni ventaja por nombre. Añadir contenido no debe requerir tocar `core/`.
 - Funciones simples y explícitas. Nada de clases con herencia, DI, observables, decoradores ni "managers". Preferir un `switch` claro a una abstracción.
 - Identificadores en inglés; comentarios, textos de UI y documentación en español.

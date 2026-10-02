@@ -105,12 +105,6 @@ function perksOfKind(s: SimState, w: WorldId, kind: string): { perk: PerkDef; le
   return out;
 }
 
-function hasPerkKind(s: SimState, w: WorldId, kind: string): boolean {
-  return perksOfKind(s, w, kind).length > 0;
-}
-
-export const hasAutobuyGenerators = (s: SimState, w: WorldId) => hasPerkKind(s, w, 'autobuyGenerators');
-export const hasAutobuyUpgrades = (s: SimState, w: WorldId) => hasPerkKind(s, w, 'autobuyUpgrades');
 
 function bonusApplies(b: Bonus, w: WorldId, kind: Bonus['kind']): boolean {
   return b.kind === kind && (b.world === 'all' || b.world === w);
