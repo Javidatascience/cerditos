@@ -49,7 +49,7 @@ npm run sim:typecheck
 
 ## Reglas anti-dopamina (requisitos, no preferencias)
 
-1. Nada aleatorio que afecte al progreso: ni cajas, ni gacha, ni botín, ni críticos. **Excepción decidida por el usuario (2026-10-02):** el cerdito viajero (`ui/visitor.ts`), cuyo momento de llegada y tipo de recompensa (inyección de moneda o impulso ×5 durante 60 s) son aleatorios, pero la cuantía es fija, se queda hasta aceptarlo y solo cuenta con el juego abierto. El azar vive fuera de `core`.
+1. Nada aleatorio que afecte al progreso: ni cajas, ni gacha, ni botín, ni críticos. **Excepción decidida por el usuario (2026-10-02):** el cerdito viajero (`ui/visitor.ts`), cuyo momento de llegada (cada 1-2 min) y tipo de recompensa (inyección de moneda o impulso ×5 durante 60 s) son aleatorios, pero la cuantía es fija. **Se queda 10 s y se va (excepción también a la regla 2, decidida por el usuario)**; solo cuenta con el juego abierto. El azar vive fuera de `core`.
 2. Sin urgencia: nada caduca, sin ofertas temporales ni eventos de temporada.
 3. Sin rachas ni recompensas diarias. Offline al 100 %: ausentarse no se castiga.
 4. Sin notificaciones push, badges ni petición de permisos.
@@ -64,4 +64,4 @@ Si una tarea parece requerir romper alguna, parar y preguntar.
 
 ## Estado actual
 
-Hitos 0-9, 11 y 12 hechos (los 4 mundos jugables, ascensión, ventajas, colección, logros, diario, guardado v2, offline, tema claro/oscuro, cesta de la granja, cerdito viajero). El hito 10 (PWA) se saltó a petición del usuario. Pendiente: más pulido gráfico a gusto del usuario y la semana de prueba manual. Ver la tabla de docs/04.
+Hitos 0-12 hechos (los 4 mundos jugables, ascensión, ventajas, colección, logros, diario, guardado v2, offline, tema claro/oscuro, cesta de la granja, cerdito viajero). Pendiente: más pulido gráfico a gusto del usuario y la semana de prueba manual. Ver la tabla de docs/04.

@@ -269,28 +269,6 @@ export function upgradeViews(state: GameState, content: Content, worldId: WorldI
     .sort((a, b) => a.cost.cmp(b.cost));
 }
 
-/** Mejoras ya compradas (por cerdito y globales), para el desplegable de la vista de mejoras. */
-export function purchasedUpgradeViews(state: GameState, content: Content, worldId: WorldId): { id: string; name: string }[] {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return [];
-  const result: { id: string; name: string }[] = [];
-
-  for (const upgrade of world.globalUpgrades) {
-    if (worldState.upgrades[upgrade.id]) result.push({ id: upgrade.id, name: upgrade.name });
-  }
-  if (world.genUpgrades) {
-    const levels = world.genUpgrades.counts.length;
-    for (const gen of world.generators) {
-      for (let level = 0; level < levels; level++) {
-        const id = generatorUpgradeId(gen.id, level);
-        if (worldState.upgrades[id]) result.push({ id, name: generatorUpgradeName(world.id, gen, level) });
-      }
-    }
-  }
-  return result;
-}
-
 // ---------------------------------------------------------------------------
 // Ascensión (hito 5, 01 §5)
 // ---------------------------------------------------------------------------
@@ -522,6 +500,8 @@ export interface AchievementView {
   flavor: string;
   owned: boolean;
   requirement: RequirementView;
+  /** Si es de "tener N de un cerdito": mundo, cerdito y cantidad (la UI los agrupa por cerdito). */
+  generator: { worldId: WorldId; genId: string; genName: string; genIndex: number; count: number } | null;
 }
 
 function describeAchievementReq(content: Content, req: AchievementReq): (format: (n: Decimal) => string) => string {
@@ -537,6 +517,14 @@ function describeAchievementReq(content: Content, req: AchievementReq): (format:
   }
 }
 
+function generatorOf(content: Content, req: AchievementReq): AchievementView['generator'] {
+  if (req.kind !== 'genCount') return null;
+  const world = content.worlds.find((w) => w.id === req.world);
+  const index = world?.generators.findIndex((g) => g.id === req.gen) ?? -1;
+  const gen = world?.generators[index];
+  return gen ? { worldId: req.world, genId: gen.id, genName: gen.name, genIndex: index, count: req.count } : null;
+}
+
 export function achievementViews(state: GameState, content: Content): AchievementView[] {
   return content.achievements.map((a) => ({
     id: a.id,
@@ -544,6 +532,7 @@ export function achievementViews(state: GameState, content: Content): Achievemen
     flavor: a.flavor,
     owned: state.achievements[a.id] !== undefined,
     requirement: { ...achievementProgress(state, a.requires), describe: describeAchievementReq(content, a.requires) },
+    generator: generatorOf(content, a.requires),
   }));
 }
 
@@ -556,7 +545,7 @@ export function visitorInjectionValue(state: GameState, content: Content, worldI
  * El próximo cerdito por descubrir (aunque no se vea): segundos hasta poder pagar su primera
  * unidad al ritmo actual (`null` si no se produce nada). `null` si ya están todos descubiertos.
  */
-export function nextDiscovery(state: GameState, content: Content, worldId: WorldId): { etaSeconds: number | null } | null {
+export function nextDiscovery(state: GameState, content: Content, worldId: WorldId): { etaSeconds: number | null; progress: number } | null {
   const world = getWorldDef(content, worldId);
   const worldState = state.worlds[worldId];
   if (!worldState || worldState.revealed >= world.generators.length) return null;
@@ -564,7 +553,8 @@ export function nextDiscovery(state: GameState, content: Content, worldId: World
   if (!gen) return null;
   const cost = generatorCost(world, gen, worldState.generators[gen.id]?.bought ?? 0, perkCostGrowthDelta(state, content, worldId), totalCostMultiplier(state, content, worldId));
   const missing = cost.sub(worldState.currency);
-  if (missing.lte(0)) return { etaSeconds: 0 };
+  if (missing.lte(0)) return { etaSeconds: 0, progress: 1 };
   const rate = displayProductionPerSecond(state, content, worldId);
-  return { etaSeconds: rate.gt(0) ? missing.div(rate).toNumber() : null };
+  const progress = Math.min(1, Math.max(0, worldState.currency.div(cost).toNumber()));
+  return { etaSeconds: rate.gt(0) ? missing.div(rate).toNumber() : null, progress };
 }

@@ -8,6 +8,7 @@ import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { registerPwa } from './pwa/register.ts';
 import { mountApp } from './ui/app.ts';
+import { disableZoom } from './ui/noZoom.ts';
 import { createVisitorScheduler } from './ui/visitor.ts';
 import { showOfflineSummary } from './ui/views/offlineSummary.ts';
 import { createLocalStorageStorage, loadGame, saveGame } from './save/storage.ts';
@@ -74,3 +75,4 @@ window.addEventListener('pagehide', persist);
 if (!pendingOfflineSummary || pendingOfflineSummary.awaySeconds <= OFFLINE_SUMMARY_THRESHOLD_SECONDS) persist();
 
 registerPwa();
+disableZoom();

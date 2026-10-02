@@ -75,6 +75,7 @@ describe('paridad core/tools-sim (Valle, 1 h, estrategia "más barato")', () => 
     for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
       buyCheapestSim(simState);
       sim.produce(simState, STEP_SECONDS);
+      sim.updateCollectionAndUnlocks(simState); // core lo hace dentro de advance()
     }
     const simLifetime = simState.worlds[WORLD_ID]!.lifetimeEarned;
 
@@ -103,6 +104,7 @@ describe('paridad core/tools-sim en la cadena del Bosque (1 h)', () => {
     for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
       buyCheapestSim(simState, id);
       sim.produce(simState, STEP_SECONDS);
+      sim.updateCollectionAndUnlocks(simState); // core lo hace dentro de advance()
     }
 
     const coreWorld = coreState.worlds[id]!;
@@ -137,6 +139,7 @@ describe('paridad core/tools-sim con armonía (Huerta, 1 h)', () => {
     for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
       buyCheapestSim(simState, id);
       sim.produce(simState, STEP_SECONDS);
+      sim.updateCollectionAndUnlocks(simState); // core lo hace dentro de advance()
     }
 
     const coreWorld = coreState.worlds[id]!;
@@ -167,6 +170,7 @@ describe('paridad core/tools-sim con calma (Balneario, 1 h)', () => {
     for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
       buyCheapestSim(simState, id);
       sim.produce(simState, STEP_SECONDS);
+      sim.updateCollectionAndUnlocks(simState); // core lo hace dentro de advance()
     }
 
     const coreWorld = coreState.worlds[id]!;

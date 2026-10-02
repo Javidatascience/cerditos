@@ -24,7 +24,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Lechón manchado',
     flavor: 'Cada mancha cuenta una historia distinta.',
     set: 'valle',
-    requires: [{ kind: 'genCount', world: 'valle', gen: 'lechon', count: 100 }],
+    requires: [{ kind: 'genCount', world: 'valle', gen: 'lechon', count: 80 }],
     bonus: own('valle'),
   },
   {
@@ -32,7 +32,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Rosa de concurso',
     flavor: 'Ganó la cinta azul en la feria de otoño.',
     set: 'valle',
-    requires: [{ kind: 'genCount', world: 'valle', gen: 'cerdita-rosa', count: 200 }],
+    requires: [{ kind: 'genCount', world: 'valle', gen: 'cerdita-rosa', count: 160 }],
     bonus: own('valle'),
   },
   {
@@ -40,7 +40,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Duroc pelirrojo',
     flavor: 'Pelirrojo y orgulloso de serlo.',
     set: 'valle',
-    requires: [{ kind: 'genCount', world: 'valle', gen: 'duroc', count: 250 }],
+    requires: [{ kind: 'genCount', world: 'valle', gen: 'duroc', count: 200 }],
     bonus: own('valle'),
   },
   {
@@ -48,7 +48,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Ibérico de bellota',
     flavor: 'Solo come lo mejor, y se nota.',
     set: 'valle',
-    requires: [{ kind: 'genCount', world: 'valle', gen: 'iberico', count: 245 }],
+    requires: [{ kind: 'genCount', world: 'valle', gen: 'iberico', count: 200 }],
     bonus: own('valle'),
   },
   // Familia del Bosque
@@ -65,7 +65,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Jabato curioso',
     flavor: 'Mete el hocico en todo lo que brilla.',
     set: 'bosque',
-    requires: [{ kind: 'genCount', world: 'bosque', gen: 'abuela-sabia', count: 150 }],
+    requires: [{ kind: 'genCount', world: 'bosque', gen: 'abuela-sabia', count: 125 }],
     bonus: own('bosque'),
   },
   {
@@ -73,7 +73,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdita con sombrero de seta',
     flavor: 'El sombrero es real. La seta, discutible.',
     set: 'bosque',
-    requires: [{ kind: 'lifetime', world: 'bosque', amount: 1e33 }],
+    requires: [{ kind: 'lifetime', world: 'bosque', amount: 1e31 }],
     bonus: own('bosque'),
   },
   {
@@ -81,7 +81,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Madre del bosque',
     flavor: 'Todas las trufas del bosque le deben algo.',
     set: 'bosque',
-    requires: [{ kind: 'plumasTotal', world: 'bosque', count: 5e6 }],
+    requires: [{ kind: 'plumasTotal', world: 'bosque', count: 3.5e6 }],
     bonus: own('bosque'),
   },
   // Amigos de la Huerta
@@ -90,7 +90,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Calabacero',
     flavor: 'Cultiva calabazas más grandes que él.',
     set: 'huerta',
-    requires: [{ kind: 'harmony', world: 'huerta', count: 25 }],
+    requires: [{ kind: 'harmony', world: 'huerta', count: 20 }],
     bonus: own('huerta'),
   },
   {
@@ -98,7 +98,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdo espantapájaros',
     flavor: 'No espanta a nadie, pero lo intenta con ganas.',
     set: 'huerta',
-    requires: [{ kind: 'harmony', world: 'huerta', count: 150 }],
+    requires: [{ kind: 'harmony', world: 'huerta', count: 125 }],
     bonus: own('huerta'),
   },
   {
@@ -106,7 +106,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdita jardinera',
     flavor: 'Sabe el nombre de cada planta del huerto.',
     set: 'huerta',
-    requires: [{ kind: 'ascensions', world: 'huerta', count: 10 }],
+    requires: [{ kind: 'ascensions', world: 'huerta', count: 8 }],
     bonus: own('huerta'),
   },
   {
@@ -114,7 +114,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Gran calabaza (con cerdito dentro)',
     flavor: 'Nadie sabe cómo entró. Nadie sabe cómo sale.',
     set: 'huerta',
-    requires: [{ kind: 'harmony', world: 'huerta', count: 250 }],
+    requires: [{ kind: 'harmony', world: 'huerta', count: 210 }],
     bonus: own('huerta'),
   },
   // Clientes del Balneario
@@ -131,7 +131,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdo en remojo',
     flavor: 'Lleva tanto en remojo que ya es parte de la bañera.',
     set: 'balneario',
-    requires: [{ kind: 'lifetime', world: 'balneario', amount: 1e21 }],
+    requires: [{ kind: 'lifetime', world: 'balneario', amount: 1e20 }],
     bonus: own('balneario'),
   },
   {
@@ -139,7 +139,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdita con pepinos',
     flavor: 'Los pepinos son para los ojos, no para comer. Casi nunca.',
     set: 'balneario',
-    requires: [{ kind: 'genCount', world: 'balneario', gen: 'cerdo-zen', count: 140 }],
+    requires: [{ kind: 'genCount', world: 'balneario', gen: 'cerdo-zen', count: 115 }],
     bonus: own('balneario'),
   },
   {
@@ -147,7 +147,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Maestro del barro',
     flavor: 'Sabe exactamente cuánto barro hace falta para la felicidad.',
     set: 'balneario',
-    requires: [{ kind: 'plumasTotal', world: 'balneario', count: 5e4 }],
+    requires: [{ kind: 'plumasTotal', world: 'balneario', count: 3.5e4 }],
     bonus: own('balneario'),
   },
   // Cerditos curiosos (hitos de ascensión y plumas en el Valle)
@@ -156,7 +156,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdito con boina',
     flavor: 'Se cree artista desde que encontró la boina.',
     set: 'curiosos',
-    requires: [{ kind: 'ascensions', world: 'valle', count: 5 }],
+    requires: [{ kind: 'ascensions', world: 'valle', count: 4 }],
     bonus: own('valle'),
   },
   {
@@ -164,7 +164,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdita lectora',
     flavor: 'Ha leído más libros que cerditos hay en el Valle.',
     set: 'curiosos',
-    requires: [{ kind: 'plumasTotal', world: 'valle', count: 1e5 }],
+    requires: [{ kind: 'plumasTotal', world: 'valle', count: 7e4 }],
     bonus: own('valle'),
   },
   {
@@ -172,7 +172,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdo filósofo',
     flavor: 'Se pregunta si el barro le mancha a él o él mancha al barro.',
     set: 'curiosos',
-    requires: [{ kind: 'ascensions', world: 'valle', count: 30 }],
+    requires: [{ kind: 'ascensions', world: 'valle', count: 24 }],
     bonus: own('valle'),
   },
   {
@@ -180,7 +180,7 @@ export const VARIETIES: VarietyDef[] = [
     name: 'Cerdito astronauta',
     flavor: 'Sueña con bellotas que caigan desde más arriba.',
     set: 'curiosos',
-    requires: [{ kind: 'plumasTotal', world: 'valle', count: 4e6 }],
+    requires: [{ kind: 'plumasTotal', world: 'valle', count: 3e6 }],
     bonus: own('valle'),
   },
   // Cruces (necesitan dos variedades de mundos distintos)

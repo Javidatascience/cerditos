@@ -51,6 +51,8 @@
 
 html,
 body {
+  touch-action: manipulation; /* sin zoom por doble toque */
+  -webkit-text-size-adjust: 100%;
   margin: 0;
   padding: 0;
   background: var(--color-bg);
@@ -615,6 +617,16 @@ textarea:focus-visible {
   font-size: 1.2rem;
 }
 
+/* Volar: ascensión y ventajas en una sola pestaña */
+.fly-heading {
+  margin: 24px 0 8px;
+  font-size: 0.95rem;
+}
+
+.upgrades-slot:not(:empty) {
+  margin-bottom: 12px;
+}
+
 /* Filas con imagen */
 .generator-row,
 .upgrade-row,
@@ -709,6 +721,32 @@ textarea:focus-visible {
 .visitor-text {
   flex: 1;
   font-size: 0.85rem;
+}
+
+.visitor-left {
+  color: var(--color-text-muted);
+}
+
+/* Logros por cerdito: una insignia por cantidad */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.chip-done {
+  background: var(--world-accent);
+  border-color: var(--world-accent);
+  color: var(--color-on-button);
 }
 
 /* Álbum y logros: icono a la izquierda del texto */

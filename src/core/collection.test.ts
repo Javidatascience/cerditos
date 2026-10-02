@@ -161,7 +161,7 @@ describe('albumViews', () => {
       for (const r of v.requirements) expect(r.describe((n) => n.toString())).not.toBe('');
     }
     const iberico = all.find((v) => v.id === 'iberico-de-bellota')!;
-    expect(iberico.requirements[0]!.describe((n) => n.toString())).toBe('Ten 245 Ibérico a la vez en El Valle');
+    expect(iberico.requirements[0]!.describe((n) => n.toString())).toBe('Ten 200 Ibérico a la vez en El Valle');
   });
 });
 

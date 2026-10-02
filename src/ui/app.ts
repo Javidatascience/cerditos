@@ -15,12 +15,10 @@ import { WORLD_EMOJI, worldBanner } from './art.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
 import { mountAlbumView } from './views/albumView.ts';
-import { mountAscendView } from './views/ascendView.ts';
+import { mountFlyView } from './views/flyView.ts';
 import { mountFarmView } from './views/farmView.ts';
 import { mountJournalView } from './views/journalView.ts';
-import { mountPerksView } from './views/perksView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
-import { mountUpgradesView } from './views/upgradesView.ts';
 
 /** Una vista montada: `update` repinta a partir del estado, `destroy` limpia sus nodos. */
 export interface View {
@@ -48,9 +46,7 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { id: 'farm', label: 'Granja', mount: mountFarmView },
-  { id: 'upgrades', label: 'Mejoras', mount: mountUpgradesView },
-  { id: 'ascend', label: 'Volar', mount: mountAscendView },
-  { id: 'perks', label: 'Ventajas', mount: mountPerksView },
+  { id: 'fly', label: 'Volar', mount: mountFlyView },
   { id: 'album', label: 'Álbum', mount: mountAlbumView },
   { id: 'journal', label: 'Diario', mount: mountJournalView },
   { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
@@ -146,6 +142,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   // Cerdito viajero: una tarjeta fija bajo las pestañas de mundo (nada de ventanas emergentes).
   const visitorSlot = h('div', { className: 'visitor-slot' });
   let shownVisitor: string | null = null;
+  let visitorLeft: Text | null = null;
 
   function renderVisitor(): void {
     const kind = visitor?.current() ?? null;
@@ -163,12 +160,20 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
         visitor?.clear();
         renderVisitor();
       });
-      visitorSlot.replaceChildren(h('div', { className: 'visitor-card' }, [h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, ['🐷']), h('span', { className: 'visitor-text' }, [text]), accept]));
+      visitorLeft = document.createTextNode('');
+      visitorSlot.replaceChildren(
+        h('div', { className: 'visitor-card' }, [
+          h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, ['🐷']),
+          h('span', { className: 'visitor-text' }, [text, h('span', { className: 'visitor-left' }, [visitorLeft])]),
+          accept,
+        ]),
+      );
       shownVisitor = signature;
     } else if (!kind && shownVisitor !== null) {
       visitorSlot.replaceChildren();
       shownVisitor = null;
     }
+    if (kind && visitorLeft) setText(visitorLeft, ` Se va en ${Math.ceil(visitor?.secondsLeft() ?? 0)} s.`);
   }
 
   root.appendChild(

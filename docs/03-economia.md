@@ -342,7 +342,7 @@ Estrategia del jugador simulado (en `tools/sim/strategy.ts`): en cada visita com
 | Desbloqueo Huerta | 7.0 d – 14.0 d | 12.0 d | sí |
 | Desbloqueo Balneario | 16.0 d – 30.0 d | 19.0 d | sí |
 | Colección 50 % | 10.0 d – 30.0 d | 21.7 d | sí |
-| Colección 100 % | 40.0 d – 75.0 d | 46.0 d | sí |
+| Colección 100 % | 25.0 d – 75.0 d | 29.5 d | sí |
 | Desbloqueo Bosque (ocasional) | 3.0 d – 8.0 d | 5.0 d | sí |
 | Desbloqueo Balneario (ocasional) | 16.0 d – 40.0 d | 19.0 d | sí |
 | Desbloqueo Balneario (activo) | 10.0 d – 25.0 d | 17.0 d | sí |

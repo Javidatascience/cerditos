@@ -593,3 +593,21 @@ comprobación manual) y `.github/workflows/deploy.yml` (Pages en cada push a `ma
   (`sw.js` y todos los recursos responden 200; el fallo es del propio panel). Manifest, iconos y build sí
   comprobados. Falta la lista manual del README en un navegador y un iPhone reales.
 - El repo no tiene remoto: el workflow queda listo pero no se ha ejecutado.
+
+**2026-10-02 (hito 12, segunda tanda, a petición del usuario)**
+- **Interfaz**: las mejoras disponibles van en la Granja, justo bajo "Rascar la barriga" (sin lista de compradas
+  ni pestaña "Mejoras"); "Volar" y "Ventajas" son una sola pestaña (`views/flyView.ts`): 5 pestañas en total.
+  Una sola barra de "te falta": si queda algún cerdito por descubrir dice "??? — te falta X. Hay más cerditos por
+  descubrir."; si no, la de la próxima compra.
+- **Logros**: uno por cada cerdito y cada cantidad (1, 15, 25, 50, 100, 150, 200, 250, 300, 350, 400): 319 + 15
+  generales = 334. Se agrupan por cerdito en el Álbum (una insignia por cantidad). Los de cantidad no escriben
+  en el Diario (inundarían las 100 líneas que guarda).
+- **Variedades más fáciles** (~15-20 %): p. ej. Lechón manchado 100→80, Ibérico de bellota 245→200, 10 vuelos
+  →8, 30→24… La colección completa pasa de ~46 d a ~29,5 d en el simulador casual, así que el objetivo
+  "Colección 100 %" de `tools/sim/main.ts` baja de 40-75 d a 25-75 d (y 03 §9.3). Los demás objetivos siguen en
+  rango y `npm run sim` pasa.
+- **Zoom**: `maximum-scale=1, user-scalable=no`, `touch-action: manipulation` y cancelación del gesto de
+  pellizco (`ui/noZoom.ts`); no se cancela el doble toque por JS porque impediría tocar deprisa. Contrapartida
+  de accesibilidad: no se puede agrandar con el gesto.
+- **Cerdito viajero**: ahora llega cada 1-2 min (al azar) y se queda **10 s** (con cuenta atrás en la tarjeta).
+  Es una excepción más a la regla 2 (urgencia), decidida por el usuario; CLAUDE.md y docs/01 actualizados.

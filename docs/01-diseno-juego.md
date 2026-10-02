@@ -144,7 +144,7 @@ Lo que **no** hacemos: convertir una moneda en otra, ni que las plumas de un mun
 
 Estas reglas son **requisitos**, no preferencias. Cualquier tarea que las contradiga está mal planteada.
 
-1. **Nada aleatorio** que afecte al progreso: ni cajas, ni gacha, ni botín, ni "críticos". *Excepción (decisión del usuario, 2026-10-02): el **cerdito viajero**. Llega al azar (cada 5-10 min con el juego abierto, nunca offline) y trae, también al azar, una inyección de 10 min de producción o un ×5 durante 60 s. La cuantía es fija, no caduca (espera hasta aceptarlo) y no hay nada que perder por no estar.*
+1. **Nada aleatorio** que afecte al progreso: ni cajas, ni gacha, ni botín, ni "críticos". *Excepción (decisión del usuario, 2026-10-02): el **cerdito viajero**. Llega al azar (cada 1-2 min con el juego abierto, nunca offline) y trae, también al azar, una inyección de 10 min de producción o un ×5 durante 60 s. La cuantía es fija. **Se queda solo 10 s y se va** (excepción a la regla 2); si no estás, no pierdes nada porque no cuenta offline.*
 2. **Nada de urgencia**: sin temporizadores que caduquen, sin ofertas por tiempo limitado, sin eventos de temporada que se pierden.
 3. **Sin rachas** ni recompensas diarias por entrar. Sin penalización por ausencia (offline al 100 %).
 4. **Sin notificaciones** push, sin badges en el icono, sin pedir permisos de notificación.

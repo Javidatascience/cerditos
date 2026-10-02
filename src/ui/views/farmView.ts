@@ -10,6 +10,7 @@ import { basketView, calmView, cheapestPendingPurchase, generatorViews, harmonyV
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { generatorIcon } from '../art.ts';
+import { mountUpgradesList } from './upgradesList.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -86,8 +87,6 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       return item;
     }),
   );
-  const moreHintText = document.createTextNode('');
-  const moreHint = h('p', { className: 'more-hint hidden' }, [moreHintText]);
 
   // Armonía (Huerta): indicador de filas y botón "Completar fila" (solo en ese mundo).
   const harmonyText = document.createTextNode('');
@@ -110,13 +109,17 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   const progressInner = h('div', { className: 'progress-bar-inner' });
   const pendingBlock = h('div', { className: 'pending-purchase hidden' }, [h('div', { className: 'progress-bar', role: 'presentation' }, [progressInner]), h('p', {}, [pendingText])]);
 
-  const container = h('div', { className: 'farm-view' }, [tapButton, basketBlock, harmonyBlock, calmBlock, amountRow, list, moreHint, pendingBlock]);
+  const upgradesSlot = h('div', { className: 'upgrades-slot' });
+  const upgrades = mountUpgradesList(upgradesSlot, ctx);
+
+  const container = h('div', { className: 'farm-view' }, [tapButton, upgradesSlot, basketBlock, harmonyBlock, calmBlock, amountRow, list, pendingBlock]);
   root.appendChild(container);
 
   function update(state: GameState): void {
     const notation = state.settings.notation;
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
 
+    upgrades.update(state);
     setText(tapText, `Rascar la barriga (+${formatNumber(tapValue(state, ctx.content, worldId), notation)})`);
 
     const basket = basketView(state, ctx.content, worldId);
@@ -146,13 +149,6 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       setDisabled(row.buyButton, teaser || !view.canAfford);
       row.buyButton.tabIndex = teaser ? -1 : 0;
     }
-    const discovery = nextDiscovery(state, ctx.content, worldId);
-    setClass(moreHint, 'hidden', discovery === null);
-    if (discovery) {
-      const wait = discovery.etaSeconds === null ? '' : discovery.etaSeconds <= 0 ? ' ya casi' : ` te falta ${formatDuration(discovery.etaSeconds)}`;
-      setText(moreHintText, `???${wait ? ` —${wait}` : ''}. Hay más cerditos por descubrir.`);
-    }
-
     const harmony = harmonyView(state, ctx.content, worldId);
     setClass(harmonyBlock, 'hidden', harmony === null);
     if (harmony) {
@@ -175,16 +171,28 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       );
     }
 
+    // Una sola barra de "te falta": si queda algún cerdito por descubrir, ese; si no, la próxima compra.
+    const discovery = nextDiscovery(state, ctx.content, worldId);
     const pending = cheapestPendingPurchase(state, ctx.content, worldId);
-    setClass(pendingBlock, 'hidden', pending === null || pending.etaSeconds === null);
-    if (pending && pending.etaSeconds !== null) {
+    if (discovery) {
+      const wait = discovery.etaSeconds === null ? '' : discovery.etaSeconds <= 0 ? ' — ya casi' : ` — te falta ${formatDuration(discovery.etaSeconds)}`;
+      setClass(pendingBlock, 'hidden', false);
+      setText(pendingText, `???${wait}. Hay más cerditos por descubrir.`);
+      setStyleProp(progressInner, 'width', `${(discovery.progress * 100).toFixed(1)}%`);
+    } else if (pending && pending.etaSeconds !== null) {
+      setClass(pendingBlock, 'hidden', false);
       setText(pendingText, `${pending.name}: te faltan ${formatDuration(pending.etaSeconds)}`);
       setStyleProp(progressInner, 'width', `${(pending.progress * 100).toFixed(1)}%`);
+    } else {
+      setClass(pendingBlock, 'hidden', true);
     }
   }
 
   return {
     update,
-    destroy: () => container.remove(),
+    destroy: () => {
+      upgrades.destroy();
+      container.remove();
+    },
   };
 }

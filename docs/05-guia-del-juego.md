@@ -14,17 +14,16 @@ Es un juego tranquilo: **no hay azar, nada caduca, nada te mete prisa**. Entrar 
 |---|---|
 | **Cabecera** | El mundo que estás viendo, su moneda y cuánto produce por segundo. |
 | **Pestañas de mundo** | Los mundos abiertos y, en gris, el siguiente con lo que falta para abrirlo. |
-| **Barra inferior** | Granja · Mejoras · Volar · Ventajas · Álbum · Diario · Ajustes. |
+| **Barra inferior** | Granja · Volar · Álbum · Diario · Ajustes. |
 
 - **Granja**: la lista de cerditos con su coste. Los botones ×1, ×10 y Máx cambian cuántos compras de golpe. Debajo, una barra fina te dice cuánto falta para la próxima compra.
 - **Rascar la barriga**: da **1 segundo de tu producción** (lo que da se ve en el botón; mínimo 1). Al principio solo arranca la granja; luego es un empujoncito.
 - **Cesta de la granja**: cada mundo va llenando una cesta con el 25 % de su producción (hasta 30 min). *Recoger* la vacía y la suma a tu moneda. No caduca.
-- **Cerdito viajero**: de vez en cuando (cada 5-10 min con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 de producción durante 60 s. Espera hasta que lo aceptes.
+- **Cerdito viajero**: cada 1-2 minutos (al azar, con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 de producción durante 60 s. Se queda 10 segundos: si no lo aceptas, se va.
 - **Cerditos por descubrir**: en cada mundo solo se ven los que ya has podido comprar; el siguiente aparece difuminado y un aviso dice que hay más. (En la Huerta se ven todos, porque la armonía los necesita.)
-- **Mejoras**: aparecen cuando las puedes aprovechar (ver §3), con la imagen del cerdito al que mejoran. Las ya compradas están en el desplegable.
-- **Volar**: tu ascensión (§4).
-- **Ventajas**: el árbol permanente comprado con plumas (§5).
-- **Álbum**: las 28 variedades y cómo conseguir cada una (§7), y los **logros**: reconocimientos con su requisito visible (no dan bonos; se anotan en el Diario).
+- **Mejoras**: aparecen en la Granja, justo bajo "Rascar la barriga", cuando las puedes aprovechar (ver §3), con la imagen del cerdito al que mejoran. Las ya compradas no se listan.
+- **Volar**: tu ascensión (§4) y, debajo, el árbol de ventajas permanentes comprado con plumas (§5).
+- **Álbum**: las 28 variedades y cómo conseguir cada una (§7), y los **logros**: reconocimientos con su requisito visible y su progreso (no dan bonos). Hay uno por cada cerdito y cada cantidad (1, 15, 25, 50, 100, 150, 200, 250, 300, 350 y 400) y varios generales (vuelos, mundos, rascar, colección). Los generales se anotan en el Diario.
 - **Diario**: lo que ha ido pasando (variedades nuevas, mundos abiertos, vuelos). Nunca salta una ventana.
 - **Ajustes**: notación de números, autocompra, exportar/importar la partida como texto y borrarla.
 
@@ -104,46 +103,46 @@ Hay 28 variedades en 7 sets. **Todas son deterministas**: al cumplir el requisit
 
 | Variedad | Cómo se consigue | Bono |
 |---|---|---|
-| Lechón manchado | Ten 100 Lechón a la vez en El Valle | +5 % de producción en El Valle |
-| Rosa de concurso | Ten 200 Cerdita rosa a la vez en El Valle | +5 % de producción en El Valle |
-| Duroc pelirrojo | Ten 250 Duroc a la vez en El Valle | +5 % de producción en El Valle |
-| Ibérico de bellota | Ten 245 Ibérico a la vez en El Valle | +5 % de producción en El Valle |
+| Lechón manchado | Ten 80 Lechón a la vez en El Valle | +5 % de producción en El Valle |
+| Rosa de concurso | Ten 160 Cerdita rosa a la vez en El Valle | +5 % de producción en El Valle |
+| Duroc pelirrojo | Ten 200 Duroc a la vez en El Valle | +5 % de producción en El Valle |
+| Ibérico de bellota | Ten 200 Ibérico a la vez en El Valle | +5 % de producción en El Valle |
 
 **Familia del Bosque** — set completo: +25 % de producción en El Bosque
 
 | Variedad | Cómo se consigue | Bono |
 |---|---|---|
 | Buscadora veterana | Echa a volar 1 vez en El Bosque | +5 % de producción en El Bosque |
-| Jabato curioso | Ten 150 Abuela sabia a la vez en El Bosque | +5 % de producción en El Bosque |
-| Cerdita con sombrero de seta | Gana 1,00e33 Trufas en total en El Bosque | +5 % de producción en El Bosque |
-| Madre del bosque | Consigue 5,00 M Plumas del Bosque en total | +5 % de producción en El Bosque |
+| Jabato curioso | Ten 125 Abuela sabia a la vez en El Bosque | +5 % de producción en El Bosque |
+| Cerdita con sombrero de seta | Gana 1,00e31 Trufas en total en El Bosque | +5 % de producción en El Bosque |
+| Madre del bosque | Consigue 3,50 M Plumas del Bosque en total | +5 % de producción en El Bosque |
 
 **Amigos de la Huerta** — set completo: +25 % de producción en La Huerta
 
 | Variedad | Cómo se consigue | Bono |
 |---|---|---|
-| Calabacero | Llega a 25 filas completas en La Huerta | +5 % de producción en La Huerta |
-| Cerdo espantapájaros | Llega a 150 filas completas en La Huerta | +5 % de producción en La Huerta |
-| Cerdita jardinera | Echa a volar 10 veces en La Huerta | +5 % de producción en La Huerta |
-| Gran calabaza (con cerdito dentro) | Llega a 250 filas completas en La Huerta | +5 % de producción en La Huerta |
+| Calabacero | Llega a 20 filas completas en La Huerta | +5 % de producción en La Huerta |
+| Cerdo espantapájaros | Llega a 125 filas completas en La Huerta | +5 % de producción en La Huerta |
+| Cerdita jardinera | Echa a volar 8 veces en La Huerta | +5 % de producción en La Huerta |
+| Gran calabaza (con cerdito dentro) | Llega a 210 filas completas en La Huerta | +5 % de producción en La Huerta |
 
 **Clientes del Balneario** — set completo: +25 % de producción en El Balneario
 
 | Variedad | Cómo se consigue | Bono |
 |---|---|---|
 | Cerdito con toalla | Echa a volar 1 vez en El Balneario | +5 % de producción en El Balneario |
-| Cerdo en remojo | Gana 1,00 mil T Pompas en total en El Balneario | +5 % de producción en El Balneario |
-| Cerdita con pepinos | Ten 140 Cerdo zen a la vez en El Balneario | +5 % de producción en El Balneario |
-| Maestro del barro | Consigue 50.000 Plumas del Balneario en total | +5 % de producción en El Balneario |
+| Cerdo en remojo | Gana 100,00 T Pompas en total en El Balneario | +5 % de producción en El Balneario |
+| Cerdita con pepinos | Ten 115 Cerdo zen a la vez en El Balneario | +5 % de producción en El Balneario |
+| Maestro del barro | Consigue 35.000 Plumas del Balneario en total | +5 % de producción en El Balneario |
 
 **Cerditos curiosos** — set completo: −5 % en el coste de los cerditos en todos los mundos
 
 | Variedad | Cómo se consigue | Bono |
 |---|---|---|
-| Cerdito con boina | Echa a volar 5 veces en El Valle | +5 % de producción en El Valle |
-| Cerdita lectora | Consigue 100.000 Plumas del Valle en total | +5 % de producción en El Valle |
-| Cerdo filósofo | Echa a volar 30 veces en El Valle | +5 % de producción en El Valle |
-| Cerdito astronauta | Consigue 4,00 M Plumas del Valle en total | +5 % de producción en El Valle |
+| Cerdito con boina | Echa a volar 4 veces en El Valle | +5 % de producción en El Valle |
+| Cerdita lectora | Consigue 70.000 Plumas del Valle en total | +5 % de producción en El Valle |
+| Cerdo filósofo | Echa a volar 24 veces en El Valle | +5 % de producción en El Valle |
+| Cerdito astronauta | Consigue 3,00 M Plumas del Valle en total | +5 % de producción en El Valle |
 
 **Cruces** — set completo: +10 % de producción en todos los mundos
 
@@ -162,6 +161,7 @@ Hay 28 variedades en 7 sets. **Todas son deterministas**: al cumplir el requisit
 | La Gran Madre | Consigue antes: Madre del bosque, Gran calabaza (con cerdito dentro) | +5 % de producción en todos los mundos |
 | Cerdo de oro | Consigue antes: Trufero ibérico, Jabalí rosa, Duroc hortelano, Lechón de spa | +5 % de producción en todos los mundos |
 | Pancho, el primer cerdito | Consigue antes: Cerdo alado, La Gran Madre, Cerdo de oro, Cerdo filósofo, Cerdita con sombrero de seta, Cerdita con pepinos, Cerdita jardinera, Cerdo en remojo | +5 % de producción en todos los mundos |
+
 Un par de notas: el requisito "Ten N a la vez" se cuenta con el **máximo que hayas llegado a tener** en alguna ronda, así que ascender no te lo quita. Las variedades de **cruce** y **leyenda** se piden por otras variedades, no por números.
 
 ## 8. Cuando no estás
@@ -176,4 +176,4 @@ Un par de notas: el requisito "Ten N a la vez" se cuenta con el **máximo que ha
 
 ## 10. Lo que este juego no hace
 
-Sin cajas ni gacha, sin ofertas con prisa (el único azar es cuándo llega el cerdito viajero y qué trae), sin rachas diarias, sin notificaciones, sin destellos ni sonidos, sin pantallazos de recompensa, sin combos ni mejoras de toque, sin compras ni anuncios, sin rankings. Lo que ves es lo que hay.
+Sin cajas ni gacha, sin ofertas con prisa (el único azar y la única prisa son las del cerdito viajero: cuándo llega, qué trae y que se va a los 10 s), sin rachas diarias, sin notificaciones, sin destellos ni sonidos, sin pantallazos de recompensa, sin combos ni mejoras de toque, sin compras ni anuncios, sin rankings. Lo que ves es lo que hay.

@@ -3,10 +3,10 @@
 // sin bonos, también con su requisito visible). Ver docs/01-diseno-juego.md §8.
 
 import type { Decimal } from '../../core/num.ts';
-import { achievementViews, albumSummary, albumViews, type RequirementView } from '../../core/selectors.ts';
+import { achievementViews, albumSummary, albumViews, type AchievementView, type RequirementView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { achievementBadge, varietyIcon } from '../art.ts';
+import { achievementBadge, generatorIcon, varietyIcon } from '../art.ts';
 import { h, setClass, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
@@ -17,7 +17,7 @@ export function mountAlbumView(root: HTMLElement, ctx: UiContext): View {
 
   const summaryText = document.createTextNode('');
   const sets = h('div', { className: 'album-sets' });
-  const achievements = h('ul', { className: 'album-list achievements-list hidden' });
+  const achievements = h('div', { className: 'achievements-list hidden' });
 
   const tabButtons = new Map<Section, HTMLButtonElement>();
   const tabs = h(
@@ -78,16 +78,33 @@ export function mountAlbumView(root: HTMLElement, ctx: UiContext): View {
     } else {
       const views = achievementViews(state, ctx.content);
       setText(summaryText, `${views.filter((a) => a.owned).length} de ${views.length} logros. Son solo un reconocimiento: no dan bonos.`);
-      achievements.replaceChildren(
-        ...views.map((a) =>
-          h('li', { className: a.owned ? 'album-card' : 'album-card album-card-locked' }, [
-            achievementBadge(a.owned),
-            h('span', { className: 'upgrade-name' }, [a.name]),
-            h('span', { className: 'generator-flavor' }, [a.owned ? a.flavor : '???']),
-            reqLine(a.requirement, format),
-          ]),
-        ),
-      );
+
+      const card = (a: AchievementView) =>
+        h('li', { className: a.owned ? 'album-card' : 'album-card album-card-locked' }, [
+          achievementBadge(a.owned),
+          h('span', { className: 'upgrade-name' }, [a.name]),
+          h('span', { className: 'generator-flavor' }, [a.owned ? a.flavor : '???']),
+          reqLine(a.requirement, format),
+        ]);
+
+      // Los de "tener N de un cerdito" se agrupan por cerdito: una ficha con una insignia por cantidad.
+      const general = views.filter((a) => a.generator === null);
+      const sections: HTMLElement[] = [h('section', { className: 'album-set' }, [h('h3', {}, [`Generales (${general.filter((a) => a.owned).length}/${general.length})`]), h('ul', { className: 'album-list' }, general.map(card))])];
+      for (const world of ctx.content.worlds) {
+        const cards = world.generators.map((gen, index) => {
+          const own = views.filter((a) => a.generator?.worldId === world.id && a.generator.genId === gen.id).sort((a, b) => a.generator!.count - b.generator!.count);
+          const done = own.filter((a) => a.owned).length;
+          const next = own.find((a) => !a.owned);
+          return h('li', { className: 'album-card achievement-gen' }, [
+            generatorIcon(world.id, index, gen.id),
+            h('span', { className: 'upgrade-name' }, [`${gen.name} (${done}/${own.length})`]),
+            h('span', { className: 'chip-row' }, own.map((a) => h('span', { className: a.owned ? 'chip chip-done' : 'chip' }, [String(a.generator!.count)]))),
+            next ? reqLine(next.requirement, format) : h('span', { className: 'album-req album-req-done' }, ['Todos conseguidos']),
+          ]);
+        });
+        sections.push(h('section', { className: 'album-set' }, [h('h3', {}, [`Cerditos de ${world.name}`]), h('ul', { className: 'album-list' }, cards)]));
+      }
+      achievements.replaceChildren(...sections);
     }
   }
 

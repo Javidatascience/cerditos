@@ -56,7 +56,7 @@ const TARGETS: Target[] = [
   { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 14 * 24, profiles: ['casual'] },
   { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 16 * 24, max: 30 * 24, profiles: ['casual'] },
   { id: 'collection:50', label: 'Colección 50 %', min: 10 * 24, max: 30 * 24, profiles: ['casual'] },
-  { id: 'collection:100', label: 'Colección 100 %', min: 40 * 24, max: 75 * 24, profiles: ['casual'] },
+  { id: 'collection:100', label: 'Colección 100 %', min: 25 * 24, max: 75 * 24, profiles: ['casual'] },
   { id: 'unlock:bosque', label: 'Desbloqueo Bosque (ocasional)', min: 3 * 24, max: 8 * 24, profiles: ['ocasional'] },
   { id: 'unlock:balneario', label: 'Desbloqueo Balneario (ocasional)', min: 16 * 24, max: 40 * 24, profiles: ['ocasional'] },
   { id: 'unlock:balneario', label: 'Desbloqueo Balneario (activo)', min: 10 * 24, max: 25 * 24, profiles: ['activo'] },

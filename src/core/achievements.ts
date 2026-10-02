@@ -36,7 +36,8 @@ export function updateAchievements(state: GameState, content: Content, now: numb
   for (const def of content.achievements) {
     if (isAchieved(state, def) || !achievementProgress(state, def.requires).done) continue;
     state.achievements[def.id] = { at: now };
-    addEntry(state, `Logro: ${def.name}. ${def.flavor}`, now);
+    // Los de "tener N cerditos" son tantos (cientos) que inundarían el diario: van solo al logro.
+    if (def.requires.kind !== 'genCount') addEntry(state, `Logro: ${def.name}. ${def.flavor}`, now);
     achieved.push(def.id);
   }
   return achieved;
