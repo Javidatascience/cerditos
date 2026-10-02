@@ -6,7 +6,7 @@
 // cambiar de mundo.
 
 import { buyGenerator, buyRow, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
-import { cheapestPendingPurchase, generatorViews, harmonyView } from '../../core/selectors.ts';
+import { cheapestPendingPurchase, calmView, generatorViews, harmonyView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
@@ -81,7 +81,17 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   rowButton.addEventListener('click', () => ctx.dispatch((state) => void buyRow(state, ctx.content, worldId)));
   const harmonyBlock = h('div', { className: 'harmony-block hidden' }, [h('span', { className: 'harmony-text' }, [harmonyText]), rowButton]);
 
-  const container = h('div', { className: 'farm-view' }, [tapButton, harmonyBlock, amountRow, list, pendingBlock]);
+  // Calma (Balneario): barra estática y un aviso suave sobre el efecto de comprar.
+  const calmText = document.createTextNode('');
+  const calmInner = h('div', { className: 'progress-bar-inner' });
+  const calmNote = document.createTextNode('');
+  const calmBlock = h('div', { className: 'calm-block hidden' }, [
+    h('div', { className: 'progress-bar' }, [calmInner]),
+    h('p', { className: 'harmony-text' }, [calmText]),
+    h('p', { className: 'settings-hint' }, [calmNote]),
+  ]);
+
+  const container = h('div', { className: 'farm-view' }, [tapButton, harmonyBlock, calmBlock, amountRow, list, pendingBlock]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -107,6 +117,19 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       setText(harmonyText, `Filas completas: ${harmony.rows} (×${formatNumber(harmony.multiplier, notation)})${next}`);
       setText(rowCostText, `Completar fila (${formatNumber(harmony.rowCost, notation)})`);
       setDisabled(rowButton, !harmony.canBuyRow);
+    }
+
+    const calm = calmView(state, ctx.content, worldId);
+    setClass(calmBlock, 'hidden', calm === null);
+    if (calm) {
+      setText(calmText, `Calma ${Math.round(calm.calm * 100)} % · ×${formatNumber(calm.multiplier, notation)}`);
+      setStyleProp(calmInner, 'width', `${(calm.calm * 100).toFixed(1)}%`);
+      setText(
+        calmNote,
+        calm.buyWillDisturb
+          ? `Comprar molestará a los cerditos (la calma bajará ${calm.penalty === 0.5 ? "a la mitad" : `a ${Math.round(calm.penalty * 100)} %`}). Varias compras seguidas molestan una sola vez.`
+          : `Los cerditos ya están algo revueltos: durante ${formatDuration(calm.windowSecondsLeft)} puedes comprar sin molestarlos más.`,
+      );
     }
 
     const pending = cheapestPendingPurchase(state, ctx.content, worldId);

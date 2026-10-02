@@ -40,8 +40,15 @@ export interface WorldDef {
   prestige: { e0: number; exponent: number; perPluma: number };
   unlock: { world: WorldId; plumasTotal: number } | null;
   harmony?: { perLevel: number; thresholds: number[]; mult: number };
-  calm?: { maxBonus: number; rampSeconds: number; penalty: number; windowSeconds: number };
+  calm?: CalmDef;
   flavor: string;
+}
+
+export interface CalmDef {
+  maxBonus: number;
+  rampSeconds: number;
+  penalty: number;
+  windowSeconds: number;
 }
 
 export type PerkEffect =

@@ -17,7 +17,7 @@
 | 6 | Colección y diario | ✅ |
 | 7 | Multi-mundo y el Bosque (cadena) | ✅ |
 | 8 | La Huerta (armonía) | ✅ |
-| 9 | El Balneario (calma) y bonos entre mundos | ⬜ |
+| 9 | El Balneario (calma) y bonos entre mundos | ✅ |
 | 10 | PWA en iPhone y escritorio | ⬜ |
 | 11 | Pulido visual, textos y accesibilidad | ⬜ |
 
@@ -487,3 +487,18 @@ paquete que decide el simulador y el que compra el jugador son idénticos. `buyG
 `upgradesView` no necesitó cambios: `genUpgrades: null` ya devolvía solo las globales. El indicador
 dice "siguiente ×2 a las N filas"; los cerditos en el mínimo se resaltan con borde (sin animación).
 Paridad nueva con la Huerta (1 h; moneda y `maxHarmony` idénticos).
+
+**2026-10-02 (hito 9) — la calma no entra en `globalMultiplier`**, igual que en `tools/sim` (donde
+`income()` no la incluye y solo `produce` la aplica). `productionPerSecond` y `valueRate` (las que usan
+la autocompra y sus puntuaciones) quedan sin calma para mantener la paridad; el tick multiplica por el
+factor medio de calma (`advanceCalm`, integral exacta) y la UI usa `displayProductionPerSecond`
+(cabecera, por cerdito y tiempo estimado hasta la próxima compra). Comprar un cerdito o una mejora llama
+a `touchCalm` (una penalización por ventana de 60 s de `state.time`); comprar ventajas con plumas no
+molesta, como en el simulador. El aviso "Comprar molestará a los cerditos" es una línea de texto bajo la
+barra de calma (no cambia de color ni se anima) y pasa a decir cuánto dura la ventana sin molestar.
+
+**2026-10-02 (hito 9) — Hermandad ya estaba implementada** en `globalMultiplier` desde el hito 5 (y su
+texto "+X % producción en los demás mundos" en la vista de Ventajas), así que esta tarea no requirió
+cambios. La paridad de los 4 mundos a la vez (24 h) fuerza todos los mundos abiertos desde el inicio
+(en una partida real el Balneario tarda ~17 días, 03 §8) para ejercitar Hermandad, calma, armonía y
+cadena a la vez.

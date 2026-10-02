@@ -21,10 +21,11 @@ import {
   perkLevel,
   perPlumaBonusRate,
   plumasPending,
-  productionPerSecond,
+  displayProductionPerSecond,
   type UpgradeOffer,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
+import { calmMultiplier, purchaseWouldDisturb } from './mechanics/calm.ts';
 import { harmonyLevel, harmonyMultiplier, lowestGenerators, nextHarmonyThreshold } from './mechanics/harmony.ts';
 import { unlockProgress } from './unlocks.ts';
 import { rowBundleCost, type BuyAmount } from './actions.ts';
@@ -44,7 +45,7 @@ export function headerView(state: GameState, content: Content, worldId: WorldId)
     worldName: world.name,
     currencyName: world.currency,
     currency: worldState?.currency ?? D(0),
-    perSecond: productionPerSecond(state, content, worldId),
+    perSecond: displayProductionPerSecond(state, content, worldId),
   };
 }
 
@@ -104,6 +105,7 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
   const amount = state.settings.buyAmount;
   const costDelta = perkCostGrowthDelta(state, content, worldId);
   const costMult = totalCostMultiplier(state, content, worldId);
+  const calmFactor = calmMultiplier(world, worldState);
   const lowest = world.mechanic === 'harmony' ? new Set(lowestGenerators(world, worldState)) : new Set<string>();
 
   return world.generators.map((gen, k) => {
@@ -120,7 +122,7 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
       name: gen.name,
       flavor: gen.flavor,
       owned,
-      prodPerSec: owned.mul(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m),
+      prodPerSec: owned.mul(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m * calmFactor),
       prodUnit: world.mechanic === 'chain' && k > 0 ? (world.generators[k - 1]?.name ?? null) : null,
       nextCost,
       amountToBuy,
@@ -128,6 +130,33 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
       atMinimum: lowest.has(gen.id),
     };
   });
+}
+
+export interface CalmView {
+  /** 0..1 */
+  calm: number;
+  /** Factor de producción por calma (1..1+maxBonus). */
+  multiplier: number;
+  /** Comprar ahora bajaría la calma (fuera de la ventana ya penalizada). */
+  buyWillDisturb: boolean;
+  /** Factor al que bajaría la calma al comprar (0,5 = a la mitad). */
+  penalty: number;
+  /** Segundos que quedan de ventana en la que comprar no molesta más (0 si no hay). */
+  windowSecondsLeft: number;
+}
+
+/** Datos de la calma del Balneario; `null` en los mundos que no la usan. */
+export function calmView(state: GameState, content: Content, worldId: WorldId): CalmView | null {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (world.mechanic !== 'calm' || !world.calm || !worldState) return null;
+  return {
+    calm: worldState.calm,
+    multiplier: calmMultiplier(world, worldState),
+    buyWillDisturb: purchaseWouldDisturb(world, worldState, state.time),
+    penalty: world.calm.penalty,
+    windowSecondsLeft: Math.max(0, worldState.calmPenaltyUntil - state.time),
+  };
 }
 
 export interface HarmonyView {
@@ -183,7 +212,7 @@ export function cheapestPendingPurchase(state: GameState, content: Content, worl
 
   const missing = cheapest.nextCost.sub(worldState.currency);
   const progress = worldState.currency.div(cheapest.nextCost).toNumber();
-  const rate = productionPerSecond(state, content, worldId);
+  const rate = displayProductionPerSecond(state, content, worldId);
   const etaSeconds = rate.gt(0) ? Math.max(0, missing.div(rate).toNumber()) : null;
 
   return { name: cheapest.name, etaSeconds, progress: Math.min(1, Math.max(0, progress)) };

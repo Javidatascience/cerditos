@@ -148,6 +148,36 @@ describe('paridad core/tools-sim con armonía (Huerta, 1 h)', () => {
   });
 });
 
+describe('paridad core/tools-sim con calma (Balneario, 1 h)', () => {
+  it('moneda de vida y calma final coinciden', () => {
+    const id = 'balneario';
+    const START = 1e8;
+
+    const coreState = createInitialState(CONTENT, 0);
+    coreState.worlds[id]!.unlocked = true;
+    coreState.worlds[id]!.currency = D(START);
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestCore(coreState, id);
+      advance(coreState, CONTENT, STEP_SECONDS);
+    }
+
+    const simState = sim.newSimState();
+    simState.worlds[id]!.unlocked = true;
+    simState.worlds[id]!.currency = START;
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestSim(simState, id);
+      sim.produce(simState, STEP_SECONDS);
+    }
+
+    const coreWorld = coreState.worlds[id]!;
+    const simWorld = simState.worlds[id]!;
+    expect(coreWorld.calm).toBeCloseTo(simWorld.calm, 9);
+    expect(simWorld.calm).toBeLessThan(1); // la penalización se ejerce
+    const relError = Math.abs(coreWorld.lifetimeEarned.toNumber() - simWorld.lifetimeEarned) / simWorld.lifetimeEarned;
+    expect(relError).toBeLessThan(1e-9);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Paridad con la estrategia completa del simulador (ventajas + ascensión), 24 h (hito 5)
 // ---------------------------------------------------------------------------
@@ -251,5 +281,46 @@ describe('paridad core/tools-sim con ventajas y ascensión (Valle, 24 h)', () =>
     expect(coreAscensions).toBe(simAscensions); // misma secuencia de eventos
     const relError = Math.abs(corePlumasTotal - simPlumasTotal) / simPlumasTotal;
     expect(relError).toBeLessThan(1e-6);
+  });
+});
+
+describe('paridad core/tools-sim con los 4 mundos a la vez (24 h)', () => {
+  it('plumas totales y ascensiones coinciden en cada mundo (error relativo < 1e-6)', () => {
+    const STEP = 600;
+    const TOTAL = 24 * 3600;
+
+    const coreState = createInitialState(CONTENT, 0);
+    for (const world of CONTENT.worlds) {
+      const ws = coreState.worlds[world.id]!;
+      ws.unlocked = true;
+      ws.currency = D(world.startCurrency);
+    }
+    coreBestRate.clear();
+    for (let t = 0; t < TOTAL; t += STEP) {
+      advance(coreState, CONTENT, STEP);
+      for (const world of CONTENT.worlds) corePlayerAct(coreState, world.id);
+    }
+
+    strategy.resetStrategyMemory();
+    const simState = sim.newSimState();
+    for (const world of CONTENT.worlds) {
+      const ws = simState.worlds[world.id]!;
+      ws.unlocked = true;
+      ws.currency = SIM_WORLD_BY_ID[world.id]!.startCurrency;
+    }
+    for (let t = 0; t < TOTAL; t += STEP) {
+      sim.produce(simState, STEP);
+      sim.updateCollectionAndUnlocks(simState);
+      for (const world of CONTENT.worlds) strategy.playerAct(simState, world.id);
+    }
+
+    for (const world of CONTENT.worlds) {
+      const c = coreState.worlds[world.id]!;
+      const sm = simState.worlds[world.id]!;
+      expect(c.ascensions, `${world.id}: ascensiones`).toBe(sm.ascensions);
+      const sp = sm.plumasTotal;
+      if (sp > 0) expect(Math.abs(c.plumasTotal.toNumber() - sp) / sp, `${world.id}: plumas`).toBeLessThan(1e-6);
+    }
+    expect(simState.worlds['valle']!.plumasTotal).toBeGreaterThan(0);
   });
 });

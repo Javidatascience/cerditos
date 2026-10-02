@@ -18,6 +18,7 @@ import {
   startCurrency,
 } from './formulas.ts';
 import { addEntry } from './journal.ts';
+import { touchCalm } from './mechanics/calm.ts';
 import { harmonyLevel, lowestGenerators } from './mechanics/harmony.ts';
 import { D } from './num.ts';
 import type { Decimal } from './num.ts';
@@ -58,6 +59,7 @@ export function buyGenerator(state: GameState, content: Content, worldId: WorldI
   genState.bought += count;
   genState.owned = genState.owned.add(count);
   worldState.records.maxBought[genId] = Math.max(worldState.records.maxBought[genId] ?? 0, genState.bought);
+  touchCalm(world, worldState, state.time); // Balneario: comprar molesta (una vez por ventana)
   if (world.mechanic === 'harmony') worldState.records.maxHarmony = Math.max(worldState.records.maxHarmony, harmonyLevel(world, worldState));
   return count;
 }
@@ -102,6 +104,7 @@ export function buyUpgrade(state: GameState, content: Content, worldId: WorldId,
 
   worldState.currency = worldState.currency.sub(offer.cost);
   worldState.upgrades[upgradeId] = true;
+  touchCalm(getWorldDef(content, worldId), worldState, state.time);
   return true;
 }
 

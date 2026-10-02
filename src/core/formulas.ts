@@ -1,11 +1,12 @@
 // Fórmulas económicas. Ver docs/03-economia.md.
 // Plumas, ventajas permanentes (03 §4-§6) y bonos de colección (03 §7) aplicados al
 // multiplicador global y al coste de los cerditos. M_mecánica de armonía (hito 8) se
-// aplica en globalMultiplier; la de calma llega en el hito 9.
+// aplica en globalMultiplier; la de calma (hito 9) se aplica aparte, en el tick.
 
 import type { Content, GeneratorDef, PerkDef, PerkEffect, WorldDef } from '../content/types.ts';
 import { collectionMultiplier } from './collection.ts';
 import { chainProductionPerSecond } from './mechanics/chain.ts';
+import { calmMultiplier } from './mechanics/calm.ts';
 import { harmonyLevel, harmonyMultiplier } from './mechanics/harmony.ts';
 import { classicProductionPerSecond } from './mechanics/classic.ts';
 import type { GameState, GeneratorId, PerkId, UpgradeId, WorldId, WorldState } from './state.ts';
@@ -184,7 +185,7 @@ export function generatorMultiplier(world: WorldDef, worldState: WorldState, gen
  *   × (1 + (0,05 + 0,01·nivel(Raíces)) · P)            ← bono pasivo de plumas
  *   × 1,10^nivel(Abono)
  *   × Π_{otros mundos} (1 + 0,10 · nivel(Hermandad en ese mundo))
- *   × bonos de colección (variedades y sets) × M_armonía (solo Huerta; calma, hito 9)
+ *   × bonos de colección (variedades y sets) × M_armonía (solo Huerta). La calma (Balneario) no entra en M: se aplica en tick.ts/displayProductionPerSecond
  */
 export function globalMultiplier(state: GameState, content: Content, worldId: WorldId): number {
   const world = getWorldDef(content, worldId);
@@ -226,6 +227,16 @@ export function productionPerSecond(state: GameState, content: Content, worldId:
   const genMult = generatorMultiplierFn(world, worldState);
   if (world.mechanic === 'chain') return chainProductionPerSecond(world, worldState, m, genMult);
   return classicProductionPerSecond(world, worldState, m, genMult);
+}
+
+/**
+ * Producción/s que se ve ahora mismo: incluye el bono de calma del Balneario. Las decisiones
+ * (autobuy, valueRate) usan `productionPerSecond` sin calma, igual que tools/sim (`income`).
+ */
+export function displayProductionPerSecond(state: GameState, content: Content, worldId: WorldId): Decimal {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  return productionPerSecond(state, content, worldId).mul(worldState ? calmMultiplier(world, worldState) : 1);
 }
 
 const CHAIN_VALUE_HORIZON_SECONDS = 1800; // 03 §4: mismo horizonte que tools/sim (CHAIN_HORIZON)
