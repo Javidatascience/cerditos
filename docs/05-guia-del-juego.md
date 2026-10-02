@@ -166,7 +166,7 @@ Un par de notas: el requisito "Ten N a la vez" se cuenta con el **máximo que ha
 ## 8. Cuando no estás
 
 - Al volver, el juego calcula lo que ha pasado con las mismas reglas, también la calma. Un resumen sobrio dice cuánto has estado fuera y lo ganado por mundo; un botón "Vale" lo cierra.
-- Tope técnico de 30 días fuera (para protegerse de relojes mal puestos). Fuera de eso, no hay penalización por ausencia.
+- **Solo se producen las primeras 2 horas de ausencia.** Si estás fuera más tiempo, el resumen te lo dice ("has estado fuera 8 h; la granja produjo durante las primeras 2 h"): el resto no cuenta. Conviene entrar al menos cada 2 horas.
 
 ## 9. Guardado
 

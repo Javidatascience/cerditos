@@ -14,6 +14,7 @@ interface Profile { id: string; description: string; isOnline: (t: number) => bo
 
 const DAY = 86400;
 const HOUR = 3600;
+const OFFLINE_CAP = 2 * HOUR; // tope de producción offline por ausencia
 
 const PROFILES: Profile[] = [
   {
@@ -51,14 +52,14 @@ interface Target { id: string; label: string; min: number; max: number; profiles
 const TARGETS: Target[] = [
   { id: 'asc:valle:1', label: '1ª ascensión Valle', min: 0.5, max: 3, profiles: ['casual'] },
   { id: 'asc:valle:2', label: '2ª ascensión Valle', min: 1.5, max: 10, profiles: ['casual'] },
-  { id: 'asc:valle:10', label: '10ª ascensión Valle', min: 24, max: 96, profiles: ['casual'] },
+  { id: 'asc:valle:10', label: '10ª ascensión Valle', min: 24, max: 6 * 24, profiles: ['casual'] },
   { id: 'unlock:bosque', label: 'Desbloqueo Bosque', min: 2 * 24, max: 7 * 24, profiles: ['casual'] },
-  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 18 * 24, profiles: ['casual'] },
-  { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 16 * 24, max: 30 * 24, profiles: ['casual'] },
+  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 25 * 24, profiles: ['casual'] },
+  { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 16 * 24, max: 40 * 24, profiles: ['casual'] },
   { id: 'collection:50', label: 'Colección 50 %', min: 10 * 24, max: 30 * 24, profiles: ['casual'] },
   { id: 'collection:100', label: 'Colección 100 %', min: 25 * 24, max: 75 * 24, profiles: ['casual'] },
-  { id: 'unlock:bosque', label: 'Desbloqueo Bosque (ocasional)', min: 3 * 24, max: 8 * 24, profiles: ['ocasional'] },
-  { id: 'unlock:balneario', label: 'Desbloqueo Balneario (ocasional)', min: 16 * 24, max: 40 * 24, profiles: ['ocasional'] },
+  { id: 'unlock:bosque', label: 'Desbloqueo Bosque (ocasional)', min: 3 * 24, max: 20 * 24, profiles: ['ocasional'] },
+  // (El perfil ocasional ya no llega al Balneario en 60 días con el tope offline de 2 h: no es un objetivo.)
   { id: 'unlock:balneario', label: 'Desbloqueo Balneario (activo)', min: 10 * 24, max: 25 * 24, profiles: ['activo'] },
 ];
 
@@ -94,6 +95,7 @@ function simulate(profile: Profile, days: number): RunResult {
   const end = days * DAY;
   let seenEvents = 0;
   let collectionCheck = 0;
+  let awayStart = -1;
   let nextSnapshot = DAY;
   const timeline: string[] = [];
 
@@ -101,7 +103,11 @@ function simulate(profile: Profile, days: number): RunResult {
     const online = profile.isOnline(s.time);
     const minRun = Math.min(...WORLDS.filter((w) => s.worlds[w.id].unlocked).map((w) => s.worlds[w.id].runTime));
     const dt = online ? Math.min(10, Math.max(1, minRun * 0.05)) : 60;
-    produce(s, dt);
+    // Offline: solo cuentan las primeras 2 horas de cada ausencia (como el juego real).
+    if (online) awayStart = -1;
+    else if (awayStart < 0) awayStart = s.time;
+    if (online || s.time - awayStart < OFFLINE_CAP) produce(s, dt);
+    else s.time += dt;
     collectionCheck += dt;
     if (collectionCheck >= 30 || online) { updateCollectionAndUnlocks(s); collectionCheck = 0; }
     for (const def of WORLDS) {

@@ -173,7 +173,7 @@ Las **acciones** (`actions.ts`) validan y aplican: `buyGenerator(state, content,
 simulateOffline(state, content, seconds): OfflineSummary
 ```
 
-- `seconds = min(seconds, 30 días)`; si `seconds < 0` (reloj del sistema atrasado) → se ignora.
+- `seconds = min(seconds, 2 horas)` (tope de producción offline, decisión del usuario); si `seconds < 0` (reloj del sistema atrasado) → se ignora.
 - Se trocea en `n = clamp(ceil(seconds / 15), 1, 2000)` trozos iguales. En cada trozo: `advance(trozo)` + `runAutobuy()`.
 - Sin autocompradores la precisión es total (advance es exacta). Con autocompradores, comprar cada 15 s-20 min en vez de cada 250 ms pierde una fracción pequeña, que se acepta.
 - Coste: 2000 trozos × 4 mundos, milisegundos. Se ejecuta antes de montar la UI.

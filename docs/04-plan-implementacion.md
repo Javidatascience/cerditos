@@ -629,3 +629,10 @@ comprobación manual) y `.github/workflows/deploy.yml` (Pages en cada push a `ma
 - **Simulador**: ya no autocompra fuera de las visitas. El ritmo casual se frena (Bosque ~5,0 d, Huerta ~14,1 d,
   Colección 100 % ~34,7 d) y los rangos de "Desbloqueo Bosque" y "Desbloqueo Huerta" suben a 2-7 d y 7-18 d.
   Ya no se cumple "3 visitas rinden como todo el día" (03 §10): ahora las visitas frecuentes sí compensan.
+
+**2026-10-02 (hito 12, cuarta tanda) — tope de producción offline de 2 horas** (antes 30 días):
+`MAX_OFFLINE_SECONDS = 2 h` en `core/offline.ts`; el resumen al volver dice cuánto duró de verdad la ausencia y que
+solo produjo las primeras 2 h (`totalAwaySeconds`). El simulador aplica el mismo tope a cada ausencia (las
+noches ya no producen más de 2 h) y los objetivos de ritmo se reajustan: 10ª ascensión 1-6 d, Huerta 7-25 d,
+Balneario 16-40 d, Bosque ocasional 3-20 d; el objetivo del Balneario "ocasional" se elimina (no llega en 60 d).
+Colección 100 % ~45,5 d. Consecuencia buscada: ahora volver al menos cada 2 h compensa claramente.

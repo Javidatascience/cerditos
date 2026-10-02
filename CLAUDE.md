@@ -51,7 +51,7 @@ npm run sim:typecheck
 
 1. Nada aleatorio que afecte al progreso: ni cajas, ni gacha, ni botín, ni críticos. **Excepción decidida por el usuario (2026-10-02):** el cerdito viajero (`ui/visitor.ts`), cuyo momento de llegada (cada 1-2 min) y tipo de recompensa (inyección de moneda o impulso ×5 durante 60 s) son aleatorios, pero la cuantía es fija. **Se queda 10 s y se va (excepción también a la regla 2, decidida por el usuario)**; solo cuenta con el juego abierto. El azar vive fuera de `core`.
 2. Sin urgencia: nada caduca, sin ofertas temporales ni eventos de temporada.
-3. Sin rachas ni recompensas diarias. Offline al 100 %: ausentarse no se castiga.
+3. Sin rachas ni recompensas diarias. Offline al 100 % durante las primeras 2 h de ausencia (tope decidido por el usuario, 2026-10-02).
 4. Sin notificaciones push, badges ni petición de permisos.
 5. Sin destellos, confeti, sacudidas, números que saltan, sonidos ni vibración. Como mucho transiciones de opacidad ≤ 150 ms; nada con `prefers-reduced-motion`.
 6. Sin pantallazos de recompensa: los logros van al Diario de la granja.

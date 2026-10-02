@@ -16,7 +16,7 @@ export function showOfflineSummary(root: HTMLElement, summary: OfflineSummary, c
   const overlay = h('div', { className: 'offline-summary-overlay' }, [
     h('div', { className: 'offline-summary-card' }, [
       h('h2', {}, ['Mientras no estabas']),
-      h('p', {}, [`Has estado fuera ${formatDuration(summary.awaySeconds)}.`]),
+      h('p', {}, [summary.totalAwaySeconds > summary.awaySeconds ? `Has estado fuera ${formatDuration(summary.totalAwaySeconds)}. La granja produjo durante las primeras ${formatDuration(summary.awaySeconds)}.` : `Has estado fuera ${formatDuration(summary.awaySeconds)}.`]),
       lines.length > 0 ? h('ul', { className: 'offline-summary-list' }, lines) : h('p', {}, ['La granja ha seguido a lo suyo, tranquila.']),
       dismissButton,
     ]),

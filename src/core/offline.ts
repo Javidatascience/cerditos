@@ -9,21 +9,24 @@ import { D, Decimal } from './num.ts';
 import type { GameState } from './state.ts';
 import { advance } from './tick.ts';
 
-const MAX_OFFLINE_SECONDS = 30 * 24 * 3600; // 30 días (02 §5)
+/** Tope de producción offline: solo se cuentan las primeras 2 horas de ausencia (decisión del usuario). */
+export const MAX_OFFLINE_SECONDS = 2 * 3600;
 const CHUNK_SECONDS = 15;
 const MAX_CHUNKS = 2000;
 
 export interface OfflineSummary {
-  /** Segundos realmente simulados (ya recortados al tope de 30 días). */
+  /** Segundos realmente simulados (ya recortados al tope de 2 horas). */
   awaySeconds: number;
+  /** Segundos que duró de verdad la ausencia (puede superar el tope de producción). */
+  totalAwaySeconds: number;
   /** Moneda ganada por mundo durante la ausencia (solo mundos desbloqueados producen). */
   earnedByWorld: Record<string, Decimal>;
 }
 
-function emptySummary(awaySeconds: number, content: Content): OfflineSummary {
+function emptySummary(awaySeconds: number, content: Content, totalAwaySeconds = awaySeconds): OfflineSummary {
   const earnedByWorld: Record<string, Decimal> = {};
   for (const world of content.worlds) earnedByWorld[world.id] = D(0);
-  return { awaySeconds, earnedByWorld };
+  return { awaySeconds, totalAwaySeconds, earnedByWorld };
 }
 
 /**
@@ -52,5 +55,5 @@ export function simulateOffline(state: GameState, content: Content, seconds: num
     earnedByWorld[world.id] = after.sub(before[world.id]!);
   }
 
-  return { awaySeconds: capped, earnedByWorld };
+  return { awaySeconds: capped, totalAwaySeconds: seconds, earnedByWorld };
 }

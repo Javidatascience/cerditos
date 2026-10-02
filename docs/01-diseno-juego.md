@@ -134,8 +134,7 @@ Lo que **no** hacemos: convertir una moneda en otra, ni que las plumas de un mun
 
 ## 10. Progreso offline
 
-- Al volver, se calcula lo ocurrido durante la ausencia **con el mismo tick del juego**, troceado (02 §5) (sin compras: no hay autocompra). Rendimiento offline = **100 %**, sin tope práctico (tope técnico: 30 días, para protegerse de relojes erróneos).
-- Se muestra un resumen sobrio al abrir: tiempo fuera, moneda ganada por mundo, variedades nuevas, compras automáticas. Un botón "Vale".
+- Al volver, se calcula lo ocurrido durante la ausencia **con el mismo tick del juego**, troceado (02 §5) (sin compras: no hay autocompra). Rendimiento offline = **100 % durante las primeras 2 horas de ausencia**; pasado ese tope no se produce más (decisión del usuario, 2026-10-02: premia volver a menudo).Se muestra un resumen sobrio al abrir: tiempo fuera, moneda ganada por mundo, variedades nuevas, compras automáticas. Un botón "Vale".
 - Motivo del 100 %: un rendimiento offline menor castiga no estar, que es justo lo que queremos evitar.
 
 ## 11. Lo que NO haremos (reglas anti-dopamina)

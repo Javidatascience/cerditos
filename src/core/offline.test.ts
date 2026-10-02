@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
-import { simulateOffline } from './offline.ts';
+import { MAX_OFFLINE_SECONDS, simulateOffline } from './offline.ts';
 import { createInitialState } from './state.ts';
 import { advance } from './tick.ts';
 
@@ -13,16 +13,16 @@ function stateWithLechones(n: number) {
 }
 
 describe('simulateOffline', () => {
-  it('sin autocompra, simulateOffline(8 h) da el mismo resultado que advance(8 h)', () => {
+  it('simulateOffline(2 h) da el mismo resultado que advance(2 h)', () => {
     const viaOffline = stateWithLechones(10);
     const viaAdvance = stateWithLechones(10);
 
-    const summary = simulateOffline(viaOffline, CONTENT, 8 * 3600);
-    advance(viaAdvance, CONTENT, 8 * 3600);
+    const summary = simulateOffline(viaOffline, CONTENT, 2 * 3600);
+    advance(viaAdvance, CONTENT, 2 * 3600);
 
     expect(viaOffline.worlds['valle']!.currency.toNumber()).toBeCloseTo(viaAdvance.worlds['valle']!.currency.toNumber(), 6);
     expect(viaOffline.worlds['valle']!.lifetimeEarned.toNumber()).toBeCloseTo(viaAdvance.worlds['valle']!.lifetimeEarned.toNumber(), 6);
-    expect(summary.awaySeconds).toBe(8 * 3600);
+    expect(summary.awaySeconds).toBe(2 * 3600);
   });
 
   it('devuelve lo ganado por mundo durante la ausencia', () => {
@@ -43,10 +43,14 @@ describe('simulateOffline', () => {
     expect(summaryZero.awaySeconds).toBe(0);
   });
 
-  it('una ausencia de más de 30 días se recorta al tope', () => {
-    const state = stateWithLechones(10);
-    const summary = simulateOffline(state, CONTENT, 60 * 24 * 3600); // 60 días
-    expect(summary.awaySeconds).toBe(30 * 24 * 3600);
+  it('una ausencia de más de 2 horas solo produce durante las 2 primeras', () => {
+    const long = stateWithLechones(10);
+    const summary = simulateOffline(long, CONTENT, 60 * 24 * 3600); // 60 días
+    expect(summary.awaySeconds).toBe(MAX_OFFLINE_SECONDS);
+    expect(summary.totalAwaySeconds).toBe(60 * 24 * 3600);
+    const exact = stateWithLechones(10);
+    simulateOffline(exact, CONTENT, MAX_OFFLINE_SECONDS);
+    expect(long.worlds['valle']!.lifetimeEarned.toNumber()).toBeCloseTo(exact.worlds['valle']!.lifetimeEarned.toNumber(), 3);
   });
 
   it('no toca mundos bloqueados', () => {
