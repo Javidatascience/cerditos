@@ -18,7 +18,7 @@
 | 7 | Multi-mundo y el Bosque (cadena) | ✅ |
 | 8 | La Huerta (armonía) | ✅ |
 | 9 | El Balneario (calma) y bonos entre mundos | ✅ |
-| 10 | PWA en iPhone y escritorio | ⏭ saltado (a petición) |
+| 10 | PWA en iPhone y escritorio | ✅ (falta probar en el iPhone) |
 | 11 | Pulido visual, textos y accesibilidad | ✅ (salvo la semana de prueba manual) |
 | 12 | Pulido gráfico y juego más activo (extra) | ✅ |
 
@@ -581,3 +581,15 @@ segundos de producción (con las reglas anti-dopamina 1 y 7 **revisadas** en CLA
 - La economía del juego activo (rascar 1 s, cesta 25 %, visitante) no pasa por el simulador: el simulador sigue
   modelando solo al jugador "sin toque". Los jugadores muy activos irán algo más rápido que lo de 03 §9.
 - Posible afinar: tamaño de las constantes (`TAP_SECONDS`, `BASKET_RATE`, `VISITOR_*`) tras jugar.
+
+**2026-10-02 (hito 10, hecho después del 12 a petición del usuario) — PWA.**
+`vite-plugin-pwa` (`registerType: 'autoUpdate'`, manifest de 02 §9, precache de 16 ficheros), `src/pwa/register.ts`
+(`storage.persist()` silencioso; el service worker solo se registra en producción), metas de iOS/tema en
+`index.html`, iconos generados por código (`tools/make-icons.ts`: cerdito en PNG 192/512/maskable/apple-180 con
+zlib, sin dependencias) y `public/favicon.svg`, nota en Ajustes sobre el almacenamiento separado de la app
+de iOS, `README.md` (cómo probar en el móvil por wifi, con túnel HTTPS o en GitHub Pages; lista de
+comprobación manual) y `.github/workflows/deploy.yml` (Pages en cada push a `main`).
+- **No verificado aquí**: el service worker no se pudo registrar en el navegador integrado de la herramienta
+  (`sw.js` y todos los recursos responden 200; el fallo es del propio panel). Manifest, iconos y build sí
+  comprobados. Falta la lista manual del README en un navegador y un iPhone reales.
+- El repo no tiene remoto: el workflow queda listo pero no se ha ejecutado.

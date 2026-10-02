@@ -126,6 +126,9 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     h('p', { className: 'settings-hint' }, [
       'Genera un código y guárdalo donde quieras (una nota, un mensaje a ti mismo) para recuperar la partida en otro dispositivo.',
     ]),
+    h('p', { className: 'settings-hint' }, [
+      'En el iPhone, la app añadida a la pantalla de inicio guarda su partida aparte de la de Safari: si empezaste en Safari, exporta aquí y carga el código en la app.',
+    ]),
     exportArea,
     h('div', { className: 'amount-row' }, [exportButton, copyButton]),
     exportStatus,

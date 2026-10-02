@@ -6,6 +6,7 @@ import { CONTENT } from './content/index.ts';
 import { runAutobuyForAllWorlds } from './core/autobuy.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
+import { registerPwa } from './pwa/register.ts';
 import { mountApp } from './ui/app.ts';
 import { createVisitorScheduler } from './ui/visitor.ts';
 import { showOfflineSummary } from './ui/views/offlineSummary.ts';
@@ -71,3 +72,5 @@ window.addEventListener('pagehide', persist);
 // para fijar el nuevo lastTickAt (y, si era una partida nueva, para no perderla si se cierra
 // la pestaña antes de los primeros 10 s).
 if (!pendingOfflineSummary || pendingOfflineSummary.awaySeconds <= OFFLINE_SUMMARY_THRESHOLD_SECONDS) persist();
+
+registerPwa();
