@@ -9,6 +9,7 @@ import { CONTENT } from '../content/index.ts';
 import { ascend, buyGenerator, buyPerk } from './actions.ts';
 import { greedyBuy } from './autobuy.ts';
 import { generatorCost, getWorldDef, perkAvailable, perkCost, perkLevel, plumasPending } from './formulas.ts';
+import { D } from './num.ts';
 import { createInitialState, type GameState } from './state.ts';
 import { advance } from './tick.ts';
 
@@ -23,9 +24,9 @@ const STEP_SECONDS = 10;
 const TOTAL_SECONDS = 3600;
 
 /** Compra, en core, el generador más barato mientras se pueda pagar (ignora mejoras). */
-function buyCheapestCore(state: ReturnType<typeof createInitialState>): void {
-  const world = getWorldDef(CONTENT, WORLD_ID);
-  const worldState = state.worlds[WORLD_ID]!;
+function buyCheapestCore(state: ReturnType<typeof createInitialState>, worldId: string = WORLD_ID): void {
+  const world = getWorldDef(CONTENT, worldId);
+  const worldState = state.worlds[worldId]!;
   for (;;) {
     let cheapestId: string | null = null;
     let cheapestCost = null as ReturnType<typeof generatorCost> | null;
@@ -38,26 +39,26 @@ function buyCheapestCore(state: ReturnType<typeof createInitialState>): void {
       }
     }
     if (!cheapestId || !cheapestCost || worldState.currency.lt(cheapestCost)) return;
-    buyGenerator(state, CONTENT, WORLD_ID, cheapestId, 1);
+    buyGenerator(state, CONTENT, worldId, cheapestId, 1);
   }
 }
 
 /** La misma estrategia, en tools/sim. */
-function buyCheapestSim(state: sim.SimState): void {
-  const simWorld = SIM_WORLD_BY_ID[WORLD_ID]!;
+function buyCheapestSim(state: sim.SimState, worldId: string = WORLD_ID): void {
+  const simWorld = SIM_WORLD_BY_ID[worldId]!;
   for (;;) {
     let cheapestIdx = -1;
     let cheapestCost = Infinity;
     for (let i = 0; i < simWorld.generators.length; i++) {
-      const cost = sim.genCost(state, WORLD_ID, i);
+      const cost = sim.genCost(state, worldId, i);
       if (cost < cheapestCost) {
         cheapestCost = cost;
         cheapestIdx = i;
       }
     }
-    const worldState = state.worlds[WORLD_ID]!;
+    const worldState = state.worlds[worldId]!;
     if (cheapestIdx < 0 || worldState.currency < cheapestCost) return;
-    sim.buyGenerator(state, WORLD_ID, cheapestIdx);
+    sim.buyGenerator(state, worldId, cheapestIdx);
   }
 }
 
@@ -80,6 +81,40 @@ describe('paridad core/tools-sim (Valle, 1 h, estrategia "más barato")', () => 
     expect(simLifetime).toBeGreaterThan(0); // que la comparación no sea trivialmente 0 = 0
     const relError = Math.abs(coreLifetime - simLifetime) / simLifetime;
     expect(relError).toBeLessThan(1e-9);
+  });
+});
+
+describe('paridad core/tools-sim en la cadena del Bosque (1 h)', () => {
+  it('moneda de vida y unidades de cada nivel coinciden con error relativo < 1e-9', () => {
+    const id = 'bosque';
+    const START = 1e7; // para que la estrategia llegue a comprar varios niveles de la cadena
+
+    const coreState = createInitialState(CONTENT, 0);
+    coreState.worlds[id]!.unlocked = true;
+    coreState.worlds[id]!.currency = D(START);
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestCore(coreState, id);
+      advance(coreState, CONTENT, STEP_SECONDS);
+    }
+
+    const simState = sim.newSimState();
+    simState.worlds[id]!.unlocked = true;
+    simState.worlds[id]!.currency = START;
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestSim(simState, id);
+      sim.produce(simState, STEP_SECONDS);
+    }
+
+    const coreWorld = coreState.worlds[id]!;
+    const simWorld = simState.worlds[id]!;
+    expect(coreWorld.generators['madre-trufera']!.bought).toBeGreaterThan(0); // la cadena se ejerce
+    const relError = Math.abs(coreWorld.lifetimeEarned.toNumber() - simWorld.lifetimeEarned) / simWorld.lifetimeEarned;
+    expect(relError).toBeLessThan(1e-9);
+    CONTENT.worlds.find((w) => w.id === id)!.generators.forEach((gen, k) => {
+      const coreOwned = coreWorld.generators[gen.id]!.owned.toNumber();
+      const simOwned = simWorld.owned[k]!;
+      expect(Math.abs(coreOwned - simOwned) / Math.max(1, simOwned)).toBeLessThan(1e-9);
+    });
   });
 });
 

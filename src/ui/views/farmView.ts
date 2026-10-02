@@ -2,9 +2,8 @@
 // progreso hacia la próxima compra pendiente. Ver docs/01-diseno-juego.md §4 y
 // docs/02-arquitectura.md §8.
 //
-// NOTA (hito 3): solo hay un mundo jugable (El Valle), así que esta vista usa directamente
-// `content.worlds[0]` en vez de `state.activeWorld`. El hito 7 (pestañas de mundo) la hará
-// reactiva a `state.activeWorld`, reconstruyendo las filas si cambia de mundo.
+// Muestra el mundo activo al montarse (`ctx.activeWorld()`); app.ts la vuelve a montar al
+// cambiar de mundo.
 
 import { buyGenerator, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
 import { cheapestPendingPurchase, generatorViews } from '../../core/selectors.ts';
@@ -24,9 +23,9 @@ interface Row {
 const AMOUNTS: BuyAmount[] = [1, 10, 'max'];
 
 export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
-  const world = ctx.content.worlds[0];
-  if (!world) throw new Error('No hay ningún mundo en el contenido');
-  const worldId = world.id;
+  const worldId = ctx.activeWorld();
+  const world = ctx.content.worlds.find((w) => w.id === worldId);
+  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
 
   const tapButton = h('button', { className: 'tap-button' }, ['Rascar la barriga']) as HTMLButtonElement;
   tapButton.addEventListener('click', () => ctx.dispatch((state) => tap(state, worldId)));
@@ -85,7 +84,7 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       const view = views.find((v) => v.id === row.genId);
       if (!view) continue;
       setText(row.ownedText, `× ${formatNumber(view.owned, notation)}`);
-      setText(row.prodText, `+${formatNumber(view.prodPerSec, notation)}/s`);
+      setText(row.prodText, view.prodUnit ? `produce ${formatNumber(view.prodPerSec, notation)} ${view.prodUnit}/s` : `+${formatNumber(view.prodPerSec, notation)}/s`);
       const label = view.amountToBuy > 1 ? `Comprar ×${view.amountToBuy} (${formatNumber(view.nextCost, notation)})` : `Comprar (${formatNumber(view.nextCost, notation)})`;
       setText(row.costText, label);
       setDisabled(row.buyButton, !view.canAfford);

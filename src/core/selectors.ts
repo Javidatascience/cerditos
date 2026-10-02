@@ -25,6 +25,7 @@ import {
   type UpgradeOffer,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
+import { unlockProgress } from './unlocks.ts';
 import type { BuyAmount } from './actions.ts';
 import type { GameState, PerkId, WorldId, WorldState } from './state.ts';
 
@@ -46,12 +47,45 @@ export function headerView(state: GameState, content: Content, worldId: WorldId)
   };
 }
 
+export interface WorldTabView {
+  id: WorldId;
+  name: string;
+  unlocked: boolean;
+  active: boolean;
+  /** Mientras está bloqueado: de qué mundo y cuántas plumas hacen falta, con tu progreso. */
+  requirement: { fromWorldName: string; current: number; target: number } | null;
+}
+
+/** Pestañas de mundo: los desbloqueados y, en gris, el siguiente con su requisito visible. */
+export function worldTabs(state: GameState, content: Content): WorldTabView[] {
+  const tabs: WorldTabView[] = [];
+  let nextShown = false;
+  for (const world of content.worlds) {
+    const unlocked = state.worlds[world.id]?.unlocked ?? false;
+    if (!unlocked) {
+      if (nextShown) continue;
+      nextShown = true;
+    }
+    const progress = unlocked ? null : unlockProgress(state, world);
+    tabs.push({
+      id: world.id,
+      name: world.name,
+      unlocked,
+      active: world.id === state.activeWorld,
+      requirement: progress ? { fromWorldName: content.worlds.find((w) => w.id === progress.fromWorld)?.name ?? progress.fromWorld, current: progress.current, target: progress.target } : null,
+    });
+  }
+  return tabs;
+}
+
 export interface GeneratorView {
   id: string;
   name: string;
   flavor: string;
   owned: Decimal;
   prodPerSec: Decimal;
+  /** Qué produce `prodPerSec`: `null` = la moneda del mundo; en la cadena, el cerdito del nivel inferior. */
+  prodUnit: string | null;
   /** Coste de comprar `amountToBuy` unidades ahora mismo (según settings.buyAmount). */
   nextCost: Decimal;
   /** Unidades que compraría el botón ahora mismo (0 si con "máx" no llega ni a 1). */
@@ -68,7 +102,7 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
   const costDelta = perkCostGrowthDelta(state, content, worldId);
   const costMult = totalCostMultiplier(state, content, worldId);
 
-  return world.generators.map((gen) => {
+  return world.generators.map((gen, k) => {
     const genState = worldState.generators[gen.id];
     const owned = genState?.owned ?? D(0);
     const bought = genState?.bought ?? 0;
@@ -82,7 +116,8 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
       name: gen.name,
       flavor: gen.flavor,
       owned,
-      prodPerSec: owned.mul(gen.baseProd).mul(genMult).mul(m),
+      prodPerSec: owned.mul(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m),
+      prodUnit: world.mechanic === 'chain' && k > 0 ? (world.generators[k - 1]?.name ?? null) : null,
       nextCost,
       amountToBuy,
       canAfford: amountToBuy > 0 && worldState.currency.gte(nextCost),

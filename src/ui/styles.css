@@ -80,6 +80,45 @@ button {
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
+/* Pestañas de mundo (hito 7) */
+.world-bar {
+  padding: 8px 16px 0;
+}
+
+.world-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.world-tab {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  min-height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  touch-action: manipulation;
+}
+
+.world-tab.active {
+  background: var(--world-accent, var(--color-accent-dark));
+  border-color: var(--world-accent, var(--color-accent-dark));
+  color: #fff;
+}
+
+.world-tab.locked {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.world-hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
 /* Navegación inferior fija (02 §8). */
 .bottom-nav {
   position: sticky;
@@ -405,14 +444,23 @@ button {
   border: 1px solid var(--color-border);
 }
 
-.album-card-locked {
-  opacity: 0.65;
-  filter: grayscale(1);
+.album-card-locked .upgrade-name,
+.album-card-locked .generator-flavor,
+.album-card-locked .upgrade-effect {
+  opacity: 0.6;
+}
+
+.album-how {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
 }
 
 .album-req {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  color: var(--color-text);
 }
 
 .album-req-done {

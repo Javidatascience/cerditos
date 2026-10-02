@@ -2,7 +2,6 @@
 // a qué ritmo crecen las plumas pendientes. Botón "Echar a volar" con confirmación simple.
 // Nada parpadea, nada presiona: ver docs/01-diseno-juego.md §5.
 //
-// NOTA (hito 5): solo hay un mundo jugable (El Valle), igual que farmView/upgradesView.
 
 import { ascend } from '../../core/actions.ts';
 import { ascendView as getAscendView } from '../../core/selectors.ts';
@@ -17,9 +16,9 @@ import { formatNumber } from '../format.ts';
 const HISTORY_WINDOW_SECONDS = 3600;
 
 export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
-  const world = ctx.content.worlds[0];
-  if (!world) throw new Error('No hay ningún mundo en el contenido');
-  const worldId = world.id;
+  const worldId = ctx.activeWorld();
+  const world = ctx.content.worlds.find((w) => w.id === worldId);
+  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
   const worldName = world.name;
   const prestigeCurrency = world.prestigeCurrency;
 

@@ -76,6 +76,11 @@ export function buyUpgrade(state: GameState, content: Content, worldId: WorldId,
   return true;
 }
 
+/** Cambia el mundo que se está viendo (solo si está desbloqueado). */
+export function setActiveWorld(state: GameState, worldId: WorldId): void {
+  if (state.worlds[worldId]?.unlocked) state.activeWorld = worldId;
+}
+
 /** Cambia la cantidad por defecto de los botones de compra (×1 / ×10 / máx). */
 export function setBuyAmount(state: GameState, amount: BuyAmount): void {
   state.settings.buyAmount = amount;

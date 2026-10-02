@@ -34,6 +34,7 @@ export function mountAlbumView(root: HTMLElement, ctx: UiContext): View {
                 h('span', { className: 'upgrade-name' }, [v.name]),
                 h('span', { className: 'generator-flavor' }, [v.owned ? v.flavor : '???']),
                 h('span', { className: 'upgrade-effect' }, [v.bonusText]),
+                h('span', { className: 'album-how' }, [v.owned ? 'Conseguida:' : 'Cómo conseguirla:']),
                 ...v.requirements.map((r) =>
                   h('span', { className: r.done ? 'album-req album-req-done' : 'album-req' }, [
                     `${r.describe(format)} — ${format(r.current.lt(r.target) ? r.current : r.target)} / ${format(r.target)}`,

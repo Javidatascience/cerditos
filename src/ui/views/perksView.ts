@@ -9,9 +9,9 @@ import { h, setClass, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
 export function mountPerksView(root: HTMLElement, ctx: UiContext): View {
-  const world = ctx.content.worlds[0];
-  if (!world) throw new Error('No hay ningún mundo en el contenido');
-  const worldId = world.id;
+  const worldId = ctx.activeWorld();
+  const world = ctx.content.worlds.find((w) => w.id === worldId);
+  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
 
   const list = h('ul', { className: 'perk-list' });
   const container = h('div', { className: 'perks-view' }, [list]);

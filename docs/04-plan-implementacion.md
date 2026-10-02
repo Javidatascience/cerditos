@@ -15,7 +15,7 @@
 | 4 | Guardado, offline, exportar/importar | ✅ hecho |
 | 5 | Ascensión, ventajas y autocompra | ✅ hecho |
 | 6 | Colección y diario | ✅ |
-| 7 | Multi-mundo y el Bosque (cadena) | ⬜ |
+| 7 | Multi-mundo y el Bosque (cadena) | ✅ |
 | 8 | La Huerta (armonía) | ⬜ |
 | 9 | El Balneario (calma) y bonos entre mundos | ⬜ |
 | 10 | PWA en iPhone y escritorio | ⬜ |
@@ -459,3 +459,21 @@ coste, igual que `tools/sim`.
 el padding/tamaño de fuente de la barra inferior. El requisito `harmony` lee
 `records.maxHarmony`, que `core` no actualiza hasta el hito 8. En `parity.test.ts` el bucle de
 24 h llama a `sim.updateCollectionAndUnlocks` porque ahora `advance()` adopta variedades.
+
+**2026-10-02 (hito 7) — el cambio de mundo se resuelve remontando la vista.** `UiContext` ganó
+`activeWorld()`; las vistas Granja, Mejoras, Volar y Ventajas lo leen al montarse y `app.ts` las
+vuelve a montar cuando cambia `state.activeWorld` (en vez de hacerlas reactivas por dentro).
+Las pestañas de mundo viven en una barra bajo la cabecera, con el requisito del siguiente
+mundo en una línea ("El Bosque abrirá con 60.000 plumas de El Valle: llevas X"). Los colores
+por mundo son solo de presentación (`WORLD_ACCENTS` en `ui/app.ts`); el pulido va en el hito 11.
+
+**2026-10-02 (hito 7) — `tick.ts` despacha por mecánica** (chain usa `advanceChain`, el resto
+sigue con `productionPerSecond`) y llama a `updateUnlocks` tras `updateCollection`. Nueva acción
+`setActiveWorld` (solo mundos desbloqueados). `GeneratorView` incluye `prodUnit` para mostrar
+"produce 0,1 Buscadoras/s" en los niveles superiores de la cadena. `productionPerSecond` de la
+cadena cuenta solo las Buscadoras (como `income()` del simulador); `valueRate` ya estaba hecho
+desde el hito 5. Test de paridad nuevo con el Bosque (1 h, error < 1e-9 en moneda y unidades).
+
+**2026-10-02 (hito 6, retoque) — el Álbum etiqueta cada requisito** con "Cómo conseguirla:" y
+lo muestra en texto normal (antes iba en gris pequeño dentro de una tarjeta apagada y pasaba
+desapercibido).

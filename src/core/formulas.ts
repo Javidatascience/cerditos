@@ -5,6 +5,7 @@
 
 import type { Content, GeneratorDef, PerkDef, PerkEffect, WorldDef } from '../content/types.ts';
 import { collectionMultiplier } from './collection.ts';
+import { chainProductionPerSecond } from './mechanics/chain.ts';
 import { classicProductionPerSecond } from './mechanics/classic.ts';
 import type { GameState, GeneratorId, PerkId, UpgradeId, WorldId, WorldState } from './state.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
@@ -208,13 +209,20 @@ export function globalMultiplier(state: GameState, content: Content, worldId: Wo
   return m;
 }
 
-/** Producción por segundo del mundo. Hito 5: solo mecánica "classic" (único mundo jugable). */
+/** Multiplicador de producción del cerdito (mejoras por cerdito) como función, para mecánicas. */
+export function generatorMultiplierFn(world: WorldDef, worldState: WorldState): (gen: GeneratorDef) => number {
+  return (gen) => generatorMultiplier(world, worldState, gen);
+}
+
+/** Producción por segundo del mundo (moneda/s). Armonía y calma (hitos 8-9) usan aún classic. */
 export function productionPerSecond(state: GameState, content: Content, worldId: WorldId): Decimal {
   const world = getWorldDef(content, worldId);
   const worldState = state.worlds[worldId];
   if (!worldState) throw new Error(`Mundo sin estado: ${worldId}`);
   const m = globalMultiplier(state, content, worldId);
-  return classicProductionPerSecond(world, worldState, m, (gen) => generatorMultiplier(world, worldState, gen));
+  const genMult = generatorMultiplierFn(world, worldState);
+  if (world.mechanic === 'chain') return chainProductionPerSecond(world, worldState, m, genMult);
+  return classicProductionPerSecond(world, worldState, m, genMult);
 }
 
 const CHAIN_VALUE_HORIZON_SECONDS = 1800; // 03 §4: mismo horizonte que tools/sim (CHAIN_HORIZON)
