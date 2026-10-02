@@ -25,8 +25,9 @@ import {
   type UpgradeOffer,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
+import { harmonyLevel, harmonyMultiplier, lowestGenerators, nextHarmonyThreshold } from './mechanics/harmony.ts';
 import { unlockProgress } from './unlocks.ts';
-import type { BuyAmount } from './actions.ts';
+import { rowBundleCost, type BuyAmount } from './actions.ts';
 import type { GameState, PerkId, WorldId, WorldState } from './state.ts';
 
 export interface HeaderView {
@@ -91,6 +92,8 @@ export interface GeneratorView {
   /** Unidades que compraría el botón ahora mismo (0 si con "máx" no llega ni a 1). */
   amountToBuy: number;
   canAfford: boolean;
+  /** Armonía: este cerdito está en el mínimo (el que frena la fila). */
+  atMinimum: boolean;
 }
 
 export function generatorViews(state: GameState, content: Content, worldId: WorldId): GeneratorView[] {
@@ -101,6 +104,7 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
   const amount = state.settings.buyAmount;
   const costDelta = perkCostGrowthDelta(state, content, worldId);
   const costMult = totalCostMultiplier(state, content, worldId);
+  const lowest = world.mechanic === 'harmony' ? new Set(lowestGenerators(world, worldState)) : new Set<string>();
 
   return world.generators.map((gen, k) => {
     const genState = worldState.generators[gen.id];
@@ -121,8 +125,38 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
       nextCost,
       amountToBuy,
       canAfford: amountToBuy > 0 && worldState.currency.gte(nextCost),
+      atMinimum: lowest.has(gen.id),
     };
   });
+}
+
+export interface HarmonyView {
+  rows: number;
+  multiplier: number;
+  /** Siguiente umbral de ×mult (`null` si ya se alcanzaron todos) y el multiplicador que daría. */
+  nextThreshold: number | null;
+  /** Factor que añade cada umbral (×2). */
+  thresholdMult: number;
+  rowCost: Decimal;
+  canBuyRow: boolean;
+}
+
+/** Datos de la armonía de la Huerta; `null` en los mundos que no la usan. */
+export function harmonyView(state: GameState, content: Content, worldId: WorldId): HarmonyView | null {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (world.mechanic !== 'harmony' || !worldState) return null;
+  const rows = harmonyLevel(world, worldState);
+  const nextThreshold = nextHarmonyThreshold(world, rows);
+  const { genIds, cost } = rowBundleCost(state, content, worldId);
+  return {
+    rows,
+    multiplier: harmonyMultiplier(world, rows),
+    nextThreshold,
+    thresholdMult: world.harmony?.mult ?? 1,
+    rowCost: cost,
+    canBuyRow: genIds.length > 0 && worldState.currency.gte(cost),
+  };
 }
 
 /**

@@ -272,6 +272,28 @@ button {
   transition: width 150ms ease-out;
 }
 
+/* Armonía (Huerta): el borde marca los cerditos que frenan la fila; sin animación. */
+.harmony-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.harmony-text {
+  font-size: 0.85rem;
+}
+
+.generator-row-lowest {
+  border-color: var(--world-accent, var(--color-accent-dark));
+  border-width: 2px;
+}
+
 /* Vista Mejoras */
 .upgrade-empty {
   color: var(--color-text-muted);

@@ -6,7 +6,7 @@
 // Balneario no sean jugables hasta los hitos 8-9 (pedido explícitamente por el hito 5): el
 // código simplemente no se ejercita todavía porque esos mundos están bloqueados.
 
-import { buyGenerator, buyUpgrade } from './actions.ts';
+import { buyGenerator, buyRow, buyUpgrade, rowBundleCost } from './actions.ts';
 import {
   availableUpgrades,
   generatorCost,
@@ -63,17 +63,7 @@ function candidates(state: GameState, content: Content, worldId: WorldId, includ
 
     // Armonía (hito 8): "paquete de fila", una unidad de cada cerdito que está en el mínimo.
     if (world.mechanic === 'harmony' && world.generators.length > 0) {
-      let min = worldState.generators[world.generators[0]!.id]?.owned ?? D(0);
-      for (const gen of world.generators) {
-        const owned = worldState.generators[gen.id]?.owned ?? D(0);
-        if (owned.lt(min)) min = owned;
-      }
-      const lowIds = world.generators.filter((gen) => (worldState.generators[gen.id]?.owned ?? D(0)).eq(min)).map((gen) => gen.id);
-      const cost = lowIds.reduce((sum, genId) => {
-        const gen = world.generators.find((g) => g.id === genId)!;
-        const bought = worldState.generators[genId]?.bought ?? 0;
-        return sum.add(generatorCost(world, gen, bought, costDelta, costMult));
-      }, D(0));
+      const { genIds: lowIds, cost } = rowBundleCost(state, content, worldId);
       const delta = deltaValue(
         state,
         content,
@@ -118,10 +108,7 @@ function execute(state: GameState, content: Content, worldId: WorldId, candidate
     case 'upgrade':
       return buyUpgrade(state, content, worldId, candidate.offer.id);
     case 'bundle': {
-      const worldState = state.worlds[worldId]!;
-      if (worldState.currency.lt(candidate.cost)) return false;
-      for (const genId of candidate.genIds) buyGenerator(state, content, worldId, genId, 1);
-      return true;
+      return buyRow(state, content, worldId);
     }
   }
 }

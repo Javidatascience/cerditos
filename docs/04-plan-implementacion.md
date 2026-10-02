@@ -16,7 +16,7 @@
 | 5 | Ascensión, ventajas y autocompra | ✅ hecho |
 | 6 | Colección y diario | ✅ |
 | 7 | Multi-mundo y el Bosque (cadena) | ✅ |
-| 8 | La Huerta (armonía) | ⬜ |
+| 8 | La Huerta (armonía) | ✅ |
 | 9 | El Balneario (calma) y bonos entre mundos | ⬜ |
 | 10 | PWA en iPhone y escritorio | ⬜ |
 | 11 | Pulido visual, textos y accesibilidad | ⬜ |
@@ -477,3 +477,13 @@ desde el hito 5. Test de paridad nuevo con el Bosque (1 h, error < 1e-9 en moned
 **2026-10-02 (hito 6, retoque) — el Álbum etiqueta cada requisito** con "Cómo conseguirla:" y
 lo muestra en texto normal (antes iba en gris pequeño dentro de una tarjeta apagada y pasaba
 desapercibido).
+
+**2026-10-02 (hito 8) — "Completar fila" vive en `core/actions.ts`** (`buyRow`, `rowBundleCost`):
+la autocompra (`execute` del paquete) y el botón de la UI comparten la misma función, así que el
+paquete que decide el simulador y el que compra el jugador son idénticos. `buyGenerator` actualiza
+`records.maxHarmony` (igual que `tools/sim`), con lo que los requisitos de armonía del álbum
+(Calabacero, Cerdo espantapájaros, Gran calabaza) ya avanzan. El multiplicador de armonía entra en
+`globalMultiplier` (no en `productionPerSecond`), por lo que también lo ven `valueRate` y la autocompra.
+`upgradesView` no necesitó cambios: `genUpgrades: null` ya devolvía solo las globales. El indicador
+dice "siguiente ×2 a las N filas"; los cerditos en el mínimo se resaltan con borde (sin animación).
+Paridad nueva con la Huerta (1 h; moneda y `maxHarmony` idénticos).

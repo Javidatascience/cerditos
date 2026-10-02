@@ -1,11 +1,12 @@
 // Fórmulas económicas. Ver docs/03-economia.md.
 // Plumas, ventajas permanentes (03 §4-§6) y bonos de colección (03 §7) aplicados al
-// multiplicador global y al coste de los cerditos. M_mecánica de armonía/calma (hitos 8-9)
-// sigue valiendo 1: esos mundos aún no son jugables.
+// multiplicador global y al coste de los cerditos. M_mecánica de armonía (hito 8) se
+// aplica en globalMultiplier; la de calma llega en el hito 9.
 
 import type { Content, GeneratorDef, PerkDef, PerkEffect, WorldDef } from '../content/types.ts';
 import { collectionMultiplier } from './collection.ts';
 import { chainProductionPerSecond } from './mechanics/chain.ts';
+import { harmonyLevel, harmonyMultiplier } from './mechanics/harmony.ts';
 import { classicProductionPerSecond } from './mechanics/classic.ts';
 import type { GameState, GeneratorId, PerkId, UpgradeId, WorldId, WorldState } from './state.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
@@ -183,7 +184,7 @@ export function generatorMultiplier(world: WorldDef, worldState: WorldState, gen
  *   × (1 + (0,05 + 0,01·nivel(Raíces)) · P)            ← bono pasivo de plumas
  *   × 1,10^nivel(Abono)
  *   × Π_{otros mundos} (1 + 0,10 · nivel(Hermandad en ese mundo))
- *   × bonos de colección (variedades y sets) × M_mecánica (= 1 fuera de armonía/calma, hitos 8-9)
+ *   × bonos de colección (variedades y sets) × M_armonía (solo Huerta; calma, hito 9)
  */
 export function globalMultiplier(state: GameState, content: Content, worldId: WorldId): number {
   const world = getWorldDef(content, worldId);
@@ -205,6 +206,8 @@ export function globalMultiplier(state: GameState, content: Content, worldId: Wo
   }
 
   m *= collectionMultiplier(state, content, worldId, 'prod');
+
+  if (world.mechanic === 'harmony') m *= harmonyMultiplier(world, harmonyLevel(world, worldState));
 
   return m;
 }

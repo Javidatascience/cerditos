@@ -18,7 +18,9 @@ import {
   startCurrency,
 } from './formulas.ts';
 import { addEntry } from './journal.ts';
+import { harmonyLevel, lowestGenerators } from './mechanics/harmony.ts';
 import { D } from './num.ts';
+import type { Decimal } from './num.ts';
 import type { GameState, GeneratorId, PerkId, Settings, UpgradeId, WorldId } from './state.ts';
 
 export type BuyAmount = 1 | 10 | 'max';
@@ -56,7 +58,34 @@ export function buyGenerator(state: GameState, content: Content, worldId: WorldI
   genState.bought += count;
   genState.owned = genState.owned.add(count);
   worldState.records.maxBought[genId] = Math.max(worldState.records.maxBought[genId] ?? 0, genState.bought);
+  if (world.mechanic === 'harmony') worldState.records.maxHarmony = Math.max(worldState.records.maxHarmony, harmonyLevel(world, worldState));
   return count;
+}
+
+/** Coste de "Completar fila" (armonía): una unidad de cada cerdito que está en el mínimo. */
+export function rowBundleCost(state: GameState, content: Content, worldId: WorldId): { genIds: GeneratorId[]; cost: Decimal } {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (!worldState || world.mechanic !== 'harmony') return { genIds: [], cost: D(0) };
+  const delta = perkCostGrowthDelta(state, content, worldId);
+  const mult = totalCostMultiplier(state, content, worldId);
+  const genIds = lowestGenerators(world, worldState);
+  let cost = D(0);
+  for (const id of genIds) cost = cost.add(generatorCost(world, getGeneratorDef(world, id), worldState.generators[id]?.bought ?? 0, delta, mult));
+  return { genIds, cost };
+}
+
+/**
+ * Completar fila (armonía): compra una unidad de cada cerdito que está en el mínimo, todo o
+ * nada. Devuelve `true` si se compró.
+ */
+export function buyRow(state: GameState, content: Content, worldId: WorldId): boolean {
+  const worldState = state.worlds[worldId];
+  if (!worldState) return false;
+  const { genIds, cost } = rowBundleCost(state, content, worldId);
+  if (genIds.length === 0 || worldState.currency.lt(cost)) return false;
+  for (const id of genIds) buyGenerator(state, content, worldId, id, 1);
+  return true;
 }
 
 /**

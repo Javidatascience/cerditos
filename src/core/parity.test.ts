@@ -118,6 +118,36 @@ describe('paridad core/tools-sim en la cadena del Bosque (1 h)', () => {
   });
 });
 
+describe('paridad core/tools-sim con armonía (Huerta, 1 h)', () => {
+  it('moneda de vida y filas completas coinciden', () => {
+    const id = 'huerta';
+    const START = 1e8;
+
+    const coreState = createInitialState(CONTENT, 0);
+    coreState.worlds[id]!.unlocked = true;
+    coreState.worlds[id]!.currency = D(START);
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestCore(coreState, id);
+      advance(coreState, CONTENT, STEP_SECONDS);
+    }
+
+    const simState = sim.newSimState();
+    simState.worlds[id]!.unlocked = true;
+    simState.worlds[id]!.currency = START;
+    for (let t = 0; t < TOTAL_SECONDS; t += STEP_SECONDS) {
+      buyCheapestSim(simState, id);
+      sim.produce(simState, STEP_SECONDS);
+    }
+
+    const coreWorld = coreState.worlds[id]!;
+    const simWorld = simState.worlds[id]!;
+    expect(simWorld.maxHarmony).toBeGreaterThan(0); // la armonía se ejerce
+    expect(coreWorld.records.maxHarmony).toBe(simWorld.maxHarmony);
+    const relError = Math.abs(coreWorld.lifetimeEarned.toNumber() - simWorld.lifetimeEarned) / simWorld.lifetimeEarned;
+    expect(relError).toBeLessThan(1e-9);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Paridad con la estrategia completa del simulador (ventajas + ascensión), 24 h (hito 5)
 // ---------------------------------------------------------------------------

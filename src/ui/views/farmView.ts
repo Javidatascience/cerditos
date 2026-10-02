@@ -5,8 +5,8 @@
 // Muestra el mundo activo al montarse (`ctx.activeWorld()`); app.ts la vuelve a montar al
 // cambiar de mundo.
 
-import { buyGenerator, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
-import { cheapestPendingPurchase, generatorViews } from '../../core/selectors.ts';
+import { buyGenerator, buyRow, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
+import { cheapestPendingPurchase, generatorViews, harmonyView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
@@ -14,6 +14,7 @@ import { formatDuration, formatNumber } from '../format.ts';
 
 interface Row {
   genId: string;
+  item: HTMLElement;
   ownedText: Text;
   prodText: Text;
   costText: Text;
@@ -56,8 +57,7 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       const costText = document.createTextNode('');
       const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
       buyButton.addEventListener('click', () => ctx.dispatch((state) => void buyGenerator(state, ctx.content, worldId, gen.id, state.settings.buyAmount)));
-      rows.push({ genId: gen.id, ownedText, prodText, costText, buyButton });
-      return h('li', { className: 'generator-row' }, [
+      const item = h('li', { className: 'generator-row' }, [
         h('div', { className: 'generator-info' }, [
           h('div', { className: 'generator-name-row' }, [h('span', { className: 'generator-name' }, [gen.name]), ownedText]),
           h('span', { className: 'generator-flavor' }, [gen.flavor]),
@@ -65,6 +65,8 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
         ]),
         buyButton,
       ]);
+      rows.push({ genId: gen.id, item, ownedText, prodText, costText, buyButton });
+      return item;
     }),
   );
 
@@ -72,7 +74,14 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   const progressInner = h('div', { className: 'progress-bar-inner' });
   const pendingBlock = h('div', { className: 'pending-purchase hidden' }, [h('div', { className: 'progress-bar' }, [progressInner]), h('p', {}, [pendingText])]);
 
-  const container = h('div', { className: 'farm-view' }, [tapButton, amountRow, list, pendingBlock]);
+  // Armonía (Huerta): indicador de filas y botón "Completar fila" (solo en ese mundo).
+  const harmonyText = document.createTextNode('');
+  const rowCostText = document.createTextNode('');
+  const rowButton = h('button', { className: 'buy-button' }, [rowCostText]) as HTMLButtonElement;
+  rowButton.addEventListener('click', () => ctx.dispatch((state) => void buyRow(state, ctx.content, worldId)));
+  const harmonyBlock = h('div', { className: 'harmony-block hidden' }, [h('span', { className: 'harmony-text' }, [harmonyText]), rowButton]);
+
+  const container = h('div', { className: 'farm-view' }, [tapButton, harmonyBlock, amountRow, list, pendingBlock]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -83,11 +92,21 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
     for (const row of rows) {
       const view = views.find((v) => v.id === row.genId);
       if (!view) continue;
+      setClass(row.item, 'generator-row-lowest', view.atMinimum);
       setText(row.ownedText, `× ${formatNumber(view.owned, notation)}`);
       setText(row.prodText, view.prodUnit ? `produce ${formatNumber(view.prodPerSec, notation)} ${view.prodUnit}/s` : `+${formatNumber(view.prodPerSec, notation)}/s`);
       const label = view.amountToBuy > 1 ? `Comprar ×${view.amountToBuy} (${formatNumber(view.nextCost, notation)})` : `Comprar (${formatNumber(view.nextCost, notation)})`;
       setText(row.costText, label);
       setDisabled(row.buyButton, !view.canAfford);
+    }
+
+    const harmony = harmonyView(state, ctx.content, worldId);
+    setClass(harmonyBlock, 'hidden', harmony === null);
+    if (harmony) {
+      const next = harmony.nextThreshold === null ? '' : ` — siguiente ×${harmony.thresholdMult} a las ${harmony.nextThreshold}`;
+      setText(harmonyText, `Filas completas: ${harmony.rows} (×${formatNumber(harmony.multiplier, notation)})${next}`);
+      setText(rowCostText, `Completar fila (${formatNumber(harmony.rowCost, notation)})`);
+      setDisabled(rowButton, !harmony.canBuyRow);
     }
 
     const pending = cheapestPendingPurchase(state, ctx.content, worldId);
