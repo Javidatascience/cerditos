@@ -11,8 +11,10 @@ import { headerView } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import { h, setText } from './dom.ts';
 import { formatNumber } from './format.ts';
+import { mountAlbumView } from './views/albumView.ts';
 import { mountAscendView } from './views/ascendView.ts';
 import { mountFarmView } from './views/farmView.ts';
+import { mountJournalView } from './views/journalView.ts';
 import { mountPerksView } from './views/perksView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 import { mountUpgradesView } from './views/upgradesView.ts';
@@ -44,6 +46,8 @@ const TABS: TabDef[] = [
   { id: 'upgrades', label: 'Mejoras', mount: mountUpgradesView },
   { id: 'ascend', label: 'Volar', mount: mountAscendView },
   { id: 'perks', label: 'Ventajas', mount: mountPerksView },
+  { id: 'album', label: 'Álbum', mount: mountAlbumView },
+  { id: 'journal', label: 'Diario', mount: mountJournalView },
   { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
 ];
 

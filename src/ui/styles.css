@@ -92,7 +92,8 @@ button {
 
 .nav-button {
   flex: 1;
-  padding: 12px 8px;
+  padding: 12px 2px;
+  font-size: 0.78rem;
   min-height: 44px;
   border: none;
   background: transparent;
@@ -376,6 +377,54 @@ button {
 .perk-locked {
   font-size: 0.8rem;
   color: var(--color-accent-dark);
+}
+
+/* Vistas Álbum y Diario */
+.album-set h3 {
+  margin: 20px 0 4px;
+  font-size: 0.95rem;
+}
+
+.album-list,
+.journal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.album-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.album-card-locked {
+  opacity: 0.65;
+  filter: grayscale(1);
+}
+
+.album-req {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.album-req-done {
+  color: var(--color-accent-dark);
+}
+
+.journal-row {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

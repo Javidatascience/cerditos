@@ -13,7 +13,7 @@ import {
   getWorldDef,
   hasPerkEffect,
   perkCostGrowthDelta,
-  perkCostMultiplier,
+  totalCostMultiplier,
   productionPerSecond,
   valueRate,
   type UpgradeOffer,
@@ -43,7 +43,7 @@ function candidates(state: GameState, content: Content, worldId: WorldId, includ
   const worldState = state.worlds[worldId]!;
   const base = valueRate(state, content, worldId, VALUE_HORIZON_SECONDS);
   const costDelta = perkCostGrowthDelta(state, content, worldId);
-  const costMult = perkCostMultiplier(state, content, worldId);
+  const costMult = totalCostMultiplier(state, content, worldId);
   const out: Candidate[] = [];
 
   if (includeGenerators) {

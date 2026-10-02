@@ -1,10 +1,10 @@
 // Fórmulas económicas. Ver docs/03-economia.md.
-// Hito 5: plumas, coste y efectos de las ventajas permanentes (03 §4-§6) aplicados al
-// multiplicador global y al coste de los cerditos. Los términos que dependen de la colección
-// (hito 6) y M_mecánica de armonía/calma (hitos 8-9) siguen valiendo 1: no hay nada de eso
-// todavía.
+// Plumas, ventajas permanentes (03 §4-§6) y bonos de colección (03 §7) aplicados al
+// multiplicador global y al coste de los cerditos. M_mecánica de armonía/calma (hitos 8-9)
+// sigue valiendo 1: esos mundos aún no son jugables.
 
 import type { Content, GeneratorDef, PerkDef, PerkEffect, WorldDef } from '../content/types.ts';
+import { collectionMultiplier } from './collection.ts';
 import { classicProductionPerSecond } from './mechanics/classic.ts';
 import type { GameState, GeneratorId, PerkId, UpgradeId, WorldId, WorldState } from './state.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
@@ -88,6 +88,11 @@ export function perkUpgradeCostMultiplier(state: GameState, content: Content, wo
 /** Regateo en la feria: multiplica el coste de los cerditos (m_coste de 03 §2). */
 export function perkCostMultiplier(state: GameState, content: Content, worldId: WorldId): number {
   return perkEffectProduct(state, content, worldId, 'costMult');
+}
+
+/** m_coste completo de 03 §2: Regateo en la feria × bonos de coste de la colección. */
+export function totalCostMultiplier(state: GameState, content: Content, worldId: WorldId): number {
+  return perkCostMultiplier(state, content, worldId) * collectionMultiplier(state, content, worldId, 'cost');
 }
 
 /** Establo ampliado: resta al crecimiento de coste de los cerditos (03 §2). */
@@ -177,7 +182,7 @@ export function generatorMultiplier(world: WorldDef, worldState: WorldState, gen
  *   × (1 + (0,05 + 0,01·nivel(Raíces)) · P)            ← bono pasivo de plumas
  *   × 1,10^nivel(Abono)
  *   × Π_{otros mundos} (1 + 0,10 · nivel(Hermandad en ese mundo))
- *   × bonos de colección (= 1, hito 6) × M_mecánica (= 1 fuera de armonía/calma, hitos 8-9)
+ *   × bonos de colección (variedades y sets) × M_mecánica (= 1 fuera de armonía/calma, hitos 8-9)
  */
 export function globalMultiplier(state: GameState, content: Content, worldId: WorldId): number {
   const world = getWorldDef(content, worldId);
@@ -197,6 +202,8 @@ export function globalMultiplier(state: GameState, content: Content, worldId: Wo
     if (other.id === worldId) continue;
     m *= 1 + perkEffectSum(state, content, other.id, 'crossProd'); // Hermandad de granjas (del otro mundo)
   }
+
+  m *= collectionMultiplier(state, content, worldId, 'prod');
 
   return m;
 }

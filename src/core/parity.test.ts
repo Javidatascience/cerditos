@@ -175,6 +175,7 @@ describe('paridad core/tools-sim con ventajas y ascensión (Valle, 24 h)', () =>
     const simState = sim.newSimState();
     for (let t = 0; t < TOTAL; t += STEP) {
       sim.produce(simState, STEP);
+      sim.updateCollectionAndUnlocks(simState); // core lo hace dentro de advance() (hito 6)
       strategy.playerAct(simState, WORLD_ID);
     }
     const simPlumasTotal = simState.worlds[WORLD_ID]!.plumasTotal;

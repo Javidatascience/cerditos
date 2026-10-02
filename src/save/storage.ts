@@ -5,6 +5,7 @@
 
 import type { Content } from '../content/types.ts';
 import type { GameState } from '../core/state.ts';
+import { addEntry } from '../core/journal.ts';
 import { createInitialState } from '../core/state.ts';
 import { migrate, SaveValidationError } from './migrations.ts';
 import { normalize } from './normalize.ts';
@@ -70,7 +71,7 @@ export function loadGame(storage: SaveStorage, content: Content, now: number): L
   const fromBackup = tryLoad(storage.read(BACKUP_KEY), content);
   if (fromBackup) {
     if (mainRaw) {
-      fromBackup.journal.push({ at: now, text: 'La partida guardada no se pudo leer; se ha recuperado la copia de seguridad anterior.' });
+      addEntry(fromBackup, 'La partida guardada no se pudo leer; se ha recuperado la copia de seguridad anterior.', now);
     }
     return { state: fromBackup, source: 'backup' };
   }

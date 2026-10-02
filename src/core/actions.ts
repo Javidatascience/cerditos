@@ -13,10 +13,11 @@ import {
   perkAvailable,
   perkCost,
   perkCostGrowthDelta,
-  perkCostMultiplier,
+  totalCostMultiplier,
   plumasPending,
   startCurrency,
 } from './formulas.ts';
+import { addEntry } from './journal.ts';
 import { D } from './num.ts';
 import type { GameState, GeneratorId, PerkId, Settings, UpgradeId, WorldId } from './state.ts';
 
@@ -43,7 +44,7 @@ export function buyGenerator(state: GameState, content: Content, worldId: WorldI
   if (!genState) return 0;
 
   const delta = perkCostGrowthDelta(state, content, worldId);
-  const mult = perkCostMultiplier(state, content, worldId);
+  const mult = totalCostMultiplier(state, content, worldId);
 
   const count = amount === 'max' ? maxAffordable(world, gen, genState.bought, worldState.currency, delta, mult) : amount;
   if (count <= 0) return 0;
@@ -142,7 +143,7 @@ export function ascend(state: GameState, content: Content, worldId: WorldId, now
   worldState.calm = 1; // cada ronda empieza con la calma llena (03 §3.4)
   worldState.calmPenaltyUntil = -1;
 
-  state.journal.push({ at: now, text: `${world.name}: tus cerdos han decidido que hoy sí, hoy vuelan. Dejan tras de sí ${gain} pluma${gain === 1 ? '' : 's'}.` });
+  addEntry(state, `${world.name}: tus cerdos han decidido que hoy sí, hoy vuelan. Dejan tras de sí ${gain} pluma${gain === 1 ? '' : 's'}.`, now);
 
   return gain;
 }

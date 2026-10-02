@@ -2,11 +2,14 @@
 // `advance` es la única función que hace pasar el tiempo. Es exacta para cualquier `dt`
 // mientras no haya compras de por medio: advance(dt=10) == 10× advance(dt=1) acumulado.
 //
-// Hito 1: solo mecánica "classic". Las demás mecánicas (chain, harmony, calm), la colección
-// y los desbloqueos se añaden en hitos posteriores (7-9, 6).
+// Solo mecánica "classic" por ahora; chain/harmony/calm y los desbloqueos de mundo llegan en
+// los hitos 7-9. La adopción de variedades (hito 6) no cambia lo producido en este avance, solo
+// los siguientes.
 
 import type { Content } from '../content/types.ts';
+import { updateCollection } from './collection.ts';
 import { productionPerSecond } from './formulas.ts';
+import { gameClockMs } from './journal.ts';
 import type { GameState } from './state.ts';
 
 /** Avanza `dt` segundos la producción de todos los mundos desbloqueados. Muta `state`. */
@@ -22,4 +25,7 @@ export function advance(state: GameState, content: Content, dt: number): void {
     worldState.lifetimeEarned = worldState.lifetimeEarned.add(gained);
     worldState.runSeconds += dt;
   }
+  // Adopción de variedades (01 §8): automática y sin ventanas; el diario la anota con la hora
+  // de juego derivada del estado (core no lee el reloj del sistema).
+  updateCollection(state, content, gameClockMs(state));
 }

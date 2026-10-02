@@ -2,7 +2,8 @@
 // llamar a formulas.ts directamente desde ui/. Ver docs/02-arquitectura.md §4 y §8.
 
 import { generatorUpgradeName } from '../content/upgrades.ts';
-import type { Content, GeneratorDef, PerkDef, WorldDef } from '../content/types.ts';
+import type { Bonus, Content, GeneratorDef, PerkDef, Requirement, WorldDef } from '../content/types.ts';
+import { requirementProgress } from './collection.ts';
 import {
   availableUpgrades,
   bulkCost,
@@ -16,7 +17,7 @@ import {
   perkAvailable,
   perkCost,
   perkCostGrowthDelta,
-  perkCostMultiplier,
+  totalCostMultiplier,
   perkLevel,
   perPlumaBonusRate,
   plumasPending,
@@ -65,7 +66,7 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
   const m = globalMultiplier(state, content, worldId);
   const amount = state.settings.buyAmount;
   const costDelta = perkCostGrowthDelta(state, content, worldId);
-  const costMult = perkCostMultiplier(state, content, worldId);
+  const costMult = totalCostMultiplier(state, content, worldId);
 
   return world.generators.map((gen) => {
     const genState = worldState.generators[gen.id];
@@ -287,3 +288,98 @@ export function perkViews(state: GameState, content: Content, worldId: WorldId):
 
 // Re-exportado para los tests que quieran forzar un BuyAmount sin importar actions.ts.
 export type { BuyAmount, GeneratorDef };
+
+// ---------------------------------------------------------------------------
+// Álbum de variedades (hito 6, 01 §8)
+// ---------------------------------------------------------------------------
+
+export interface RequirementView {
+  current: Decimal;
+  target: Decimal;
+  done: boolean;
+  /** Frase del requisito; `format` da formato a los números (los formatea la UI, no core). */
+  describe(format: (n: Decimal) => string): string;
+}
+
+export interface VarietyView {
+  id: string;
+  name: string;
+  flavor: string;
+  owned: boolean;
+  bonusText: string;
+  requirements: RequirementView[];
+}
+
+export interface SetView {
+  id: string;
+  name: string;
+  bonusText: string;
+  ownedCount: number;
+  total: number;
+  complete: boolean;
+  varieties: VarietyView[];
+}
+
+function bonusText(content: Content, bonus: Bonus): string {
+  const percent = Math.round(Math.abs(bonus.mult - 1) * 100);
+  const sign = bonus.mult >= 1 ? '+' : '−';
+  const where = bonus.world === 'all' ? 'en todos los mundos' : `en ${content.worlds.find((w) => w.id === bonus.world)?.name ?? bonus.world}`;
+  return bonus.kind === 'prod' ? `${sign}${percent} % de producción ${where}` : `${sign}${percent} % en el coste de los cerditos ${where}`;
+}
+
+function describeRequirement(content: Content, req: Requirement): (format: (n: Decimal) => string) => string {
+  const world = (id: string) => content.worlds.find((w) => w.id === id);
+  const worldName = (id: string) => world(id)?.name ?? id;
+  switch (req.kind) {
+    case 'genCount': {
+      const gen = world(req.world)?.generators.find((g) => g.id === req.gen);
+      return (f) => `Ten ${f(D(req.count))} ${gen?.name ?? req.gen} a la vez en ${worldName(req.world)}`;
+    }
+    case 'ascensions':
+      return (f) => `Echa a volar ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'} en ${worldName(req.world)}`;
+    case 'plumasTotal':
+      return (f) => `Consigue ${f(D(req.count))} ${world(req.world)?.prestigeCurrency ?? 'plumas'} en total`;
+    case 'lifetime':
+      return (f) => `Gana ${f(D(req.amount))} ${world(req.world)?.currency ?? ''} en total en ${worldName(req.world)}`;
+    case 'harmony':
+      return (f) => `Llega a ${f(D(req.count))} filas completas en ${worldName(req.world)}`;
+    case 'varieties': {
+      const names = req.ids.map((id) => content.varieties.find((v) => v.id === id)?.name ?? id);
+      return () => `Consigue antes: ${names.join(', ')}`;
+    }
+  }
+}
+
+export function albumViews(state: GameState, content: Content): SetView[] {
+  return content.sets.map((set) => {
+    const varieties: VarietyView[] = content.varieties
+      .filter((v) => v.set === set.id)
+      .map((v) => ({
+        id: v.id,
+        name: v.name,
+        flavor: v.flavor,
+        owned: state.collection[v.id] !== undefined,
+        bonusText: bonusText(content, v.bonus),
+        requirements: v.requires.map((req): RequirementView => ({ ...requirementProgress(state, req), describe: describeRequirement(content, req) })),
+      }));
+    const ownedCount = varieties.filter((v) => v.owned).length;
+    return {
+      id: set.id,
+      name: set.name,
+      bonusText: bonusText(content, set.bonus),
+      ownedCount,
+      total: varieties.length,
+      complete: varieties.length > 0 && ownedCount === varieties.length,
+      varieties,
+    };
+  });
+}
+
+export function albumSummary(state: GameState, content: Content): { owned: number; total: number } {
+  return { owned: content.varieties.filter((v) => state.collection[v.id] !== undefined).length, total: content.varieties.length };
+}
+
+/** Entradas del diario, de la más reciente a la más antigua. */
+export function journalEntries(state: GameState): { at: number; text: string }[] {
+  return [...state.journal].reverse();
+}

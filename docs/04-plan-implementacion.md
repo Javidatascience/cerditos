@@ -14,7 +14,7 @@
 | 3 | Valle jugable: compras, mejoras y UI de granja | ✅ hecho |
 | 4 | Guardado, offline, exportar/importar | ✅ hecho |
 | 5 | Ascensión, ventajas y autocompra | ✅ hecho |
-| 6 | Colección y diario | ⬜ |
+| 6 | Colección y diario | ✅ |
 | 7 | Multi-mundo y el Bosque (cadena) | ⬜ |
 | 8 | La Huerta (armonía) | ⬜ |
 | 9 | El Balneario (calma) y bonos entre mundos | ⬜ |
@@ -442,3 +442,20 @@ Ajustes**, no prevista explícitamente en la lista de archivos del hito pero ped
 propia tarea 3 ("Ajuste autobuyEnabled para pausarla"): sin una forma de cambiar ese ajuste
 desde la UI, el campo `settings.autobuyEnabled` (que ya existía desde el hito 1) quedaría sin
 ningún uso real.
+
+**2026-10-02 (hito 6) — la adopción de variedades vive dentro de `advance()`** (02 §4 paso 3),
+a diferencia del hito 5. Como `core` no puede usar `Date.now()`, la hora de adopción y de las
+entradas del diario que escribe `advance` sale de `gameClockMs(state) = createdAt + time·1000`
+(`core/journal.ts`), un pseudo-epoch que coincide con el reloj real mientras no haya saltos.
+`ascend` y `storage.ts` también usan `addEntry` (tope de 100 entradas).
+
+**2026-10-02 (hito 6) — `totalCostMultiplier`** (formulas.ts) = ventajas × bono de coste de la
+colección (set Curiosos −5 %); lo usan `buyGenerator`, selectors y autobuy en lugar de
+`perkCostMultiplier`. El precio unitario de las mejoras de generador sigue sin multiplicador de
+coste, igual que `tools/sim`.
+
+**2026-10-02 (hito 6) — el álbum se construye desde selectors** (`albumViews`,
+`describeRequirement`, `journalEntries`), no hay lógica en la vista. Con 7 pestañas se redujo
+el padding/tamaño de fuente de la barra inferior. El requisito `harmony` lee
+`records.maxHarmony`, que `core` no actualiza hasta el hito 8. En `parity.test.ts` el bucle de
+24 h llama a `sim.updateCollectionAndUnlocks` porque ahora `advance()` adopta variedades.
