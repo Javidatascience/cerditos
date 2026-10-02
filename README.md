@@ -15,7 +15,7 @@ npm run preview    # sirve el build
 ### A) Rápido, en tu red wifi (solo el juego, sin instalarlo)
 
 1. Móvil y PC en la misma wifi.
-2. En el PC: `npm run build && npm run preview -- --host` (o `npm run dev -- --host`).
+2. En el PC, en dos pasos (en PowerShell 5 no existe `&&`): `npm run build` y luego `npm run preview -- --host` (o solo `npm run dev -- --host`).
 3. En el móvil, abre la dirección "Network" que imprime Vite (algo como `http://192.168.1.17:4173`).
 4. Si no carga, el cortafuegos de Windows está bloqueando el puerto: permite Node.js en redes privadas.
 
@@ -25,8 +25,23 @@ Aquí el juego funciona y guarda la partida, pero **no es instalable ni funciona
 
 Dos caminos:
 
-- **Túnel temporal** (para probar ya): `npm run build && npm run preview`, y en otra terminal `npx cloudflared tunnel --url http://localhost:4173` (o `ngrok http 4173`). Abre en el móvil la URL `https://…` que te dé.
-- **GitHub Pages** (permanente): sube el repo a GitHub, en *Settings → Pages* elige *GitHub Actions* como origen y haz push a `main`: el flujo [.github/workflows/deploy.yml](.github/workflows/deploy.yml) compila y publica en `https://<usuario>.github.io/<repo>/`. (`base: './'` hace que funcione en ese subdirectorio.)
+- **Túnel temporal** (para probar ya): `npm run build`, luego `npm run preview`, y en otra terminal `npx cloudflared tunnel --url http://localhost:4173` (o `ngrok http 4173`). Abre en el móvil la URL `https://…` que te dé.
+- **GitHub Pages** (permanente, ver más abajo): el flujo [.github/workflows/deploy.yml](.github/workflows/deploy.yml) compila y publica en `https://<usuario>.github.io/<repo>/`. (`base: './'` hace que funcione en ese subdirectorio.)
+
+### Publicar en GitHub Pages (una vez)
+
+1. En github.com: **New repository** (nombre p. ej. `cerditos`, **público**: Pages gratis lo exige; sin README ni .gitignore).
+2. En la carpeta del proyecto (PowerShell), con la URL que te dé GitHub:
+
+```powershell
+git remote add origin https://github.com/TU_USUARIO/cerditos.git
+git push -u origin main
+```
+
+3. En el repo: **Settings → Pages → Source: GitHub Actions**. El flujo [deploy.yml](.github/workflows/deploy.yml) compila, pasa los tests y publica en cada push a `main`. En la pestaña **Actions** ves el progreso.
+4. Tu juego queda en `https://TU_USUARIO.github.io/cerditos/`. Ábrelo en Safari desde el iPhone.
+
+Cada `git push` posterior publica la versión nueva, y la app instalada la aplica sola la siguiente vez que se abre.
 
 ### Instalar en iPhone
 

@@ -551,3 +551,20 @@ export function achievementViews(state: GameState, content: Content): Achievemen
 export function visitorInjectionValue(state: GameState, content: Content, worldId: WorldId): Decimal {
   return displayProductionPerSecond(state, content, worldId).mul(VISITOR_INJECTION_SECONDS);
 }
+
+/**
+ * El próximo cerdito por descubrir (aunque no se vea): segundos hasta poder pagar su primera
+ * unidad al ritmo actual (`null` si no se produce nada). `null` si ya están todos descubiertos.
+ */
+export function nextDiscovery(state: GameState, content: Content, worldId: WorldId): { etaSeconds: number | null } | null {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (!worldState || worldState.revealed >= world.generators.length) return null;
+  const gen = world.generators[worldState.revealed];
+  if (!gen) return null;
+  const cost = generatorCost(world, gen, worldState.generators[gen.id]?.bought ?? 0, perkCostGrowthDelta(state, content, worldId), totalCostMultiplier(state, content, worldId));
+  const missing = cost.sub(worldState.currency);
+  if (missing.lte(0)) return { etaSeconds: 0 };
+  const rate = displayProductionPerSecond(state, content, worldId);
+  return { etaSeconds: rate.gt(0) ? missing.div(rate).toNumber() : null };
+}

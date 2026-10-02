@@ -6,7 +6,7 @@
 // cambiar de mundo.
 
 import { buyGenerator, buyRow, collectBasket, setBuyAmount, tap, tapValue, type BuyAmount } from '../../core/actions.ts';
-import { basketView, calmView, cheapestPendingPurchase, generatorViews, harmonyView } from '../../core/selectors.ts';
+import { basketView, calmView, cheapestPendingPurchase, generatorViews, harmonyView, nextDiscovery } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { generatorIcon } from '../art.ts';
@@ -86,7 +86,8 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       return item;
     }),
   );
-  const moreHint = h('p', { className: 'more-hint hidden' }, ['Hay más cerditos por descubrir.']);
+  const moreHintText = document.createTextNode('');
+  const moreHint = h('p', { className: 'more-hint hidden' }, [moreHintText]);
 
   // Armonía (Huerta): indicador de filas y botón "Completar fila" (solo en ese mundo).
   const harmonyText = document.createTextNode('');
@@ -145,7 +146,12 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       setDisabled(row.buyButton, teaser || !view.canAfford);
       row.buyButton.tabIndex = teaser ? -1 : 0;
     }
-    setClass(moreHint, 'hidden', !views.some((v) => v.reveal !== 'visible'));
+    const discovery = nextDiscovery(state, ctx.content, worldId);
+    setClass(moreHint, 'hidden', discovery === null);
+    if (discovery) {
+      const wait = discovery.etaSeconds === null ? '' : discovery.etaSeconds <= 0 ? ' ya casi' : ` te falta ${formatDuration(discovery.etaSeconds)}`;
+      setText(moreHintText, `???${wait ? ` —${wait}` : ''}. Hay más cerditos por descubrir.`);
+    }
 
     const harmony = harmonyView(state, ctx.content, worldId);
     setClass(harmonyBlock, 'hidden', harmony === null);

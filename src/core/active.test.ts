@@ -6,6 +6,7 @@ import { BASKET_CAP_SECONDS, BASKET_RATE, basketSeconds, basketValue } from './b
 import { displayProductionPerSecond } from './formulas.ts';
 import { D } from './num.ts';
 import { updateReveals } from './reveal.ts';
+import { nextDiscovery } from './selectors.ts';
 import { createInitialState, type GameState } from './state.ts';
 import { advance } from './tick.ts';
 
@@ -122,5 +123,24 @@ describe('logros', () => {
     expect(achievementProgress(state, { kind: 'worldUnlocked', world: 'bosque' }).done).toBe(false);
     state.worlds['bosque']!.unlocked = true;
     expect(achievementProgress(state, { kind: 'worldUnlocked', world: 'bosque' }).done).toBe(true);
+  });
+});
+
+describe('próximo cerdito por descubrir', () => {
+  it('da el tiempo que falta para poder pagarlo y desaparece al descubrirlos todos', () => {
+    const state = createInitialState(CONTENT, 0);
+    const ws = state.worlds['valle']!;
+    ws.generators['lechon']!.owned = D(10); // 5/s
+    ws.currency = D(0); // Cerdita rosa cuesta 110
+    const found = nextDiscovery(state, CONTENT, 'valle')!;
+    expect(found.etaSeconds).toBeCloseTo(110 / 5, 6);
+    ws.revealed = 8;
+    expect(nextDiscovery(state, CONTENT, 'valle')).toBeNull();
+  });
+
+  it('sin producción no hay tiempo estimado, y en la armonía no hay nada por descubrir', () => {
+    const state = createInitialState(CONTENT, 0);
+    expect(nextDiscovery(state, CONTENT, 'valle')).toEqual({ etaSeconds: null });
+    expect(nextDiscovery(state, CONTENT, 'huerta')).toBeNull();
   });
 });
