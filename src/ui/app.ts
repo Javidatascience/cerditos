@@ -7,12 +7,13 @@
 // `ctx.activeWorld()` al montarse.
 
 import type { Content } from '../content/types.ts';
-import { setActiveWorld } from '../core/actions.ts';
-import { headerView, worldTabs } from '../core/selectors.ts';
+import { claimVisitor, setActiveWorld, VISITOR_BOOST } from '../core/actions.ts';
+import { headerView, visitorInjectionValue, worldTabs } from '../core/selectors.ts';
 import type { GameState, WorldId } from '../core/state.ts';
 import { h, setClass, setText } from './dom.ts';
-import { WORLD_EMOJI } from './art.ts';
-import { formatNumber } from './format.ts';
+import { WORLD_EMOJI, worldBanner } from './art.ts';
+import { formatDuration, formatNumber } from './format.ts';
+import type { VisitorScheduler } from './visitor.ts';
 import { mountAlbumView } from './views/albumView.ts';
 import { mountAscendView } from './views/ascendView.ts';
 import { mountFarmView } from './views/farmView.ts';
@@ -59,7 +60,7 @@ export interface App {
   update(state: GameState): void;
 }
 
-export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}): App {
+export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}, visitor: VisitorScheduler | null = null): App {
   const worldNameText = document.createTextNode('');
   const currencyText = document.createTextNode('');
   const perSecondText = document.createTextNode('');
@@ -106,6 +107,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   const worldHint = h('p', { className: 'world-hint hidden' });
   let tabsSignature = '';
   let shownWorld = state.activeWorld;
+  let bannerWorld = '';
 
   function renderWorldTabs(): void {
     const tabs = worldTabs(state, content);
@@ -130,14 +132,50 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     );
   }
 
+  // Escena del mundo detrás de la cabecera (estática; cambia al cambiar de mundo).
+  const bannerSlot = h('div', { className: 'banner-slot' });
+  const header = h('header', { className: 'app-header' }, [
+    bannerSlot,
+    h('div', { className: 'header-text' }, [
+      h('div', { className: 'world-name' }, [worldNameText]),
+      h('div', { className: 'currency-row' }, [currencyText]),
+      h('div', { className: 'per-second-row' }, [perSecondText]),
+    ]),
+  ]);
+
+  // Cerdito viajero: una tarjeta fija bajo las pestañas de mundo (nada de ventanas emergentes).
+  const visitorSlot = h('div', { className: 'visitor-slot' });
+  let shownVisitor: string | null = null;
+
+  function renderVisitor(): void {
+    const kind = visitor?.current() ?? null;
+    const signature = kind ? `${kind}:${state.activeWorld}` : null;
+    if (kind && signature !== shownVisitor) {
+      const notation = state.settings.notation;
+      const world = content.worlds.find((w) => w.id === state.activeWorld);
+      const text =
+        kind === 'injection'
+          ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content, state.activeWorld), notation)} ${world?.currency.toLowerCase() ?? ''}.`
+          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción durante ${formatDuration(VISITOR_BOOST.seconds)}.`;
+      const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
+      accept.addEventListener('click', () => {
+        dispatch((s) => claimVisitor(s, content, kind, s.activeWorld));
+        visitor?.clear();
+        renderVisitor();
+      });
+      visitorSlot.replaceChildren(h('div', { className: 'visitor-card' }, [h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, ['🐷']), h('span', { className: 'visitor-text' }, [text]), accept]));
+      shownVisitor = signature;
+    } else if (!kind && shownVisitor !== null) {
+      visitorSlot.replaceChildren();
+      shownVisitor = null;
+    }
+  }
+
   root.appendChild(
     h('div', { className: 'app' }, [
-      h('header', { className: 'app-header' }, [
-        h('div', { className: 'world-name' }, [worldNameText]),
-        h('div', { className: 'currency-row' }, [currencyText]),
-        h('div', { className: 'per-second-row' }, [perSecondText]),
-      ]),
+      header,
       h('div', { className: 'world-bar' }, [worldTabsRow, worldHint]),
+      visitorSlot,
       viewContainer,
       nav,
     ]),
@@ -155,12 +193,18 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       }
     }
     document.documentElement.dataset.world = state.activeWorld; // el CSS pone el color del mundo
+    if (bannerWorld !== state.activeWorld) {
+      bannerWorld = state.activeWorld;
+      bannerSlot.replaceChildren(worldBanner(state.activeWorld));
+    }
+    renderVisitor();
     renderWorldTabs();
-    const header = headerView(state, content, state.activeWorld);
+    const headerData = headerView(state, content, state.activeWorld);
     const notation = state.settings.notation;
-    setText(worldNameText, header.worldName);
-    setText(currencyText, `${header.currencyName}: ${formatNumber(header.currency, notation)}`);
-    setText(perSecondText, `+${formatNumber(header.perSecond, notation)}/s`);
+    setText(worldNameText, headerData.worldName);
+    setText(currencyText, `${headerData.currencyName}: ${formatNumber(headerData.currency, notation)}`);
+    const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
+    setText(perSecondText, `+${formatNumber(headerData.perSecond, notation)}/s${buff}`);
     activeView?.update(state);
   }
 

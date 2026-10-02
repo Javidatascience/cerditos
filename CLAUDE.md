@@ -49,13 +49,13 @@ npm run sim:typecheck
 
 ## Reglas anti-dopamina (requisitos, no preferencias)
 
-1. Nada aleatorio que afecte al progreso: ni cajas, ni gacha, ni botín, ni críticos, ni eventos sorpresa.
+1. Nada aleatorio que afecte al progreso: ni cajas, ni gacha, ni botín, ni críticos. **Excepción decidida por el usuario (2026-10-02):** el cerdito viajero (`ui/visitor.ts`), cuyo momento de llegada y tipo de recompensa (inyección de moneda o impulso ×5 durante 60 s) son aleatorios, pero la cuantía es fija, se queda hasta aceptarlo y solo cuenta con el juego abierto. El azar vive fuera de `core`.
 2. Sin urgencia: nada caduca, sin ofertas temporales ni eventos de temporada.
 3. Sin rachas ni recompensas diarias. Offline al 100 %: ausentarse no se castiga.
 4. Sin notificaciones push, badges ni petición de permisos.
 5. Sin destellos, confeti, sacudidas, números que saltan, sonidos ni vibración. Como mucho transiciones de opacidad ≤ 150 ms; nada con `prefers-reduced-motion`.
 6. Sin pantallazos de recompensa: los logros van al Diario de la granja.
-7. Sin clic compulsivo: el toque ("Rascar la barriga") da +1 y no escala.
+7. Sin clic compulsivo, **revisada por el usuario (2026-10-02):** el toque ("Rascar la barriga") da 1 s de tu producción (mínimo 1) y se muestra lo que da. Sigue sin haber mejoras de toque ni combos.
 8. Sin monetización, publicidad ni moneda premium.
 9. Toda condición de progreso es visible (requisitos de variedades con su progreso, umbrales de mundos).
 10. Sin comparación social.
@@ -64,4 +64,4 @@ Si una tarea parece requerir romper alguna, parar y preguntar.
 
 ## Estado actual
 
-Hitos 0-9 y 11 hechos (los 4 mundos jugables, ascensión, ventajas, colección, diario, guardado, offline, tema claro/oscuro). El hito 10 (PWA) se saltó a petición del usuario. Pendiente: pulido gráfico (maquetación móvil, ilustraciones) y la semana de prueba manual. Ver la tabla de docs/04.
+Hitos 0-9, 11 y 12 hechos (los 4 mundos jugables, ascensión, ventajas, colección, logros, diario, guardado v2, offline, tema claro/oscuro, cesta de la granja, cerdito viajero). El hito 10 (PWA) se saltó a petición del usuario. Pendiente: más pulido gráfico a gusto del usuario y la semana de prueba manual. Ver la tabla de docs/04.

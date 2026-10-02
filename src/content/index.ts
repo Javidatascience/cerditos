@@ -1,5 +1,6 @@
 // Contenido completo del juego (hito 2). Ver docs/02-arquitectura.md §7.
 
+import { ACHIEVEMENTS } from './achievements.ts';
 import { SETS, VARIETIES } from './collection.ts';
 import { PERKS } from './perks.ts';
 import type { Content } from './types.ts';
@@ -13,4 +14,5 @@ export const CONTENT: Content = {
   perks: PERKS,
   varieties: VARIETIES,
   sets: SETS,
+  achievements: ACHIEVEMENTS,
 };

@@ -22,7 +22,7 @@ function baseWorld(): WorldDef {
 }
 
 function baseContent(): Content {
-  return { worlds: [baseWorld()], perks: [], varieties: [], sets: [] };
+  return { worlds: [baseWorld()], perks: [], varieties: [], sets: [], achievements: [] };
 }
 
 describe('validateContent', () => {

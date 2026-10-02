@@ -2,9 +2,9 @@
 // No vive en src/core/: core no sabe nada de guardado, solo del estado en memoria.
 
 import { Decimal } from '../core/num.ts';
-import type { GameState, GeneratorState, JournalEntry, Settings, WorldState } from '../core/state.ts';
+import type { Buff, GameState, GeneratorState, JournalEntry, Settings, WorldState } from '../core/state.ts';
 
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 export interface SerializedGeneratorState {
   bought: number;
@@ -25,6 +25,8 @@ export interface SerializedWorldState {
   runSeconds: number;
   calm: number;
   calmPenaltyUntil: number;
+  revealed: number;
+  basketSince: number;
   records: { maxBought: Record<string, number>; maxHarmony: number };
 }
 
@@ -36,6 +38,9 @@ export interface SerializedGameState {
   activeWorld: string;
   worlds: Record<string, SerializedWorldState>;
   collection: Record<string, { adoptedAt: number }>;
+  achievements: Record<string, { at: number }>;
+  taps: number;
+  buff: Buff | null;
   journal: JournalEntry[];
   settings: Settings;
 }
@@ -73,6 +78,8 @@ function serializeWorld(w: WorldState): SerializedWorldState {
     runSeconds: w.runSeconds,
     calm: w.calm,
     calmPenaltyUntil: w.calmPenaltyUntil,
+    revealed: w.revealed,
+    basketSince: w.basketSince,
     records: { maxBought: { ...w.records.maxBought }, maxHarmony: w.records.maxHarmony },
   };
 }
@@ -94,6 +101,8 @@ function deserializeWorld(w: SerializedWorldState): WorldState {
     runSeconds: w.runSeconds,
     calm: w.calm,
     calmPenaltyUntil: w.calmPenaltyUntil,
+    revealed: w.revealed,
+    basketSince: w.basketSince,
     records: { maxBought: { ...w.records.maxBought }, maxHarmony: w.records.maxHarmony },
   };
 }
@@ -113,6 +122,9 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       activeWorld: state.activeWorld,
       worlds,
       collection: Object.fromEntries(Object.entries(state.collection).map(([id, v]) => [id, { ...v }])),
+      achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
+      taps: state.taps,
+      buff: state.buff ? { ...state.buff } : null,
       journal: state.journal.map((e) => ({ ...e })),
       settings: { ...state.settings },
     },
@@ -130,6 +142,9 @@ export function deserialize(data: SaveData): GameState {
     activeWorld: data.state.activeWorld,
     worlds,
     collection: Object.fromEntries(Object.entries(data.state.collection).map(([id, v]) => [id, { ...v }])),
+    achievements: Object.fromEntries(Object.entries(data.state.achievements).map(([id, v]) => [id, { ...v }])),
+    taps: data.state.taps,
+    buff: data.state.buff ? { ...data.state.buff } : null,
     journal: data.state.journal.map((e) => ({ ...e })),
     settings: { ...data.state.settings },
   };

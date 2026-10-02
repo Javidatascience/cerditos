@@ -144,13 +144,13 @@ Lo que **no** hacemos: convertir una moneda en otra, ni que las plumas de un mun
 
 Estas reglas son **requisitos**, no preferencias. Cualquier tarea que las contradiga está mal planteada.
 
-1. **Nada aleatorio** que afecte al progreso: ni cajas, ni gacha, ni botín, ni "críticos", ni eventos sorpresa, ni cerdito dorado que aparece al azar.
+1. **Nada aleatorio** que afecte al progreso: ni cajas, ni gacha, ni botín, ni "críticos". *Excepción (decisión del usuario, 2026-10-02): el **cerdito viajero**. Llega al azar (cada 5-10 min con el juego abierto, nunca offline) y trae, también al azar, una inyección de 10 min de producción o un ×5 durante 60 s. La cuantía es fija, no caduca (espera hasta aceptarlo) y no hay nada que perder por no estar.*
 2. **Nada de urgencia**: sin temporizadores que caduquen, sin ofertas por tiempo limitado, sin eventos de temporada que se pierden.
 3. **Sin rachas** ni recompensas diarias por entrar. Sin penalización por ausencia (offline al 100 %).
 4. **Sin notificaciones** push, sin badges en el icono, sin pedir permisos de notificación.
 5. **Sin estímulos agresivos**: sin destellos, confeti, sacudidas de pantalla, números que saltan, contadores que giran, sonidos, vibración. Transiciones ≤ 150 ms de opacidad como mucho.
 6. **Sin pantallazos de recompensa** a pantalla completa. Los logros y variedades se anotan en el Diario.
-7. **Sin mecánicas de clic compulsivo**: el toque no escala.
+7. **Sin mecánicas de clic compulsivo**: el toque da 1 s de tu producción (decisión del usuario, 2026-10-02), pero no hay mejoras de toque ni combos. Además de eso, la **cesta de la granja** (determinista, con tope de 30 min) da un empujón a quien visita a menudo.
 8. **Sin monetización** ni publicidad, ni moneda premium, ni "acelerar con dinero".
 9. **Sin información oculta** sobre cómo progresar: todo requisito es visible.
 10. **Sin comparación social** (rankings, amigos) en la v1.

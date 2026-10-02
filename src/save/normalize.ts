@@ -32,6 +32,8 @@ function normalizeWorldState(w: WorldState, world: WorldDef, content: Content): 
   for (const id of Object.keys(w.generators)) if (!validGenIds.has(id)) delete w.generators[id];
   for (const id of Object.keys(w.records.maxBought)) if (!validGenIds.has(id)) delete w.records.maxBought[id];
 
+  w.revealed = Math.min(world.generators.length, Math.max(1, Math.floor(w.revealed)));
+
   const validUpgradeIds = validUpgradeIdsFor(world);
   for (const id of Object.keys(w.upgrades)) if (!validUpgradeIds.has(id)) delete w.upgrades[id];
 
@@ -57,6 +59,9 @@ export function normalize(state: GameState, content: Content): GameState {
 
   const validVarietyIds = new Set(content.varieties.map((v) => v.id));
   for (const id of Object.keys(state.collection)) if (!validVarietyIds.has(id)) delete state.collection[id];
+
+  const validAchievementIds = new Set(content.achievements.map((a) => a.id));
+  for (const id of Object.keys(state.achievements)) if (!validAchievementIds.has(id)) delete state.achievements[id];
 
   return state;
 }

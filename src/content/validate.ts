@@ -74,6 +74,22 @@ export function validateContent(content: Content): string[] {
     }
   }
 
+  const achievementIds = new Set<string>();
+  for (const a of content.achievements) {
+    if (achievementIds.has(a.id)) errors.push(`Logro duplicado: ${a.id}`);
+    achievementIds.add(a.id);
+    const req = a.requires;
+    if (req.kind === 'worldUnlocked') {
+      if (!worldIds.has(req.world)) errors.push(`${a.id}: mundo desconocido en requisito (${req.world})`);
+    } else if (req.kind === 'varietyCount') {
+      if (req.count <= 0 || req.count > content.varieties.length) errors.push(`${a.id}: varietyCount fuera de rango`);
+    } else if (req.kind === 'taps') {
+      if (req.count <= 0) errors.push(`${a.id}: count debe ser > 0`);
+    } else {
+      errors.push(...validateRequirement(a.id, req, worldIds, content, varietyIds));
+    }
+  }
+
   return errors;
 }
 

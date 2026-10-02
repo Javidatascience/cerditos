@@ -7,6 +7,7 @@ import { runAutobuyForAllWorlds } from './core/autobuy.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { mountApp } from './ui/app.ts';
+import { createVisitorScheduler } from './ui/visitor.ts';
 import { showOfflineSummary } from './ui/views/offlineSummary.ts';
 import { createLocalStorageStorage, loadGame, saveGame } from './save/storage.ts';
 
@@ -37,7 +38,8 @@ function persist(): void {
   saveGame(storage, state, Date.now());
 }
 
-const app = mountApp(root, CONTENT, state, persist);
+const visitor = createVisitorScheduler();
+const app = mountApp(root, CONTENT, state, persist, visitor);
 
 if (pendingOfflineSummary && pendingOfflineSummary.awaySeconds > OFFLINE_SUMMARY_THRESHOLD_SECONDS) {
   showOfflineSummary(document.body, pendingOfflineSummary, CONTENT, state.settings.notation, () => app.update(state));
@@ -54,6 +56,7 @@ setInterval(() => {
   } else {
     advance(state, CONTENT, dt);
     runAutobuyForAllWorlds(state, CONTENT);
+    visitor.tick(dt); // solo cuenta el tiempo con el juego abierto, nunca el offline
   }
   app.update(state);
 }, TICK_MS);

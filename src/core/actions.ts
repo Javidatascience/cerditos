@@ -12,6 +12,7 @@ import {
   maxAffordable,
   perkAvailable,
   perkCost,
+  displayProductionPerSecond,
   perkCostGrowthDelta,
   totalCostMultiplier,
   plumasPending,
@@ -20,17 +21,64 @@ import {
 import { addEntry } from './journal.ts';
 import { touchCalm } from './mechanics/calm.ts';
 import { harmonyLevel, lowestGenerators } from './mechanics/harmony.ts';
-import { D } from './num.ts';
-import type { Decimal } from './num.ts';
+import { basketValue } from './basket.ts';
+import { D, Decimal } from './num.ts';
 import type { GameState, GeneratorId, PerkId, Settings, UpgradeId, WorldId } from './state.ts';
 
 export type BuyAmount = 1 | 10 | 'max';
 
-/** Rasca la barriga de un cerdito: +1 a la moneda del mundo. No escala (regla anti-clic, CLAUDE.md). */
-export function tap(state: GameState, worldId: WorldId): void {
+/** Segundos de producción que da cada toque (con un mínimo de 1 de moneda). */
+export const TAP_SECONDS = 1;
+
+/** Lo que daría rascar la barriga ahora: TAP_SECONDS de producción, mínimo 1. */
+export function tapValue(state: GameState, content: Content, worldId: WorldId): Decimal {
+  return Decimal.max(1, displayProductionPerSecond(state, content, worldId).mul(TAP_SECONDS));
+}
+
+/** Rasca la barriga: da `tapValue` de moneda (no cuenta como producción para plumas). Devuelve lo dado. */
+export function tap(state: GameState, content: Content, worldId: WorldId): Decimal {
   const worldState = state.worlds[worldId];
-  if (!worldState) return;
-  worldState.currency = worldState.currency.add(1);
+  if (!worldState) return D(0);
+  const gain = tapValue(state, content, worldId);
+  worldState.currency = worldState.currency.add(gain);
+  state.taps += 1;
+  return gain;
+}
+
+/** Recoge la cesta de la granja: suma su valor a la moneda y la vacía. Devuelve lo recogido. */
+export function collectBasket(state: GameState, content: Content, worldId: WorldId): Decimal {
+  const worldState = state.worlds[worldId];
+  if (!worldState || !worldState.unlocked) return D(0);
+  const gain = basketValue(state, content, worldId);
+  worldState.currency = worldState.currency.add(gain);
+  worldState.runEarned = worldState.runEarned.add(gain);
+  worldState.lifetimeEarned = worldState.lifetimeEarned.add(gain);
+  worldState.basketSince = state.time;
+  return gain;
+}
+
+export type VisitorKind = 'injection' | 'boost';
+
+/** Minutos de producción que da la inyección de un visitante. */
+export const VISITOR_INJECTION_SECONDS = 600;
+/** Multiplicador y duración del impulso de un visitante. */
+export const VISITOR_BOOST = { mult: 5, seconds: 60 };
+
+/**
+ * Recompensa de un cerdito viajero: `injection` = 10 min de producción del mundo activo de golpe;
+ * `boost` = ×5 de producción en todos los mundos durante 60 s de juego.
+ */
+export function claimVisitor(state: GameState, content: Content, kind: VisitorKind, worldId: WorldId): void {
+  if (kind === 'boost') {
+    state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
+    return;
+  }
+  const worldState = state.worlds[worldId];
+  if (!worldState || !worldState.unlocked) return;
+  const gain = displayProductionPerSecond(state, content, worldId).mul(VISITOR_INJECTION_SECONDS);
+  worldState.currency = worldState.currency.add(gain);
+  worldState.runEarned = worldState.runEarned.add(gain);
+  worldState.lifetimeEarned = worldState.lifetimeEarned.add(gain);
 }
 
 /**

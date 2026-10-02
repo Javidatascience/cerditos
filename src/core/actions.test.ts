@@ -9,11 +9,12 @@ const world = getWorldDef(CONTENT, 'valle');
 const lechon = getGeneratorDef(world, 'lechon');
 
 describe('tap', () => {
-  it('suma 1 a la moneda del mundo', () => {
+  it('sin producción suma 1 a la moneda del mundo', () => {
     const state = createInitialState(CONTENT, 0);
     const before = state.worlds['valle']!.currency.toNumber();
-    tap(state, 'valle');
+    tap(state, CONTENT, 'valle');
     expect(state.worlds['valle']!.currency.toNumber()).toBe(before + 1);
+    expect(state.taps).toBe(1);
   });
 });
 

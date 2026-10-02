@@ -1,16 +1,17 @@
-// Vista "Mejoras": mejoras disponibles (por cerdito y globales) ordenadas por coste, y las ya
-// compradas en un desplegable. Ver docs/02-arquitectura.md §8.
-//
-// La lista se reconstruye entera en cada `update` (en vez de actualizar nodo a nodo): el
-// número de mejoras disponibles cambia con el tiempo (aparecen y desaparecen al comprarlas),
-// y con como mucho una veintena de filas no compensa la complejidad de llevar un diff.
+// Vista "Mejoras": las mejoras disponibles con la imagen del cerdito al que mejoran (o un icono
+// para las globales), su efecto y su coste; y un desplegable con las ya compradas. Ver docs/01 §4.
+// La lista se sincroniza por clave (dom.ts > createListSync) para que los botones no se
+// recreen cada 250 ms y un clic nunca se pierda.
 
 import { buyUpgrade } from '../../core/actions.ts';
-import { purchasedUpgradeViews, upgradeViews } from '../../core/selectors.ts';
+import { purchasedUpgradeViews, upgradeViews, type UpgradeView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { h, setClass, setText } from '../dom.ts';
+import { generatorIcon, upgradeBadge } from '../art.ts';
+import { createListSync, h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
+
+type UpgradeRow = UpgradeView & { costText: string };
 
 export function mountUpgradesView(root: HTMLElement, ctx: UiContext): View {
   const worldId = ctx.activeWorld();
@@ -27,25 +28,43 @@ export function mountUpgradesView(root: HTMLElement, ctx: UiContext): View {
   const container = h('div', { className: 'upgrades-view' }, [list, emptyText, purchasedToggle, purchasedList]);
   root.appendChild(container);
 
+  const syncOffers = createListSync<UpgradeRow>(
+    list,
+    (offer) => offer.id,
+    (offer) => {
+      const costText = document.createTextNode('');
+      const nameText = document.createTextNode('');
+      const effectText = document.createTextNode('');
+      const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
+      buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyUpgrade(s, ctx.content, worldId, offer.id)));
+      const art = offer.genIndex !== null ? generatorIcon(worldId, offer.genIndex, world.generators[offer.genIndex]?.id) : upgradeBadge(offer.id, worldId);
+      const el = h('li', { className: 'upgrade-row' }, [
+        h('div', { className: 'row-art' }, [art, h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'upgrade-effect' }, [effectText])])]),
+        buyButton,
+      ]);
+      return {
+        el,
+        update: (o) => {
+          setText(nameText, o.name);
+          setText(effectText, o.effectText);
+          setText(costText, o.costText);
+          setDisabled(buyButton, !o.canAfford);
+        },
+      };
+    },
+  );
+
   function update(state: GameState): void {
     const notation = state.settings.notation;
     const offers = upgradeViews(state, ctx.content, worldId);
-    list.replaceChildren(
-      ...offers.map((offer) => {
-        const buyButton = h('button', { className: 'buy-button' }, [formatNumber(offer.cost, notation)]) as HTMLButtonElement;
-        if (!offer.canAfford) buyButton.disabled = true;
-        buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyUpgrade(s, ctx.content, worldId, offer.id)));
-        return h('li', { className: 'upgrade-row' }, [
-          h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [offer.name]), h('span', { className: 'upgrade-effect' }, [offer.effectText])]),
-          buyButton,
-        ]);
-      }),
-    );
+    syncOffers(offers.map((o) => ({ ...o, costText: formatNumber(o.cost, notation) })));
     setClass(emptyText, 'hidden', offers.length > 0);
 
     const purchased = purchasedUpgradeViews(state, ctx.content, worldId);
     setText(purchasedToggle, `Mejoras compradas (${purchased.length})`);
-    purchasedList.replaceChildren(...purchased.map((p) => h('li', { className: 'purchased-row' }, [p.name])));
+    if (purchasedList.childElementCount !== purchased.length) {
+      purchasedList.replaceChildren(...purchased.map((p) => h('li', { className: 'purchased-row' }, [p.name])));
+    }
   }
 
   return {

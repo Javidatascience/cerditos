@@ -2,7 +2,9 @@
 // llamar a formulas.ts directamente desde ui/. Ver docs/02-arquitectura.md §4 y §8.
 
 import { generatorUpgradeName } from '../content/upgrades.ts';
-import type { Bonus, Content, GeneratorDef, PerkDef, Requirement, WorldDef } from '../content/types.ts';
+import type { AchievementReq, Bonus, Content, GeneratorDef, PerkDef, Requirement, WorldDef } from '../content/types.ts';
+import { achievementProgress } from './achievements.ts';
+import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
 import { requirementProgress } from './collection.ts';
 import {
   availableUpgrades,
@@ -28,7 +30,7 @@ import { D, Decimal } from './num.ts';
 import { calmMultiplier, purchaseWouldDisturb } from './mechanics/calm.ts';
 import { harmonyLevel, harmonyMultiplier, lowestGenerators, nextHarmonyThreshold } from './mechanics/harmony.ts';
 import { unlockProgress } from './unlocks.ts';
-import { rowBundleCost, type BuyAmount } from './actions.ts';
+import { rowBundleCost, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import type { GameState, PerkId, WorldId, WorldState } from './state.ts';
 
 export interface HeaderView {
@@ -95,6 +97,14 @@ export interface GeneratorView {
   canAfford: boolean;
   /** Armonía: este cerdito está en el mínimo (el que frena la fila). */
   atMinimum: boolean;
+  /** Posición (0-based) del cerdito en el mundo. */
+  index: number;
+  /** Lo que produce UNA unidad sola (por segundo; en la cadena, del nivel inferior). */
+  unitProd: Decimal;
+  /** 'visible' = descubierto; 'teaser' = el siguiente, difuminado; 'hidden' = aún no se muestra. */
+  reveal: 'visible' | 'teaser' | 'hidden';
+  /** 0..1: lo cerca que está de poder pagar la primera unidad (para difuminar menos). */
+  closeness: number;
 }
 
 export function generatorViews(state: GameState, content: Content, worldId: WorldId): GeneratorView[] {
@@ -128,6 +138,10 @@ export function generatorViews(state: GameState, content: Content, worldId: Worl
       amountToBuy,
       canAfford: amountToBuy > 0 && worldState.currency.gte(nextCost),
       atMinimum: lowest.has(gen.id),
+      index: k,
+      unitProd: D(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m * calmFactor),
+      reveal: k < worldState.revealed ? 'visible' : k === worldState.revealed ? 'teaser' : 'hidden',
+      closeness: Math.min(1, Math.max(0, worldState.currency.div(generatorCost(world, gen, bought, costDelta, costMult)).toNumber())),
     };
   });
 }
@@ -203,7 +217,7 @@ export function cheapestPendingPurchase(state: GameState, content: Content, worl
   const worldState = state.worlds[worldId];
   if (!worldState) return null;
   const views = generatorViews(state, content, worldId);
-  const pending = views.filter((v) => !v.canAfford);
+  const pending = views.filter((v) => v.reveal === 'visible' && !v.canAfford);
   if (pending.length === 0) return null;
 
   let cheapest = pending[0];
@@ -224,6 +238,8 @@ export interface UpgradeView {
   effectText: string;
   cost: Decimal;
   canAfford: boolean;
+  /** Posición del cerdito al que mejora (para su imagen); `null` en las mejoras globales. */
+  genIndex: number | null;
 }
 
 function describeUpgrade(world: WorldDef, worldState: WorldState, offer: UpgradeOffer): UpgradeView {
@@ -231,7 +247,7 @@ function describeUpgrade(world: WorldDef, worldState: WorldState, offer: Upgrade
   if (offer.kind === 'generator') {
     const gen = getGeneratorDef(world, offer.genId);
     const mult = world.genUpgrades?.mult ?? 1;
-    return { id: offer.id, name: generatorUpgradeName(world.id, gen, offer.level), effectText: `×${mult} producción de ${gen.name}`, cost: offer.cost, canAfford };
+    return { id: offer.id, name: generatorUpgradeName(world.id, gen, offer.level), effectText: `×${mult} producción de ${gen.name}`, cost: offer.cost, canAfford, genIndex: world.generators.indexOf(gen) };
   }
   const upgrade = world.globalUpgrades.find((u) => u.id === offer.id);
   return {
@@ -240,6 +256,7 @@ function describeUpgrade(world: WorldDef, worldState: WorldState, offer: Upgrade
     effectText: `×${upgrade?.mult ?? 1} a todo el mundo`,
     cost: offer.cost,
     canAfford,
+    genIndex: null,
   };
 }
 
@@ -480,4 +497,57 @@ export function albumSummary(state: GameState, content: Content): { owned: numbe
 /** Entradas del diario, de la más reciente a la más antigua. */
 export function journalEntries(state: GameState): { at: number; text: string }[] {
   return [...state.journal].reverse();
+}
+
+// ---------------------------------------------------------------------------
+// Cesta, logros (hito 12)
+// ---------------------------------------------------------------------------
+
+export interface BasketView {
+  value: Decimal;
+  seconds: number;
+  capSeconds: number;
+  /** 0..1 */
+  fill: number;
+}
+
+export function basketView(state: GameState, content: Content, worldId: WorldId): BasketView {
+  const seconds = basketSeconds(state, worldId);
+  return { value: basketValue(state, content, worldId), seconds, capSeconds: BASKET_CAP_SECONDS, fill: seconds / BASKET_CAP_SECONDS };
+}
+
+export interface AchievementView {
+  id: string;
+  name: string;
+  flavor: string;
+  owned: boolean;
+  requirement: RequirementView;
+}
+
+function describeAchievementReq(content: Content, req: AchievementReq): (format: (n: Decimal) => string) => string {
+  switch (req.kind) {
+    case 'varietyCount':
+      return (f) => `Ten ${f(D(req.count))} variedades en el álbum`;
+    case 'worldUnlocked':
+      return () => `Abre ${content.worlds.find((w) => w.id === req.world)?.name ?? req.world}`;
+    case 'taps':
+      return (f) => `Rasca la barriga ${f(D(req.count))} veces`;
+    default:
+      return describeRequirement(content, req);
+  }
+}
+
+export function achievementViews(state: GameState, content: Content): AchievementView[] {
+  return content.achievements.map((a) => ({
+    id: a.id,
+    name: a.name,
+    flavor: a.flavor,
+    owned: state.achievements[a.id] !== undefined,
+    requirement: { ...achievementProgress(state, a.requires), describe: describeAchievementReq(content, a.requires) },
+  }));
+}
+
+/** Lo que daría una inyección de visitante ahora mismo en `worldId` (moneda). */
+export function visitorInjectionValue(state: GameState, content: Content, worldId: WorldId): Decimal {
+  return displayProductionPerSecond(state, content, worldId).mul(VISITOR_INJECTION_SECONDS);
 }

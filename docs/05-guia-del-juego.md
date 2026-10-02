@@ -17,11 +17,14 @@ Es un juego tranquilo: **no hay azar, nada caduca, nada te mete prisa**. Entrar 
 | **Barra inferior** | Granja · Mejoras · Volar · Ventajas · Álbum · Diario · Ajustes. |
 
 - **Granja**: la lista de cerditos con su coste. Los botones ×1, ×10 y Máx cambian cuántos compras de golpe. Debajo, una barra fina te dice cuánto falta para la próxima compra.
-- **Rascar la barriga**: da +1 de moneda. Solo sirve para arrancar; no mejora ni escala.
-- **Mejoras**: aparecen cuando las puedes aprovechar (ver §3). Las ya compradas están en el desplegable.
+- **Rascar la barriga**: da **1 segundo de tu producción** (lo que da se ve en el botón; mínimo 1). Al principio solo arranca la granja; luego es un empujoncito.
+- **Cesta de la granja**: cada mundo va llenando una cesta con el 25 % de su producción (hasta 30 min). *Recoger* la vacía y la suma a tu moneda. No caduca.
+- **Cerdito viajero**: de vez en cuando (cada 5-10 min con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 de producción durante 60 s. Espera hasta que lo aceptes.
+- **Cerditos por descubrir**: en cada mundo solo se ven los que ya has podido comprar; el siguiente aparece difuminado y un aviso dice que hay más. (En la Huerta se ven todos, porque la armonía los necesita.)
+- **Mejoras**: aparecen cuando las puedes aprovechar (ver §3), con la imagen del cerdito al que mejoran. Las ya compradas están en el desplegable.
 - **Volar**: tu ascensión (§4).
 - **Ventajas**: el árbol permanente comprado con plumas (§5).
-- **Álbum**: las 28 variedades y cómo conseguir cada una (§7).
+- **Álbum**: las 28 variedades y cómo conseguir cada una (§7), y los **logros**: reconocimientos con su requisito visible (no dan bonos; se anotan en el Diario).
 - **Diario**: lo que ha ido pasando (variedades nuevas, mundos abiertos, vuelos). Nunca salta una ventana.
 - **Ajustes**: notación de números, autocompra, exportar/importar la partida como texto y borrarla.
 
@@ -173,4 +176,4 @@ Un par de notas: el requisito "Ten N a la vez" se cuenta con el **máximo que ha
 
 ## 10. Lo que este juego no hace
 
-Sin cajas ni azar, sin ofertas con prisa, sin rachas diarias, sin notificaciones, sin destellos ni sonidos, sin pantallazos de recompensa, sin clics compulsivos, sin compras ni anuncios, sin rankings. Lo que ves es lo que hay.
+Sin cajas ni gacha, sin ofertas con prisa (el único azar es cuándo llega el cerdito viajero y qué trae), sin rachas diarias, sin notificaciones, sin destellos ni sonidos, sin pantallazos de recompensa, sin combos ni mejoras de toque, sin compras ni anuncios, sin rankings. Lo que ves es lo que hay.

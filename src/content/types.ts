@@ -105,4 +105,19 @@ export interface Content {
   perks: PerkDef[];
   varieties: VarietyDef[];
   sets: SetDef[];
+  achievements: AchievementDef[];
+}
+
+/** Requisitos de logro: los de variedades más contadores globales. */
+export type AchievementReq =
+  | Requirement
+  | { kind: 'varietyCount'; count: number }
+  | { kind: 'worldUnlocked'; world: WorldId }
+  | { kind: 'taps'; count: number };
+
+export interface AchievementDef {
+  id: string;
+  name: string;
+  flavor: string;
+  requires: AchievementReq;
 }

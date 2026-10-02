@@ -20,6 +20,7 @@
 | 9 | El Balneario (calma) y bonos entre mundos | ✅ |
 | 10 | PWA en iPhone y escritorio | ⏭ saltado (a petición) |
 | 11 | Pulido visual, textos y accesibilidad | ✅ (salvo la semana de prueba manual) |
+| 12 | Pulido gráfico y juego más activo (extra) | ✅ |
 
 ---
 
@@ -545,3 +546,38 @@ Tabla de estado: el 10 queda como ⏭ saltado (pendiente si se quiere instalar e
 
 **Extra pedido por el usuario**: `docs/05-guia-del-juego.md`, guía para jugadores con las pantallas, los
 cuatro mundos y sus mecánicas, las ventajas y las tablas del álbum (generadas desde el contenido).
+
+---
+
+## Hito 12 · Pulido gráfico y juego más activo (petición del usuario, 2026-10-02)
+
+Fuera del plan original. Decisiones del usuario: cesta de la granja, evento aleatorio y que rascar dé
+segundos de producción (con las reglas anti-dopamina 1 y 7 **revisadas** en CLAUDE.md y docs/01 §11).
+
+**Hecho**
+- **Forma del estado → versión 2** (`CURRENT_VERSION`/`STATE_VERSION` = 2, migración `v1ToV2`, fixture
+  `v2.json`, tests): `worlds[*].revealed`, `worlds[*].basketSince`, `buff`, `achievements`, `taps`.
+- **Rascar** da `TAP_SECONDS` (1 s) de producción, mínimo 1, y muestra lo que da en el botón.
+  No cuenta para las plumas (solo suma moneda).
+- **Cesta** (`core/basket.ts`): llena con el 25 % de la producción, tope 30 min, "Recoger" en la Granja.
+- **Cerdito viajero**: `core/actions.claimVisitor` (inyección = 10 min de producción del mundo activo;
+  impulso = ×5 durante 60 s, integral exacta en `advance`) y `ui/visitor.ts` (el azar y el reloj, fuera de
+  `core`; 5-10 min de juego abierto, no cuenta el offline, no caduca). Tarjeta fija bajo las pestañas.
+- **Cerditos descubiertos** (`core/reveal.ts`): solo se ven los ya pagables; el siguiente, difuminado (menos
+  cuanto más cerca); aviso "Hay más cerditos por descubrir". La Huerta los muestra todos (la armonía los necesita).
+  El "te faltan X" de la Granja ya solo mira los cerditos descubiertos.
+- **Por cerdito**: "Cada uno da +X/s · en total +Y/s" (en la cadena, lo que produce del nivel inferior).
+- **Logros** (`content/achievements.ts`, `core/achievements.ts`): 20, sin bonos (no tocan la economía ni la
+  paridad con el simulador), requisito visible con progreso, línea en el Diario; sección "Logros" en el Álbum.
+- **Bug "hay que pulsar varias veces la mejora"**: las listas de Mejoras y Ventajas se reconstruían
+  cada 250 ms, así que un clic entre el pulsar y el soltar se perdía. Ahora se sincronizan por clave
+  (`ui/dom.ts > createListSync`) y los botones no se recrean (comprobado: mismo nodo tras 1 s y una compra
+  con un solo clic).
+- **Gráficos**: cerditos SVG con accesorio propio (sombrero, gafas, corona, seta, toalla…), escena por mundo
+  tras la cabecera, imagen del cerdito en cada mejora por cerdito, emojis para mejoras globales, ventajas y
+  logros, iconos en el Álbum, pestañas de mundo en 4 columnas iguales (ya caben en 375 px).
+
+**Pendiente / a revisar**
+- La economía del juego activo (rascar 1 s, cesta 25 %, visitante) no pasa por el simulador: el simulador sigue
+  modelando solo al jugador "sin toque". Los jugadores muy activos irán algo más rápido que lo de 03 §9.
+- Posible afinar: tamaño de las constantes (`TAP_SECONDS`, `BASKET_RATE`, `VISITOR_*`) tras jugar.

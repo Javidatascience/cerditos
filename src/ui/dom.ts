@@ -49,3 +49,41 @@ export function setClass(el: HTMLElement, className: string, on: boolean): void 
 export function setStyleProp(el: HTMLElement, prop: string, value: string): void {
   if (el.style.getPropertyValue(prop) !== value) el.style.setProperty(prop, value);
 }
+
+/** Una fila de una lista sincronizada: su nodo y cómo repintarlo con datos nuevos. */
+export interface ListRow<T> {
+  el: HTMLElement;
+  update(item: T): void;
+}
+
+/**
+ * Lista que se sincroniza por clave en vez de reconstruirse: las filas existentes se reutilizan
+ * (se repintan con `update`) y solo se crean o quitan las que cambian. Importa porque la UI se
+ * repinta cada 250 ms: si el botón se recrease, un clic que cae entre el pulsar y el soltar
+ * se perdería (había que pulsar varias veces para comprar una mejora).
+ */
+export function createListSync<T>(parent: HTMLElement, key: (item: T) => string, create: (item: T) => ListRow<T>): (items: T[]) => void {
+  const rows = new Map<string, ListRow<T>>();
+  return (items) => {
+    const seen = new Set<string>();
+    let previous: Node | null = null;
+    for (const item of items) {
+      const k = key(item);
+      seen.add(k);
+      let row = rows.get(k);
+      if (!row) {
+        row = create(item);
+        rows.set(k, row);
+      }
+      row.update(item);
+      const expected: Node | null = previous ? previous.nextSibling : parent.firstChild;
+      if (row.el !== expected) parent.insertBefore(row.el, expected);
+      previous = row.el;
+    }
+    for (const [k, row] of rows) {
+      if (seen.has(k)) continue;
+      row.el.remove();
+      rows.delete(k);
+    }
+  };
+}

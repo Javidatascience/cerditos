@@ -11,9 +11,33 @@ export class SaveValidationError extends Error {}
 
 type RawSave = Record<string, unknown>;
 
-/** v(n) → v(n+1). Vacío de momento: CURRENT_VERSION = 1 es la primera versión del formato. */
+/**
+ * v1 → v2 (visitante, cesta, logros y cerditos descubiertos): añade `buff`, `achievements`,
+ * `taps` al estado y `basketSince` y `revealed` a cada mundo. `revealed` se calcula con lo que
+ * ya se tenía: hasta el último cerdito comprado alguna vez (el juego completa el resto).
+ */
+function v1ToV2(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 2 }; // lo rechazará la validación posterior
+  const state = old['state'];
+  const time = typeof state['time'] === 'number' ? state['time'] : 0;
+  const worlds: RawSave = {};
+  for (const [id, raw] of Object.entries((state['worlds'] ?? {}) as RawSave)) {
+    const w = raw as RawSave;
+    const ids = Object.keys((w['generators'] ?? {}) as RawSave);
+    const maxBought = ((w['records'] as RawSave | undefined)?.['maxBought'] ?? {}) as Record<string, number>;
+    const generators = (w['generators'] ?? {}) as Record<string, { bought?: number }>;
+    let last = -1;
+    ids.forEach((gid, i) => {
+      if ((maxBought[gid] ?? 0) > 0 || (generators[gid]?.bought ?? 0) > 0) last = i;
+    });
+    worlds[id] = { ...w, revealed: Math.max(1, last + 1), basketSince: time };
+  }
+  return { ...old, version: 2, state: { ...state, version: 2, worlds, achievements: {}, taps: 0, buff: null } };
+}
+
+/** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
-  // 1: (v1) => ({ ...v1, version: 2, state: { ...(v1.state as RawSave), ... } }),
+  1: v1ToV2,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

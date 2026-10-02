@@ -1,48 +1,73 @@
-// Vista "Ventajas": árbol de ventajas permanentes en lista, con coste, nivel, efecto actual
-// → siguiente, y el requisito si está bloqueada. Ver docs/01-diseno-juego.md §6.
+// Vista "Ventajas": árbol de ventajas permanentes en lista, con su imagen, coste, nivel, efecto
+// actual → siguiente, y el requisito si está bloqueada. Ver docs/01-diseno-juego.md §6.
+// Se sincroniza por clave (dom.ts > createListSync) para que los botones no se recreen y un
+// clic nunca se pierda.
 
 import { buyPerk } from '../../core/actions.ts';
-import { perkViews } from '../../core/selectors.ts';
+import { perkViews, type PerkView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { h, setClass, setText } from '../dom.ts';
+import { perkBadge } from '../art.ts';
+import { createListSync, h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
+
+type PerkRow = PerkView & { costText: string };
 
 export function mountPerksView(root: HTMLElement, ctx: UiContext): View {
   const worldId = ctx.activeWorld();
-  const world = ctx.content.worlds.find((w) => w.id === worldId);
-  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
 
   const list = h('ul', { className: 'perk-list' });
   const container = h('div', { className: 'perks-view' }, [list]);
   root.appendChild(container);
 
-  function update(state: GameState): void {
-    const notation = state.settings.notation;
-    const views = perkViews(state, ctx.content, worldId);
+  const sync = createListSync<PerkRow>(
+    list,
+    (perk) => perk.id,
+    (perk) => {
+      const nameText = document.createTextNode(perk.name);
+      const levelText = document.createTextNode('');
+      const effectText = document.createTextNode('');
+      const lockedText = document.createTextNode('');
+      const costText = document.createTextNode('');
+      const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
+      buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyPerk(s, ctx.content, perk.id)));
+      const maxedText = h('span', { className: 'settings-hint hidden' }, ['Al máximo']);
+      const lockedLine = h('span', { className: 'perk-locked' }, [lockedText]);
 
-    list.replaceChildren(
-      ...views.map((perk) => {
-        const buyButton = h('button', { className: 'buy-button' }, [formatNumber(perk.cost, notation)]) as HTMLButtonElement;
-        buyButton.disabled = !perk.purchasable;
-        buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyPerk(s, ctx.content, perk.id)));
-
-        const levelText = perk.maxLevel === null ? `nivel ${perk.level}` : `nivel ${perk.level}/${perk.maxLevel}`;
-        const effectText = perk.nextEffectText ? `${perk.currentEffectText} → ${perk.nextEffectText}` : `${perk.currentEffectText} (máximo)`;
-
-        const row = h('li', { className: 'perk-row' }, [
+      const el = h('li', { className: 'perk-row' }, [
+        h('div', { className: 'row-art' }, [
+          perkBadge(perk.id),
           h('div', { className: 'perk-info' }, [
-            h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [perk.name]), h('span', { className: 'generator-owned' }, [levelText])]),
+            h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-owned' }, [levelText])]),
             h('span', { className: 'generator-flavor' }, [perk.flavor]),
             h('span', { className: 'upgrade-effect' }, [effectText]),
-            perk.missingRequirements.length > 0 ? h('span', { className: 'perk-locked' }, [`Requiere: ${perk.missingRequirements.join(', ')}`]) : null,
-          ].filter((n): n is HTMLElement => n !== null)),
-          perk.maxed ? h('span', { className: 'settings-hint' }, ['Al máximo']) : buyButton,
-        ]);
-        setClass(row, 'perk-row-locked', perk.missingRequirements.length > 0);
-        return row;
-      }),
-    );
+            lockedLine,
+          ]),
+        ]),
+        buyButton,
+        maxedText,
+      ]);
+      return {
+        el,
+        update: (p) => {
+          setText(levelText, p.maxLevel === null ? `nivel ${p.level}` : `nivel ${p.level}/${p.maxLevel}`);
+          setText(effectText, p.nextEffectText ? `${p.currentEffectText} → ${p.nextEffectText}` : `${p.currentEffectText} (máximo)`);
+          const locked = p.missingRequirements.length > 0;
+          setText(lockedText, locked ? `Requiere: ${p.missingRequirements.join(', ')}` : '');
+          setClass(lockedLine, 'hidden', !locked);
+          setClass(el, 'perk-row-locked', locked);
+          setText(costText, p.costText);
+          setDisabled(buyButton, !p.purchasable);
+          setClass(buyButton, 'hidden', p.maxed);
+          setClass(maxedText, 'hidden', !p.maxed);
+        },
+      };
+    },
+  );
+
+  function update(state: GameState): void {
+    const notation = state.settings.notation;
+    sync(perkViews(state, ctx.content, worldId).map((p) => ({ ...p, costText: formatNumber(p.cost, notation) })));
   }
 
   return {

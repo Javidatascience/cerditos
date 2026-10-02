@@ -5,6 +5,9 @@
 import { D, Decimal } from './num.ts';
 import type { Content, WorldDef } from '../content/types.ts';
 
+/** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
+export const STATE_VERSION = 2;
+
 export type WorldId = string;
 export type GeneratorId = string;
 export type UpgradeId = string;
@@ -40,12 +43,24 @@ export interface WorldState {
   calm: number;
   /** Instante (en segundos de GameState.time) hasta el que una nueva compra no penaliza la calma. */
   calmPenaltyUntil: number;
+  /** Cuántos cerditos (por orden) ya se han descubierto: los de índice < revealed se ven enteros,
+   * el siguiente se ve difuminado. Solo crece (docs/01 §4). En armonía son todos desde el inicio. */
+  revealed: number;
+  /** Instante (segundos de GameState.time) desde el que se llena la cesta de la granja. */
+  basketSince: number;
   records: {
     /** Máximo histórico de `bought` por generador (para requisitos de colección). */
     maxBought: Record<GeneratorId, number>;
     /** Máximo histórico de armonía alcanzado (solo Huerta). */
     maxHarmony: number;
   };
+}
+
+export interface Buff {
+  /** Multiplicador de producción en todos los mundos. */
+  mult: number;
+  /** Instante (en segundos de GameState.time) en que termina. */
+  until: number;
 }
 
 export interface JournalEntry {
@@ -72,6 +87,12 @@ export interface GameState {
   activeWorld: WorldId;
   worlds: Record<WorldId, WorldState>;
   collection: Record<VarietyId, { adoptedAt: number }>;
+  /** Logros conseguidos (sin bonos: solo reconocimiento y una línea en el diario). */
+  achievements: Record<string, { at: number }>;
+  /** Veces que se ha rascado la barriga (para logros). */
+  taps: number;
+  /** Multiplicador temporal activo (visitante), o null. */
+  buff: Buff | null;
   journal: JournalEntry[];
   settings: Settings;
 }
@@ -103,6 +124,8 @@ export function createWorldState(world: WorldDef): WorldState {
     runSeconds: 0,
     calm: 1,
     calmPenaltyUntil: -1,
+    revealed: world.mechanic === 'harmony' ? world.generators.length : 1,
+    basketSince: 0,
     records: { maxBought, maxHarmony: 0 },
   };
 }
@@ -124,13 +147,16 @@ export function createInitialState(content: Content, now: number): GameState {
   const firstWorld = content.worlds[0];
   if (!firstWorld) throw new Error('El contenido no tiene ningún mundo definido');
   return {
-    version: 1,
+    version: STATE_VERSION,
     createdAt: now,
     lastTickAt: now,
     time: 0,
     activeWorld: firstWorld.id,
     worlds,
     collection: {},
+    achievements: {},
+    taps: 0,
+    buff: null,
     journal: [],
     settings: { notation: 'es', buyAmount: 1, autobuyEnabled: true },
   };
