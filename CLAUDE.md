@@ -8,6 +8,7 @@ Juego idle/incremental web sobre granjas de cerditos (inspirado en Cookie Clicke
 - [docs/02-arquitectura.md](docs/02-arquitectura.md) — cómo está hecho: carpetas, tipos del estado, tick, offline, guardado/migraciones, contenido, UI, tests, Capacitor.
 - [docs/03-economia.md](docs/03-economia.md) — fórmulas, constantes validadas, resultados del simulador y sensibilidad.
 - [docs/04-plan-implementacion.md](docs/04-plan-implementacion.md) — hitos ordenados con tareas, criterios de aceptación y tests. **Tabla de estado al principio.**
+- [docs/05-guia-del-juego.md](docs/05-guia-del-juego.md) — guía para jugadores: pantallas, mundos, mecánicas y cómo conseguir cada variedad.
 - [tools/sim/README.md](tools/sim/README.md) — simulador de economía.
 
 ## Stack
@@ -63,4 +64,4 @@ Si una tarea parece requerir romper alguna, parar y preguntar.
 
 ## Estado actual
 
-Hito 0 (diseño + economía + simulador) hecho. El juego aún no tiene código: empezar por el hito 1 de docs/04. Hasta el hito 2, las constantes viven en `tools/sim/content.ts`.
+Hitos 0-9 y 11 hechos (los 4 mundos jugables, ascensión, ventajas, colección, diario, guardado, offline, tema claro/oscuro). El hito 10 (PWA) se saltó a petición del usuario. Pendiente: pulido gráfico (maquetación móvil, ilustraciones) y la semana de prueba manual. Ver la tabla de docs/04.

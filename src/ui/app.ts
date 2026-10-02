@@ -11,6 +11,7 @@ import { setActiveWorld } from '../core/actions.ts';
 import { headerView, worldTabs } from '../core/selectors.ts';
 import type { GameState, WorldId } from '../core/state.ts';
 import { h, setClass, setText } from './dom.ts';
+import { WORLD_EMOJI } from './art.ts';
 import { formatNumber } from './format.ts';
 import { mountAlbumView } from './views/albumView.ts';
 import { mountAscendView } from './views/ascendView.ts';
@@ -54,9 +55,6 @@ const TABS: TabDef[] = [
   { id: 'settings', label: 'Ajustes', mount: mountSettingsView },
 ];
 
-/** Color de acento de cada mundo (solo presentación; el contenido no sabe de colores). */
-const WORLD_ACCENTS: Record<string, string> = { valle: '#a86c50', bosque: '#5f7f55', huerta: '#8a8a2e', balneario: '#5a8a99' };
-
 export interface App {
   update(state: GameState): void;
 }
@@ -88,13 +86,15 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     activeView = def.mount(viewContainer, ctx);
     for (const [id, btn] of navButtons) {
       btn.classList.toggle('active', id === tabId);
+      if (id === tabId) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
     }
     activeView.update(state);
   }
 
   const nav = h(
     'nav',
-    { className: 'bottom-nav' },
+    { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
     TABS.map((t) => {
       const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [t.label]) as HTMLButtonElement;
       navButtons.set(t.id, btn);
@@ -102,7 +102,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     }),
   );
 
-  const worldTabsRow = h('div', { className: 'world-tabs' });
+  const worldTabsRow = h('div', { className: 'world-tabs', role: 'group', 'aria-label': 'Mundos' });
   const worldHint = h('p', { className: 'world-hint hidden' });
   let tabsSignature = '';
   let shownWorld = state.activeWorld;
@@ -121,8 +121,9 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     tabsSignature = signature;
     worldTabsRow.replaceChildren(
       ...tabs.map((t) => {
-        const btn = h('button', { className: `world-tab${t.active ? ' active' : ''}${t.unlocked ? '' : ' locked'}` }, [t.name]) as HTMLButtonElement;
+        const btn = h('button', { className: `world-tab${t.active ? ' active' : ''}${t.unlocked ? '' : ' locked'}` }, [h('span', { className: 'world-emoji', 'aria-hidden': 'true' }, [WORLD_EMOJI[t.id] ?? '🐷']), t.name]) as HTMLButtonElement;
         btn.disabled = !t.unlocked;
+        if (t.active) btn.setAttribute('aria-current', 'true');
         btn.addEventListener('click', () => dispatch((s) => setActiveWorld(s, t.id)));
         return btn;
       }),
@@ -153,7 +154,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
         activeView = def.mount(viewContainer, ctx);
       }
     }
-    root.style.setProperty('--world-accent', WORLD_ACCENTS[state.activeWorld] ?? '#a86c50');
+    document.documentElement.dataset.world = state.activeWorld; // el CSS pone el color del mundo
     renderWorldTabs();
     const header = headerView(state, content, state.activeWorld);
     const notation = state.settings.notation;

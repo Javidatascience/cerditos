@@ -6,6 +6,7 @@ import type { Decimal } from '../../core/num.ts';
 import { albumSummary, albumViews } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
+import { varietyIcon } from '../art.ts';
 import { h, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
@@ -31,6 +32,7 @@ export function mountAlbumView(root: HTMLElement, ctx: UiContext): View {
             { className: 'album-list' },
             set.varieties.map((v) =>
               h('li', { className: v.owned ? 'album-card' : 'album-card album-card-locked' }, [
+                varietyIcon(v.id, v.owned),
                 h('span', { className: 'upgrade-name' }, [v.name]),
                 h('span', { className: 'generator-flavor' }, [v.owned ? v.flavor : '???']),
                 h('span', { className: 'upgrade-effect' }, [v.bonusText]),

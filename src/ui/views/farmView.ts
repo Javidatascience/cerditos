@@ -9,6 +9,7 @@ import { buyGenerator, buyRow, setBuyAmount, tap, type BuyAmount } from '../../c
 import { cheapestPendingPurchase, calmView, generatorViews, harmonyView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
+import { generatorIcon } from '../art.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -58,10 +59,13 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
       const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
       buyButton.addEventListener('click', () => ctx.dispatch((state) => void buyGenerator(state, ctx.content, worldId, gen.id, state.settings.buyAmount)));
       const item = h('li', { className: 'generator-row' }, [
-        h('div', { className: 'generator-info' }, [
-          h('div', { className: 'generator-name-row' }, [h('span', { className: 'generator-name' }, [gen.name]), ownedText]),
-          h('span', { className: 'generator-flavor' }, [gen.flavor]),
-          h('span', { className: 'generator-prod' }, [prodText]),
+        h('div', { className: 'row-art' }, [
+          generatorIcon(worldId, world.generators.indexOf(gen)),
+          h('div', { className: 'generator-info' }, [
+            h('div', { className: 'generator-name-row' }, [h('span', { className: 'generator-name' }, [gen.name]), ownedText]),
+            h('span', { className: 'generator-flavor' }, [gen.flavor]),
+            h('span', { className: 'generator-prod' }, [prodText]),
+          ]),
         ]),
         buyButton,
       ]);

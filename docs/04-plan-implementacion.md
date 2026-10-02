@@ -18,8 +18,8 @@
 | 7 | Multi-mundo y el Bosque (cadena) | ✅ |
 | 8 | La Huerta (armonía) | ✅ |
 | 9 | El Balneario (calma) y bonos entre mundos | ✅ |
-| 10 | PWA en iPhone y escritorio | ⬜ |
-| 11 | Pulido visual, textos y accesibilidad | ⬜ |
+| 10 | PWA en iPhone y escritorio | ⏭ saltado (a petición) |
+| 11 | Pulido visual, textos y accesibilidad | ✅ (salvo la semana de prueba manual) |
 
 ---
 
@@ -502,3 +502,46 @@ texto "+X % producción en los demás mundos" en la vista de Ventajas), así que
 cambios. La paridad de los 4 mundos a la vez (24 h) fuerza todos los mundos abiertos desde el inicio
 (en una partida real el Balneario tarda ~17 días, 03 §8) para ejercitar Hermandad, calma, armonía y
 cadena a la vez.
+
+**2026-10-02 (hito 11) — se salta el hito 10 (PWA) por decisión del usuario; el hito 11 se hace sin él.**
+Tabla de estado: el 10 queda como ⏭ saltado (pendiente si se quiere instalar en el iPhone).
+
+**Hecho en el hito 11**
+1. *Paleta y tipografía*: variables CSS en `ui/styles.css` (bg/surface/texto/atenuado/botón/borde), fuente
+   redondeada (`ui-rounded`, SF Pro Rounded, Nunito, system-ui) y **modo oscuro** con `prefers-color-scheme`
+   (más `color-scheme` en `index.html`). El color de cada mundo ya no lo pone JS: `app.ts` marca
+   `data-world` en `<html>` y el CSS elige el acento (claro y oscuro).
+2. *Ilustraciones*: `ui/art.ts` dibuja un cerdito SVG plano (color por cerdito y mundo) en cada fila de la
+   Granja y en cada ficha del Álbum (apagado si no se tiene); cada mundo tiene un emoji en su pestaña.
+   Es la versión sencilla; el pulido gráfico queda para la siguiente tanda.
+3. *Textos*: revisados con `grep` buscando lenguaje de urgencia (rápido, oferta, última oportunidad, ¡…!,
+   caduca…): sin resultados en `src/content`, `src/ui` ni `src/core`.
+4. *Accesibilidad*: contraste AA medido (texto 12:1, atenuado 6:1, botones 5,6:1; el antiguo botón de acento
+   daba 4,3:1 y el deshabilitado 1,5:1, corregidos); `:focus-visible` con contorno de 3 px; objetivos táctiles
+   ≥ 44 px (botones de cantidad y pestañas de mundo subieron de 40); `aria-current` en la barra inferior y en
+   la pestaña de mundo activa, `aria-label` en las barras; `prefers-reduced-motion` ya existía; todo son
+   `<button>` nativos, así que el teclado funciona sin más.
+5. *Revisión anti-dopamina* (01 §11, punto por punto):
+
+| # | Regla | Resultado |
+|---|---|---|
+| 1 | Nada aleatorio | ✅ `Math.random` no aparece en `src/` (lo garantiza también `purity.test.ts` en `core`) |
+| 2 | Sin urgencia | ✅ no hay temporizadores que caduquen; la "ventana" del Balneario solo evita una segunda penalización |
+| 3 | Sin rachas ni premios por entrar | ✅ no existen; offline al 100 % (tope técnico de 30 días) |
+| 4 | Sin notificaciones | ✅ ni `Notification`, ni badges, ni permisos |
+| 5 | Sin estímulos agresivos | ✅ sin `@keyframes`, sin sonido (`Audio`), sin `vibrate`; la única transición es la barra de progreso (150 ms) y se anula con `prefers-reduced-motion` |
+| 6 | Sin pantallazos de recompensa | ✅ variedades, mundos y vuelos van al Diario; el único modal es el resumen offline (informativo, un "Vale") |
+| 7 | Sin clic compulsivo | ✅ `tap` suma +1 y no escala |
+| 8 | Sin monetización | ✅ nada |
+| 9 | Sin información oculta | ✅ requisitos del álbum con progreso, umbrales de mundos visibles, ventana de calma anunciada |
+| 10 | Sin comparación social | ✅ nada |
+
+**No hecho / pendiente**
+- *Tarea 6 (una semana real de juego con el perfil casual)*: no se puede hacer en una sesión de desarrollo.
+  La comparación con 03 §9.3 sigue cubierta por `npm run sim` (verde); queda como prueba manual del usuario.
+- *Maquetación en móvil*: con 375 px de ancho la pestaña del cuarto mundo se sale de la fila (hay scroll
+  horizontal) y el contador "× N" del nombre del cerdito se parte a veces en dos líneas. Se deja para el
+  pulido gráfico.
+
+**Extra pedido por el usuario**: `docs/05-guia-del-juego.md`, guía para jugadores con las pantallas, los
+cuatro mundos y sus mecánicas, las ventajas y las tablas del álbum (generadas desde el contenido).
