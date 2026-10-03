@@ -431,7 +431,9 @@ export function updateCollectionAndUnlocks(s: SimState): void {
   for (const d of WORLDS) {
     const ws = world(s, d.id);
     if (ws.unlocked || !d.unlock) continue;
-    if (world(s, d.unlock.world).plumasTotal >= d.unlock.plumasTotal) {
+    const fromDef = WORLD_BY_ID[d.unlock.world]!;
+    const genIndex = fromDef.generators.findIndex((g) => g.id === d.unlock!.gen);
+    if (world(s, d.unlock.world).maxBought[genIndex]! >= d.unlock.count) {
       ws.unlocked = true;
       ws.currency = startCurrency(s, d.id);
       s.events.push({ t: s.time, kind: 'unlock', world: d.id, text: `desbloqueado ${d.name}` });

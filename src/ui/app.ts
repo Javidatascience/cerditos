@@ -114,7 +114,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     setClass(worldHint, 'hidden', !next?.requirement);
     if (next?.requirement) {
       const r = next.requirement;
-      setText(worldHint, `${next.name} abrirá con ${formatNumber(r.target, notation)} plumas de ${r.fromWorldName}: llevas ${formatNumber(r.current, notation)}.`);
+      setText(worldHint, `${next.name} abrirá al tener ${formatNumber(r.target, notation)} ${r.genName} en ${r.fromWorldName}: llevas ${formatNumber(r.current, notation)}.`);
     }
     const signature = tabs.map((t) => `${t.id}:${t.unlocked}:${t.active}`).join('|');
     if (signature === tabsSignature) return;

@@ -1,5 +1,5 @@
-// Desbloqueo de mundos (01 §7): un mundo se abre al tener cierto total de plumas del mundo
-// anterior. El umbral es visible siempre (progreso en `unlockProgress`). Ver docs/02 §4 paso 3.
+// Desbloqueo de mundos (01 §7): un mundo se abre al haber tenido 10 unidades del último cerdito
+// del mundo anterior (máximo histórico, así que ascender no lo quita). El umbral es visible siempre (progreso en `unlockProgress`). Ver docs/02 §4 paso 3.
 
 import type { Content, WorldDef } from '../content/types.ts';
 import { startCurrency } from './formulas.ts';
@@ -7,8 +7,10 @@ import { addEntry } from './journal.ts';
 import type { GameState, WorldId } from './state.ts';
 
 export interface UnlockProgress {
-  /** Mundo del que hay que acumular plumas. */
+  /** Mundo en el que hay que tener los cerditos pedidos. */
   fromWorld: WorldId;
+  /** Cerdito que hay que tener (el último de ese mundo). */
+  genId: string;
   current: number;
   target: number;
   done: boolean;
@@ -17,8 +19,8 @@ export interface UnlockProgress {
 /** Progreso hacia el desbloqueo de `world`; `null` si es el mundo inicial (sin requisito). */
 export function unlockProgress(state: GameState, world: WorldDef): UnlockProgress | null {
   if (!world.unlock) return null;
-  const current = state.worlds[world.unlock.world]?.plumasTotal.toNumber() ?? 0;
-  return { fromWorld: world.unlock.world, current, target: world.unlock.plumasTotal, done: current >= world.unlock.plumasTotal };
+  const current = state.worlds[world.unlock.world]?.records.maxBought[world.unlock.gen] ?? 0;
+  return { fromWorld: world.unlock.world, genId: world.unlock.gen, current, target: world.unlock.count, done: current >= world.unlock.count };
 }
 
 /**

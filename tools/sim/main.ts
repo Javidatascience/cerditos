@@ -53,14 +53,14 @@ const TARGETS: Target[] = [
   { id: 'asc:valle:1', label: '1ª ascensión Valle', min: 0.5, max: 3, profiles: ['casual'] },
   { id: 'asc:valle:2', label: '2ª ascensión Valle', min: 1.5, max: 10, profiles: ['casual'] },
   { id: 'asc:valle:10', label: '10ª ascensión Valle', min: 24, max: 6 * 24, profiles: ['casual'] },
-  { id: 'unlock:bosque', label: 'Desbloqueo Bosque', min: 2 * 24, max: 7 * 24, profiles: ['casual'] },
-  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 7 * 24, max: 25 * 24, profiles: ['casual'] },
-  { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 16 * 24, max: 40 * 24, profiles: ['casual'] },
-  { id: 'collection:50', label: 'Colección 50 %', min: 10 * 24, max: 30 * 24, profiles: ['casual'] },
+  { id: 'unlock:bosque', label: 'Desbloqueo Bosque', min: 6, max: 5 * 24, profiles: ['casual'] },
+  { id: 'unlock:huerta', label: 'Desbloqueo Huerta', min: 24, max: 12 * 24, profiles: ['casual'] },
+  { id: 'unlock:balneario', label: 'Desbloqueo Balneario', min: 2 * 24, max: 20 * 24, profiles: ['casual'] },
+  { id: 'collection:50', label: 'Colección 50 %', min: 5 * 24, max: 30 * 24, profiles: ['casual'] },
   { id: 'collection:100', label: 'Colección 100 %', min: 25 * 24, max: 75 * 24, profiles: ['casual'] },
-  { id: 'unlock:bosque', label: 'Desbloqueo Bosque (ocasional)', min: 3 * 24, max: 20 * 24, profiles: ['ocasional'] },
+  { id: 'unlock:bosque', label: 'Desbloqueo Bosque (ocasional)', min: 12, max: 10 * 24, profiles: ['ocasional'] },
   // (El perfil ocasional ya no llega al Balneario en 60 días con el tope offline de 2 h: no es un objetivo.)
-  { id: 'unlock:balneario', label: 'Desbloqueo Balneario (activo)', min: 10 * 24, max: 25 * 24, profiles: ['activo'] },
+  { id: 'unlock:balneario', label: 'Desbloqueo Balneario (activo)', min: 24, max: 20 * 24, profiles: ['activo'] },
 ];
 
 // ---------------------------------------------------------------------------

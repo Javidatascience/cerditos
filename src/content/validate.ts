@@ -1,5 +1,5 @@
 // Valida el contenido del juego: ids únicos, referencias existentes, sin ciclos en las
-// ventajas, costes positivos, exactamente un mundo sin `unlock`. Ver docs/02-arquitectura.md §7.
+// ventajas, costes positivos, al menos un mundo sin `unlock` (y el primero lo es). Ver docs/02-arquitectura.md §7.
 // No es lógica de juego (no vive en core/): es una comprobación de los propios datos.
 
 import type { Content, PerkDef, Requirement } from './types.ts';
@@ -29,9 +29,8 @@ export function validateContent(content: Content): string[] {
     }
   }
 
-  const rootWorlds = content.worlds.filter((w) => w.unlock === null);
-  if (rootWorlds.length !== 1) {
-    errors.push(`Debe haber exactamente un mundo sin unlock (encontrados: ${rootWorlds.length})`);
+  if (content.worlds[0] && content.worlds[0].unlock !== null) {
+    errors.push('El primer mundo debe estar abierto desde el inicio (unlock: null)');
   }
   for (const world of content.worlds) {
     if (world.unlock === null) continue;
@@ -39,8 +38,11 @@ export function validateContent(content: Content): string[] {
       errors.push(`${world.id}: unlock.world no puede ser el propio mundo`);
     } else if (!worldIds.has(world.unlock.world)) {
       errors.push(`${world.id}: unlock.world desconocido (${world.unlock.world})`);
+    } else {
+      const from = content.worlds.find((w) => w.id === world.unlock!.world);
+      if (!from?.generators.some((g) => g.id === world.unlock!.gen)) errors.push(`${world.id}: unlock.gen desconocido (${world.unlock.gen})`);
     }
-    if (world.unlock.plumasTotal <= 0) errors.push(`${world.id}: unlock.plumasTotal debe ser > 0`);
+    if (world.unlock.count <= 0) errors.push(`${world.id}: unlock.count debe ser > 0`);
   }
 
   const perkIds = new Set(content.perks.map((p) => p.id));

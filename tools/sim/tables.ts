@@ -15,7 +15,7 @@ for (const w of WORLDS) {
   out.push(`\n#### ${w.name} (${w.currency}) — mecánica \`${w.mechanic}\``);
   out.push(`- Crecimiento de coste: ${w.costGrowth}${w.generators.some((g) => g.costGrowth) ? ' (por defecto; ver tabla)' : ''} · moneda inicial ${n(w.startCurrency)}`);
   out.push(`- Plumas: e0 = ${n(w.prestige.e0)}, exponente = ${n(w.prestige.exponent)}, bono por pluma = ${w.prestige.perPluma}`);
-  out.push(`- Desbloqueo: ${w.unlock ? `${n(w.unlock.plumasTotal)} plumas totales en ${w.unlock.world}` : 'desde el inicio'}`);
+  out.push(`- Desbloqueo: ${w.unlock ? `${w.unlock.count} × ${w.unlock.gen} (máximo comprado) en ${w.unlock.world}` : 'desde el inicio'}`);
   if (w.genUpgradeCounts.length) out.push(`- Mejoras por cerdito: ×${w.genUpgradeMult} al tener ${w.genUpgradeCounts.join(', ')} (coste = ${w.genUpgradeCostFactor} × precio de esa unidad)`);
   if (w.harmony) out.push(`- Armonía: ×(1 + ${w.harmony.perLevel}·filas) × ${w.harmony.mult}^(umbrales alcanzados: ${w.harmony.thresholds.join(', ')})`);
   if (w.calm) out.push(`- Calma: bono máximo +${w.calm.maxBonus * 100} %, sube en ${w.calm.rampSeconds / 60} min, comprar la multiplica por ${w.calm.penalty} (como mucho una vez cada ${w.calm.windowSeconds} s)`);

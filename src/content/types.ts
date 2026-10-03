@@ -38,7 +38,8 @@ export interface WorldDef {
   genUpgrades: { counts: number[]; mult: number; costFactor: number } | null;
   globalUpgrades: GlobalUpgradeDef[];
   prestige: { e0: number; exponent: number; perPluma: number };
-  unlock: { world: WorldId; plumasTotal: number } | null;
+  /** Se abre al haber tenido `count` unidades del cerdito `gen` (el último) del mundo `world`. */
+  unlock: { world: WorldId; gen: GeneratorId; count: number } | null;
   harmony?: { perLevel: number; thresholds: number[]; mult: number };
   calm?: CalmDef;
   flavor: string;

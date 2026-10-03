@@ -57,7 +57,7 @@ export interface WorldTabView {
   unlocked: boolean;
   active: boolean;
   /** Mientras está bloqueado: de qué mundo y cuántas plumas hacen falta, con tu progreso. */
-  requirement: { fromWorldName: string; current: number; target: number } | null;
+  requirement: { fromWorldName: string; genName: string; current: number; target: number } | null;
 }
 
 /** Pestañas de mundo: los desbloqueados y, en gris, el siguiente con su requisito visible. */
@@ -76,7 +76,14 @@ export function worldTabs(state: GameState, content: Content): WorldTabView[] {
       name: world.name,
       unlocked,
       active: world.id === state.activeWorld,
-      requirement: progress ? { fromWorldName: content.worlds.find((w) => w.id === progress.fromWorld)?.name ?? progress.fromWorld, current: progress.current, target: progress.target } : null,
+      requirement: progress
+        ? {
+            fromWorldName: content.worlds.find((w) => w.id === progress.fromWorld)?.name ?? progress.fromWorld,
+            genName: content.worlds.find((w) => w.id === progress.fromWorld)?.generators.find((g) => g.id === progress.genId)?.name ?? progress.genId,
+            current: progress.current,
+            target: progress.target,
+          }
+        : null,
     });
   }
   return tabs;

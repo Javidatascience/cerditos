@@ -101,11 +101,10 @@ describe('validateContent', () => {
     expect(errors.some((e) => e.includes('cerdito desconocido'))).toBe(true);
   });
 
-  it('exige exactamente un mundo sin unlock', () => {
+  it('el primer mundo debe estar abierto desde el inicio', () => {
     const content = baseContent();
-    content.worlds[0]!.unlock = { world: 'w1', plumasTotal: 100 }; // además, auto-referencia
+    content.worlds[0]!.unlock = { world: 'w1', gen: 'g1', count: 10 }; // además, auto-referencia
     const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('exactamente un mundo sin unlock'))).toBe(true);
-    expect(errors.some((e) => e.includes('no puede ser el propio mundo'))).toBe(true);
+    expect(errors.some((e) => e.includes('primer mundo'))).toBe(true);
   });
 });

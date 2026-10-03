@@ -58,7 +58,7 @@ export interface WorldDef {
     exponent: number;
     perPluma: number;
   };
-  unlock: { world: WorldId; plumasTotal: number } | null;
+  unlock: { world: WorldId; gen: string; count: number } | null;
   harmony?: { perLevel: number; thresholds: number[]; mult: number };
   calm?: { maxBonus: number; rampSeconds: number; penalty: number; windowSeconds: number };
 }

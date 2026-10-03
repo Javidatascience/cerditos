@@ -34,7 +34,7 @@ export const huerta: WorldDef = {
     { id: 'fiesta-de-la-cosecha', name: 'Fiesta de la cosecha', flavor: 'El día en que se recoge todo lo sembrado.', cost: 2e18, mult: 1.5 },
   ],
   prestige: { e0: 1e6, exponent: 0.3, perPluma: 0.05 },
-  unlock: { world: 'bosque', plumasTotal: 300000 },
+  unlock: { world: 'bosque', gen: 'espiritu-del-bosque', count: 10 },
   harmony: { perLevel: 0.02, thresholds: [10, 25, 50, 75, 100, 150, 200, 250, 300, 400], mult: 2 },
   flavor: 'Ocho parcelas que solo dan su mejor fruto si se cuidan todas por igual.',
 };

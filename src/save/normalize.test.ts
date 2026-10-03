@@ -62,7 +62,7 @@ describe('normalize', () => {
   it('un mundo nuevo en el contenido aparece fresco en el estado', () => {
     const w1 = world();
     const state = createInitialState(content(w1), 0);
-    const w2 = world({ id: 'w2', name: 'Mundo 2', unlock: { world: 'w1', plumasTotal: 10 } });
+    const w2 = world({ id: 'w2', name: 'Mundo 2', unlock: { world: 'w1', gen: 'g1', count: 10 } });
     const normalized = normalize(state, { worlds: [w1, w2], perks: [], varieties: [], sets: [], achievements: [] });
 
     expect(normalized.worlds['w2']).toBeDefined();

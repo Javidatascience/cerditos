@@ -31,7 +31,7 @@ export const balneario: WorldDef = {
     { id: 'aromas-de-lavanda', name: 'Aromas de lavanda', flavor: 'Se huele desde la entrada del Balneario.', cost: 1.22e18, mult: 1.5 },
   ],
   prestige: { e0: 1e6, exponent: 0.28, perPluma: 0.05 },
-  unlock: { world: 'huerta', plumasTotal: 10000 },
+  unlock: { world: 'huerta', gen: 'abuelo-del-huerto', count: 10 },
   calm: { maxBonus: 3, rampSeconds: 1800, penalty: 0.5, windowSeconds: 60 },
   flavor: 'El sitio donde hasta los cerditos más nerviosos aprenden a no hacer nada.',
 };

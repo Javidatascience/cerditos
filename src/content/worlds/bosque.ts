@@ -28,6 +28,6 @@ export const bosque: WorldDef = {
     { id: 'musgo-mullido', name: 'Musgo mullido', flavor: 'El mejor sitio para dejar descansar las patas.', cost: 1e19, mult: 1.5 },
   ],
   prestige: { e0: 1e8, exponent: 0.25, perPluma: 0.05 },
-  unlock: { world: 'valle', plumasTotal: 60000 },
+  unlock: { world: 'valle', gen: 'gran-blanco', count: 10 },
   flavor: 'Un bosque tranquilo donde las trufas se esconden bien y las buscadoras nunca se rinden.',
 };
