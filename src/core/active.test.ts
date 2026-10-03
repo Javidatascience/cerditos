@@ -31,6 +31,21 @@ describe('rascar la barriga', () => {
   });
 });
 
+describe('rascar con el impulso del visitante', () => {
+  it('con el ×5 activo, rascar también da ×5; al acabar, vuelve a lo normal', () => {
+    const state = withLechones(79);
+    const normal = tapValue(state, CONTENT, 'valle').toNumber();
+    claimVisitor(state, CONTENT, 'boost', 'valle');
+    expect(tapValue(state, CONTENT, 'valle').toNumber()).toBeCloseTo(normal * VISITOR_BOOST.mult, 9);
+    const before = state.worlds['valle']!.currency;
+    expect(tap(state, CONTENT, 'valle').toNumber()).toBeCloseTo(normal * VISITOR_BOOST.mult, 9);
+    expect(state.worlds['valle']!.currency.sub(before).toNumber()).toBeCloseTo(normal * VISITOR_BOOST.mult, 6);
+    advance(state, CONTENT, VISITOR_BOOST.seconds + 1);
+    expect(state.buff).toBeNull();
+    expect(tapValue(state, CONTENT, 'valle').toNumber()).toBeGreaterThanOrEqual(normal);
+  });
+});
+
 describe('cesta de la granja', () => {
   it('se llena con el tiempo, con tope, y recoger la vacía', () => {
     const state = withLechones(79);

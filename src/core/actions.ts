@@ -31,9 +31,10 @@ export type BuyAmount = 1 | 10 | 'max';
 /** Segundos de producción que da cada toque (con un mínimo de 1 de moneda). */
 export const TAP_SECONDS = 1;
 
-/** Lo que daría rascar la barriga ahora: TAP_SECONDS de producción, mínimo 1. */
+/** Lo que daría rascar la barriga ahora: TAP_SECONDS de producción, mínimo 1, con el impulso del visitante si está activo. */
 export function tapValue(state: GameState, content: Content, worldId: WorldId): Decimal {
-  return Decimal.max(1, displayProductionPerSecond(state, content, worldId).mul(TAP_SECONDS));
+  const base = Decimal.max(1, displayProductionPerSecond(state, content, worldId).mul(TAP_SECONDS));
+  return state.buff ? base.mul(state.buff.mult) : base;
 }
 
 /** Rasca la barriga: da `tapValue` de moneda (no cuenta como producción para plumas). Devuelve lo dado. */

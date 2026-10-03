@@ -20,7 +20,7 @@ Es un juego tranquilo: **no hay azar, nada caduca, nada te mete prisa**. Entrar 
 - **Rascar la barriga**: da **1 segundo de tu producción** (lo que da se ve en el botón; mínimo 1). Al principio solo arranca la granja; luego es un empujoncito.
 - **Cesta de la granja**: cada mundo va llenando una cesta con el 25 % de su producción (hasta 30 min). *Recoger* la vacía y la suma a tu moneda. No caduca.
 - **Granja animada**: arriba de la Granja ves el mundo en el que estás con tus cerditos paseando (hasta 3 de cada tipo). Al rascar sale el número ganado. Se puede apagar en Ajustes → *Efectos y animaciones*; si tu móvil pide reducir el movimiento, se apaga sola.
-- **Cerdito viajero**: cada 1-2 minutos (al azar, con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 de producción durante 60 s. Se queda 10 segundos: si no lo aceptas, se va.
+- **Cerdito viajero**: cada 1-2 minutos (al azar, con el juego abierto) aparece una tarjeta bajo las pestañas de mundo. Trae, al azar, 10 min de producción de golpe o un ×5 durante 60 s (la producción y también lo que da rascar la barriga). Se queda 10 segundos: si no lo aceptas, se va.
 - **Cerditos por descubrir**: en cada mundo solo se ven los que ya has podido comprar; el siguiente aparece difuminado y un aviso dice que hay más. (En la Huerta se ven todos, porque la armonía los necesita.)
 - **Mejoras**: aparecen en la Granja, justo bajo "Rascar la barriga", cuando las puedes aprovechar (ver §3), con la imagen del cerdito al que mejoran. Las ya compradas no se listan.
 - **Volar**: tu ascensión (§4) y, debajo, el árbol de ventajas permanentes comprado con plumas (§5).
