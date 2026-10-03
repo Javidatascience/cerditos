@@ -119,7 +119,7 @@ describe('logros', () => {
     const got = updateAchievements(state, CONTENT, 0);
     expect(got).toEqual(['lechon-1', 'lechon-15', 'lechon-25', 'lechon-50']);
     expect(state.journal.length).toBe(0);
-    const total = CONTENT.worlds.reduce((n, w) => n + w.generators.length, 0) * 11;
+    const total = CONTENT.worlds.reduce((n, w) => n + w.generators.length * (w.mechanic === 'merge' ? 3 : 11), 0);
     expect(CONTENT.achievements.filter((a) => a.requires.kind === 'genCount').length).toBe(total);
   });
 

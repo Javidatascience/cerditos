@@ -60,9 +60,9 @@ Cada mundo tiene su árbol, pagado con **sus** plumas. Es el mismo en los cuatro
 
 Consejo: no hay autocompra, así que cada visita sirve para gastar lo acumulado. **Abono de calidad** es siempre una buena inversión: sube la producción de todo.
 
-## 6. Los cuatro mundos
+## 6. Los cinco mundos
 
-Todos los mundos abiertos **producen a la vez**, también cuando no estás. Cada uno se abre al reunir cierto total de plumas del anterior (el requisito se ve siempre en las pestañas).
+Todos los mundos abiertos **producen a la vez**, también cuando no estás. Valle y Pocilga están abiertos desde el inicio; los demás se abren, en cadena, al tener **10 del último cerdito** del mundo anterior (el requisito y tu progreso se ven siempre en las pestañas).
 
 ### 🌾 El Valle — *aprender el juego*
 - **Moneda**: bellotas. **Se abre**: desde el inicio.
@@ -70,20 +70,26 @@ Todos los mundos abiertos **producen a la vez**, también cuando no estás. Cada
 - **Cómo jugarlo**: compra siempre lo que mejor rinde por lo que cuesta. El primer día es rápido; después se frena y toca ascender.
 - **Cerditos**: Lechón, Cerdita rosa, Duroc, Pietrain, Berkshire, Mangalica, Ibérico, Gran Blanco.
 
+### 🐽 La Pocilga — *juntar cerdos para que evolucionen*
+- **Moneda**: monedas. **Se abre**: desde el inicio, a la vez que el Valle.
+- **Mecánica: fusión.** Solo compras cochinillos (nivel 1). Cuando tienes **dos del mismo nivel**, los fusionas y salen **uno del nivel siguiente**, que produce ×3. Hay 12 huecos: fusionar libera sitio para seguir comprando. Hay 10 niveles, del Cochinillo al Cerdo cósmico.
+- **Cómo se juega**: en vez de una lista hay un tablero. **Toca un cerdo y luego otro igual**, o **arrastra uno encima de otro**. Los que tienen pareja salen con el borde marcado. Dos del nivel k valen menos que uno del k+1, así que conviene fusionar siempre que se pueda.
+- Como el resto, asciende con plumas propias y tiene su árbol de ventajas. (No hay variedades propias en el álbum todavía.)
+
 ### 🌲 El Bosque — *paciencia y comprar "arriba"*
-- **Moneda**: trufas. **Se abre**: con 60.000 plumas del Valle.
+- **Moneda**: trufas. **Se abre**: al tener 10 Gran Blanco en el Valle (cuenta el máximo que hayas tenido).
 - **Mecánica: cadena.** Solo las **Buscadoras** producen trufas. Los demás niveles **producen cerditos del nivel inferior**: las Madres truferas producen Buscadoras, las Abuelas sabias producen Madres… Esos cerditos "nacidos" no encarecen tus compras y pueden ser fraccionarios (verás 12,4 Buscadoras).
 - **Cómo jugarlo**: arranca lento y explota después. Invertir en niveles altos tarda en pagar, pero crece como un polinomio. El juego te dice en cada fila *qué produce* ("produce 0,3 Madre trufera/s").
 - **Cerditos**: Buscadora, Madre trufera, Abuela sabia, Clan del roble, Espíritu del bosque (solo 5 niveles).
 
 ### 🥕 La Huerta — *crecer en equilibrio*
-- **Moneda**: calabazas. **Se abre**: con 300.000 plumas del Bosque.
+- **Moneda**: calabazas. **Se abre**: al tener 10 Espíritus del bosque en el Bosque.
 - **Mecánica: armonía.** No hay mejoras por cerdito. Tu producción se multiplica según el **mínimo** de unidades entre los 8 tipos: las **filas completas**. Cada fila da +2 % y, al llegar a 10, 25, 50, 75, 100, 150, 200, 250, 300 y 400 filas, la producción se **duplica**.
 - **Cómo jugarlo**: no sirve apilar solo el mejor cerdito. Los que **frenan la fila** aparecen con un borde marcado, y el botón **Completar fila** compra una unidad de cada uno de ellos de golpe (todo o nada).
 - **Cerditos**: Hortelana, Regador, Escardadora, Cuidador de tomates, Pastora de gallinas, Apicultor, Jardinera jefa, Abuelo del huerto.
 
 ### ♨️ El Balneario — *espera y compra en lote*
-- **Moneda**: pompas. **Se abre**: con 10.000 plumas de la Huerta.
+- **Moneda**: pompas. **Se abre**: al tener 10 Abuelos del huerto en la Huerta.
 - **Mecánica: calma.** Los cerditos rinden hasta **×4** cuando nadie los molesta. La calma sube del 0 al 100 % en **30 minutos**; **comprar** la baja **a la mitad**, pero solo una vez por minuto (varias compras seguidas cuentan como una). Cada ronda empieza con la calma llena.
 - **Cómo jugarlo**: mejor visitas espaciadas y compras en lote que goteo constante. La pantalla avisa con una línea de texto *antes* de comprar y te dice cuánto dura la ventana en la que ya no molestas más.
 - **Cerditos**: Bañista, Cerdita del barro, Masajista, Socorrista, Termalista, Maestra de sales, Director del spa, Cerdo zen.

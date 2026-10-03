@@ -5,10 +5,10 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const INK = '#3a2e26';
 
-export const WORLD_EMOJI: Record<string, string> = { valle: '🌾', bosque: '🌲', huerta: '🥕', balneario: '♨️' };
+export const WORLD_EMOJI: Record<string, string> = { valle: '🌾', pocilga: '🐽', bosque: '🌲', huerta: '🥕', balneario: '♨️' };
 
 /** Icono de la moneda de cada mundo (para la cabecera). */
-export const CURRENCY_EMOJI: Record<string, string> = { valle: '🌰', bosque: '🍄', huerta: '🎃', balneario: '🫧' };
+export const CURRENCY_EMOJI: Record<string, string> = { valle: '🌰', pocilga: '🪙', bosque: '🍄', huerta: '🎃', balneario: '🫧' };
 
 function node<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] {
   const el = document.createElementNS(SVG_NS, tag);
@@ -31,6 +31,7 @@ const GENERATOR_ACCESSORY: Record<string, Accessory> = {
   lechon: 'none', 'cerdita-rosa': 'flower', duroc: 'cap', pietrain: 'scarf', berkshire: 'glasses', mangalica: 'leaf', iberico: 'hat', 'gran-blanco': 'crown',
   buscadora: 'leaf', 'madre-trufera': 'hat', 'abuela-sabia': 'glasses', 'clan-del-roble': 'mushroom', 'espiritu-del-bosque': 'star',
   hortelana: 'hat', regador: 'cap', escardadora: 'scarf', 'cuidador-de-tomates': 'bow', 'pastora-de-gallinas': 'flower', apicultor: 'glasses', 'jardinera-jefa': 'crown', 'abuelo-del-huerto': 'mushroom',
+  cochinillo: 'none', cerdito: 'bow', 'cerdo-joven': 'cap', 'cerdo-robusto': 'scarf', verraco: 'glasses', 'cerdo-de-feria': 'flower', 'cerdo-campeon': 'crown', 'cerdo-alado': 'star', 'cerdo-estelar': 'star', 'cerdo-cosmico': 'crown',
   banista: 'towel', 'cerdita-del-barro': 'none', masajista: 'scarf', socorrista: 'cap', termalista: 'cucumbers', 'maestra-de-sales': 'flower', 'director-del-spa': 'glasses', 'cerdo-zen': 'star',
 };
 
@@ -41,6 +42,7 @@ const WORLD_PIGS: Record<string, string[]> = {
   valle: ['#f4c7c3', '#efb0b0', '#d98a63', '#8a8484', '#5d5656', '#b98c78', '#7a4f3f', '#f6e8df'],
   bosque: ['#d9b99b', '#c49a74', '#a67c52', '#8b6b4a', '#6f5a45'],
   huerta: ['#f4c7c3', '#f0d29a', '#e7a779', '#d9c27c', '#c9d49b', '#e8b86d', '#bfa05a', '#a68c4f'],
+  pocilga: ['#f6d4d0', '#f4c7c3', '#efb0b0', '#e89a9a', '#d98a63', '#c9a24a', '#d8b84a', '#9fc3e6', '#b79de6', '#f2c94c'],
   balneario: ['#f4d3d3', '#c9a28a', '#b7c9d6', '#9fc3c9', '#e6c8e0', '#d6c2a2', '#a9bfd0', '#c5d8c2'],
 };
 const FALLBACK_PIGS = ['#f4c7c3', '#d98a63', '#9fc3c9', '#c9d49b', '#b98c78', '#e6c8e0'];

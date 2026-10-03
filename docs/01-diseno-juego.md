@@ -85,11 +85,12 @@ Costes y fórmulas en 03 §6.
 
 Todos los mundos desbloqueados **producen a la vez**, también offline. La pantalla muestra uno cada vez; se cambia con pestañas. Motivo: mirar un mundo no debe castigar a los otros, y el modelo mental es "tengo varias granjas".
 
-Cada mundo se desbloquea al alcanzar cierto número de **plumas totales en el mundo anterior** (umbral visible desde el principio: "El Bosque abrirá cuando el Valle haya dado 60.000 plumas").
+Cada mundo (salvo el Valle y La Pocilga, abiertos desde el inicio) se desbloquea al **tener 10 unidades del último cerdito del mundo anterior** (decisión del usuario, 2026-10-03; antes: cierto número de plumas totales) (umbral visible desde el principio: "El Bosque abrirá cuando el Valle haya dado 60.000 plumas").
 
 | # | Mundo | Moneda | Mecánica diferenciadora | Cómo se siente | Dificultad | Desbloqueo |
 |---|---|---|---|---|---|---|
 | 1 | **El Valle** | Bellotas | Clásica: generadores + mejoras ×2 por cantidad | Aprender el juego. Progreso rápido el primer día | Base (coste ×1,15; plumas con raíz cúbica) | Desde el inicio |
+| 1b | **La Pocilga** | Monedas | **Fusión**: solo se compra el cochinillo; dos cerdos del mismo nivel se fusionan en uno del siguiente (×3). 12 huecos, así que fusionar libera sitio | Interactivo: tocar/arrastrar cerdos | Producción que crece fusionando | Desde el inicio (a la vez que el Valle) |
 | 2 | **El Bosque** | Trufas | **Cadena**: solo las Buscadoras producen trufas; cada nivel superior *produce cerditos del nivel inferior* (Madres → Buscadoras, Abuelas → Madres…). Las unidades producidas no encarecen las compras | Arranque lento, crecimiento explosivo. Premia la paciencia y comprar "arriba" | Costes crecientes por nivel (×1,15 a ×1,55); plumas con exponente 0,25 | 60.000 plumas del Valle |
 | 3 | **La Huerta** | Calabazas | **Armonía**: no hay mejoras por cerdito. La producción de todo se multiplica según el **mínimo** de unidades entre los 8 tipos ("filas completas"): ×2 al llegar a 10, 25, 50, 75, 100, 150… filas, más +2 % por fila | Obliga a crecer en equilibrio en vez de apilar el mejor cerdito | Coste ×1,14 pero cada "fila" cuesta 8 compras; plumas con exponente 0,30 | 300.000 plumas del Bosque |
 | 4 | **El Balneario** | Pompas | **Calma**: los cerditos rinden hasta ×4 cuando nadie los molesta. La calma sube de 0 a 100 % en 30 min; **comprar la reduce a la mitad** (una vez por minuto como mucho: comprar varias cosas seguidas cuenta como una sola molestia). Cada ronda empieza con la calma llena | Premia visitas espaciadas y compras en lote. Es el mundo que mejor encarna el espíritu del juego | Coste ×1,18; plumas con exponente 0,28 | 10.000 plumas de la Huerta |

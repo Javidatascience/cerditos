@@ -66,8 +66,8 @@ describe('pestañas de mundo', () => {
   it('muestra los abiertos y solo el siguiente en gris, con su requisito', () => {
     const state = createInitialState(CONTENT, 0);
     const tabs = worldTabs(state, CONTENT);
-    expect(tabs.map((t) => t.id)).toEqual(['valle', 'bosque']);
-    expect(tabs[1]).toMatchObject({ unlocked: false, requirement: { fromWorldName: 'El Valle', genName: 'Gran Blanco', target: 10 } });
+    expect(tabs.map((t) => t.id)).toEqual(['valle', 'pocilga', 'bosque']); // La Pocilga está abierta desde el inicio
+    expect(tabs[2]).toMatchObject({ unlocked: false, requirement: { fromWorldName: 'El Valle', genName: 'Gran Blanco', target: 10 } });
   });
 
   it('setActiveWorld solo cambia a mundos desbloqueados', () => {

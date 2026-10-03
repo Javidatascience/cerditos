@@ -20,6 +20,7 @@ import {
 } from './formulas.ts';
 import { addEntry } from './journal.ts';
 import { touchCalm } from './mechanics/calm.ts';
+import { canMerge, freeSlots } from './mechanics/merge.ts';
 import { harmonyLevel, lowestGenerators } from './mechanics/harmony.ts';
 import { basketValue } from './basket.ts';
 import { D, Decimal } from './num.ts';
@@ -97,7 +98,12 @@ export function buyGenerator(state: GameState, content: Content, worldId: WorldI
   const delta = perkCostGrowthDelta(state, content, worldId);
   const mult = totalCostMultiplier(state, content, worldId);
 
-  const count = amount === 'max' ? maxAffordable(world, gen, genState.bought, worldState.currency, delta, mult) : amount;
+  let count = amount === 'max' ? maxAffordable(world, gen, genState.bought, worldState.currency, delta, mult) : amount;
+  if (world.mechanic === 'merge') {
+    // Fusión: solo se compra el nivel 0 y solo caben tantos como huecos libres.
+    if (world.generators[0]?.id !== genId) return 0;
+    count = Math.min(count, freeSlots(world, worldState));
+  }
   if (count <= 0) return 0;
 
   const cost = bulkCost(world, gen, genState.bought, count, delta, mult);
@@ -110,6 +116,24 @@ export function buyGenerator(state: GameState, content: Content, worldId: WorldI
   touchCalm(world, worldState, state.time); // Balneario: comprar molesta (una vez por ventana)
   if (world.mechanic === 'harmony') worldState.records.maxHarmony = Math.max(worldState.records.maxHarmony, harmonyLevel(world, worldState));
   return count;
+}
+
+/**
+ * Fusiona dos cerdos del nivel `level` (0-based) en uno del nivel siguiente (La Pocilga).
+ * Devuelve `true` si se fusionaron. Libera un hueco.
+ */
+export function mergePigs(state: GameState, content: Content, worldId: WorldId, level: number): boolean {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (!worldState || !worldState.unlocked || !canMerge(world, worldState, level)) return false;
+  const from = world.generators[level]!;
+  const to = world.generators[level + 1]!;
+  const fromState = worldState.generators[from.id]!;
+  const toState = worldState.generators[to.id]!;
+  fromState.owned = fromState.owned.sub(2);
+  toState.owned = toState.owned.add(1);
+  worldState.records.maxBought[to.id] = Math.max(worldState.records.maxBought[to.id] ?? 0, toState.owned.toNumber());
+  return true;
 }
 
 /** Coste de "Completar fila" (armonía): una unidad de cada cerdito que está en el mínimo. */

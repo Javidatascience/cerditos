@@ -125,7 +125,7 @@ export function createWorldState(world: WorldDef): WorldState {
     runSeconds: 0,
     calm: 1,
     calmPenaltyUntil: -1,
-    revealed: world.mechanic === 'harmony' ? world.generators.length : 1,
+    revealed: world.mechanic === 'harmony' || world.mechanic === 'merge' ? world.generators.length : 1,
     basketSince: 0,
     records: { maxBought, maxHarmony: 0 },
   };

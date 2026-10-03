@@ -636,3 +636,25 @@ solo produjo las primeras 2 h (`totalAwaySeconds`). El simulador aplica el mismo
 noches ya no producen más de 2 h) y los objetivos de ritmo se reajustan: 10ª ascensión 1-6 d, Huerta 7-25 d,
 Balneario 16-40 d, Bosque ocasional 3-20 d; el objetivo del Balneario "ocasional" se elimina (no llega en 60 d).
 Colección 100 % ~45,5 d. Consecuencia buscada: ahora volver al menos cada 2 h compensa claramente.
+
+---
+
+**2026-10-03 (hito 12, quinta tanda: desbloqueo por cerditos y La Pocilga)**
+- **Desbloqueo de mundos por cerditos** (decisión del usuario, a probar): cada mundo se abre al haber tenido 10 del
+  último cerdito del anterior (`unlock: { world, gen, count }`; máximo histórico en `records.maxBought`). Valle →
+  10 Gran Blanco; Bosque → 10 Espíritus del bosque; Huerta → 10 Abuelos del huerto. Las partidas con un mundo ya
+  abierto no se tocan. El simulador casual abre ahora los mundos en 10 h / 38 h / 2 d (antes 3 / 11 / 16 d), así que
+  los objetivos de ritmo de desbloqueo y colección 50 % se ajustan (Bosque 6 h-5 d, Huerta 1-12 d, Balneario 2-20 d,
+  Colección 50 % 5-30 d). Todos los mundos se juegan a la vez mucho antes: el reparto de plumas por mundo manda ahora.
+- **La Pocilga** (mundo de fusión abierto desde el inicio, `mechanic: 'merge'`): se compra el cochinillo (nivel 0,
+  coste ×1,04 por compra) y dos del mismo nivel se fusionan en uno del siguiente (`core/mechanics/merge.ts`,
+  `actions.mergePigs`); 10 niveles con producción ×3 por nivel; 12 huecos (`merge.slots`). Se modela con los
+  `generators` existentes (cada nivel = un cerdito; `owned` = cuántos hay) sin cambiar el estado, así que no
+  hay migración. Ascensión, ventajas, mejoras globales, offline y logros (hitos 1/3/6 por nivel) funcionan igual.
+  UI: `views/mergeBoard.ts` (tablero con tocar-y-tocar o arrastrar; sin la granja animada). Mundos abiertos desde
+  el inicio: `validate.ts` ya solo exige que el primero lo esté.
+- **No se copian imágenes ni textos del juego "Pig Evolution"**: solo la idea general de fusionar cerdos iguales.
+  Nombres, textos y dibujos son propios (cerditos SVG de `ui/art.ts`).
+- **Fuera del simulador**: La Pocilga no se simula (`tools/sim/content.ts` filtra los mundos de fusión) y los tests de
+  paridad de 4 mundos la excluyen. La economía se calibró con una estrategia ingenua (comprar, fusionar y mejorar cada
+  20 s): ~11 M monedas a la hora y ~700 M en 24 h; la primera pluma llega a 1 M ganados.

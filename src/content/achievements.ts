@@ -5,6 +5,7 @@ import type { AchievementDef } from './types.ts';
 import { balneario } from './worlds/balneario.ts';
 import { bosque } from './worlds/bosque.ts';
 import { huerta } from './worlds/huerta.ts';
+import { pocilga } from './worlds/pocilga.ts';
 import { valle } from './worlds/valle.ts';
 
 /** Cantidades de cada cerdito que dan logro (y su frase). Una serie igual para todos los cerditos. */
@@ -23,9 +24,15 @@ export const GENERATOR_MILESTONES: { count: number; flavor: string }[] = [
 ];
 
 /** Un logro por cada cerdito y cada cantidad de la serie (id `${cerdito}-${cantidad}`). */
-const GENERATOR_ACHIEVEMENTS: AchievementDef[] = [valle, bosque, huerta, balneario].flatMap((world) =>
+/** En La Pocilga cada nivel solo se tiene a la vez en pequeñas cantidades: hitos propios (1, 3 y 6). */
+const MERGE_MILESTONES = GENERATOR_MILESTONES.filter((m) => [1].includes(m.count)).concat([
+  { count: 3, flavor: 'Tres iguales: hay con quién jugar.' },
+  { count: 6, flavor: 'Medio corral de la misma talla.' },
+]);
+
+const GENERATOR_ACHIEVEMENTS: AchievementDef[] = [valle, bosque, huerta, balneario, pocilga].flatMap((world) =>
   world.generators.flatMap((gen) =>
-    GENERATOR_MILESTONES.map((m) => ({
+    (world.mechanic === 'merge' ? MERGE_MILESTONES : GENERATOR_MILESTONES).map((m) => ({
       id: `${gen.id}-${m.count}`,
       name: `${gen.name} ×${m.count}`,
       flavor: m.flavor,

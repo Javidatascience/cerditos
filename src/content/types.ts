@@ -4,7 +4,7 @@
 
 import type { GeneratorId, PerkId, UpgradeId, VarietyId, WorldId } from '../core/state.ts';
 
-export type Mechanic = 'classic' | 'chain' | 'harmony' | 'calm';
+export type Mechanic = 'classic' | 'chain' | 'harmony' | 'calm' | 'merge';
 
 export interface GeneratorDef {
   id: GeneratorId;
@@ -42,6 +42,8 @@ export interface WorldDef {
   unlock: { world: WorldId; gen: GeneratorId; count: number } | null;
   harmony?: { perLevel: number; thresholds: number[]; mult: number };
   calm?: CalmDef;
+  /** Fusión: huecos disponibles para cerdos. */
+  merge?: { slots: number };
   flavor: string;
 }
 

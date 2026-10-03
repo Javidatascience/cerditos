@@ -7,10 +7,11 @@ import type { Content } from './types.ts';
 import { balneario } from './worlds/balneario.ts';
 import { bosque } from './worlds/bosque.ts';
 import { huerta } from './worlds/huerta.ts';
+import { pocilga } from './worlds/pocilga.ts';
 import { valle } from './worlds/valle.ts';
 
 export const CONTENT: Content = {
-  worlds: [valle, bosque, huerta, balneario],
+  worlds: [valle, pocilga, bosque, huerta, balneario],
   perks: PERKS,
   varieties: VARIETIES,
   sets: SETS,

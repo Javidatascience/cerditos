@@ -68,7 +68,7 @@ function adaptWorld(world: ContentWorldDef): WorldDef {
     id: world.id,
     name: world.name,
     currency: world.currency,
-    mechanic: world.mechanic,
+    mechanic: world.mechanic as Mechanic, // (los mundos de fusión se filtran antes de llegar aquí)
     costGrowth: world.costGrowth,
     startCurrency: world.startCurrency,
     generators: world.generators.map((g) => ({ id: g.id, name: g.name, baseCost: g.baseCost, baseProd: g.baseProd, costGrowth: g.costGrowth })),
@@ -83,7 +83,8 @@ function adaptWorld(world: ContentWorldDef): WorldDef {
   };
 }
 
-export const WORLDS: WorldDef[] = CONTENT.worlds.map(adaptWorld);
+// La Pocilga (fusión) no se simula: el simulador modela los 4 mundos de producción.
+export const WORLDS: WorldDef[] = CONTENT.worlds.filter((w) => w.mechanic !== 'merge').map(adaptWorld);
 export const WORLD_BY_ID: Record<WorldId, WorldDef> = Object.fromEntries(WORLDS.map((w) => [w.id, w]));
 
 export type { PerkEffect };
@@ -99,7 +100,7 @@ export interface PerkDef {
   effect: PerkEffect;
 }
 
-export const PERKS: PerkDef[] = CONTENT.perks.map(
+export const PERKS: PerkDef[] = CONTENT.perks.filter((p) => WORLDS.some((w) => w.id === p.world)).map(
   (p: ContentPerkDef): PerkDef => ({
     id: p.id,
     world: p.world,

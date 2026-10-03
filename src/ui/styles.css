@@ -29,6 +29,7 @@
 }
 
 :root[data-world='valle'] { --world-accent: #8f5a3f; }
+:root[data-world='pocilga'] { --world-accent: #a8436b; }
 :root[data-world='bosque'] { --world-accent: #4f6f46; }
 :root[data-world='huerta'] { --world-accent: #6f6f1f; }
 :root[data-world='balneario'] { --world-accent: #3f7585; }
@@ -60,6 +61,7 @@
     color-scheme: dark;
   }
   :root[data-world='valle'] { --world-accent: #d99b78; }
+  :root[data-world='pocilga'] { --world-accent: #ec9ab8; }
   :root[data-world='bosque'] { --world-accent: #9cc08f; }
   :root[data-world='huerta'] { --world-accent: #c9c96a; }
   :root[data-world='balneario'] { --world-accent: #8cc3d3; }
@@ -169,20 +171,21 @@ button {
 }
 
 .world-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  gap: 4px;
 }
 
 .world-tab {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
   line-height: 1.15;
-  padding: 6px 4px;
-  font-size: 0.72rem;
+  padding: 6px 2px;
+  font-size: 0.68rem;
   min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -985,3 +988,85 @@ body {
   }
 }
 
+/* Tablero de fusión (La Pocilga) */
+.merge-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.merge-used {
+  font-weight: 800;
+}
+
+.merge-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.merge-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  aspect-ratio: 1 / 1;
+  padding: 4px 2px;
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: 0 3px 0 var(--color-shadow);
+  color: var(--color-text);
+  touch-action: none;
+  user-select: none;
+}
+
+.merge-cell .pig-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.merge-cell-empty {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+  touch-action: auto;
+}
+
+.merge-level {
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.merge-prod {
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+}
+
+.merge-ready {
+  border-color: var(--world-accent);
+}
+
+.merge-selected {
+  background: var(--pill-bg);
+  border-color: var(--btn-orange);
+  border-width: 3px;
+}
+
+.merge-dragging {
+  opacity: 0.35;
+}
+
+.merge-ghost {
+  position: fixed;
+  z-index: 20;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  pointer-events: none;
+  opacity: 0.9;
+}

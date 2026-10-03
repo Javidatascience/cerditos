@@ -293,7 +293,8 @@ describe('paridad core/tools-sim con los 4 mundos a la vez (24 h)', () => {
     const TOTAL = 24 * 3600;
 
     const coreState = createInitialState(CONTENT, 0);
-    for (const world of CONTENT.worlds) {
+    const SIMULATED = CONTENT.worlds.filter((w) => w.mechanic !== 'merge'); // La Pocilga no está en el simulador
+    for (const world of SIMULATED) {
       const ws = coreState.worlds[world.id]!;
       ws.unlocked = true;
       ws.currency = D(world.startCurrency);
@@ -301,12 +302,12 @@ describe('paridad core/tools-sim con los 4 mundos a la vez (24 h)', () => {
     coreBestRate.clear();
     for (let t = 0; t < TOTAL; t += STEP) {
       advance(coreState, CONTENT, STEP);
-      for (const world of CONTENT.worlds) corePlayerAct(coreState, world.id);
+      for (const world of SIMULATED) corePlayerAct(coreState, world.id);
     }
 
     strategy.resetStrategyMemory();
     const simState = sim.newSimState();
-    for (const world of CONTENT.worlds) {
+    for (const world of SIMULATED) {
       const ws = simState.worlds[world.id]!;
       ws.unlocked = true;
       ws.currency = SIM_WORLD_BY_ID[world.id]!.startCurrency;
@@ -314,10 +315,10 @@ describe('paridad core/tools-sim con los 4 mundos a la vez (24 h)', () => {
     for (let t = 0; t < TOTAL; t += STEP) {
       sim.produce(simState, STEP);
       sim.updateCollectionAndUnlocks(simState);
-      for (const world of CONTENT.worlds) strategy.playerAct(simState, world.id);
+      for (const world of SIMULATED) strategy.playerAct(simState, world.id);
     }
 
-    for (const world of CONTENT.worlds) {
+    for (const world of SIMULATED) {
       const c = coreState.worlds[world.id]!;
       const sm = simState.worlds[world.id]!;
       expect(c.ascensions, `${world.id}: ascensiones`).toBe(sm.ascensions);

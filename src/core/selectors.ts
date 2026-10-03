@@ -28,6 +28,7 @@ import {
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
 import { calmMultiplier, purchaseWouldDisturb } from './mechanics/calm.ts';
+import { canMerge, freeSlots, slotsOf, totalPigs } from './mechanics/merge.ts';
 import { harmonyLevel, harmonyMultiplier, lowestGenerators, nextHarmonyThreshold } from './mechanics/harmony.ts';
 import { unlockProgress } from './unlocks.ts';
 import { rowBundleCost, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
@@ -560,4 +561,64 @@ export function nextDiscovery(state: GameState, content: Content, worldId: World
   const rate = displayProductionPerSecond(state, content, worldId);
   const progress = Math.min(1, Math.max(0, worldState.currency.div(cost).toNumber()));
   return { etaSeconds: rate.gt(0) ? missing.div(rate).toNumber() : null, progress };
+}
+
+// ---------------------------------------------------------------------------
+// Fusión (La Pocilga)
+// ---------------------------------------------------------------------------
+
+export interface MergeLevelView {
+  index: number;
+  genId: string;
+  name: string;
+  count: number;
+  /** Producción de un cerdito de este nivel (por segundo). */
+  unitProd: Decimal;
+  /** Hay dos y existe un nivel siguiente: se puede fusionar. */
+  canMerge: boolean;
+}
+
+export interface MergeView {
+  slots: number;
+  used: number;
+  levels: MergeLevelView[];
+  buyName: string;
+  /** Cerdos que compraría el botón ahora (limitado por huecos libres y por el dinero). */
+  buyCount: number;
+  buyCost: Decimal;
+  canBuy: boolean;
+}
+
+/** Datos del tablero de fusión; `null` en los mundos que no usan esa mecánica. */
+export function mergeView(state: GameState, content: Content, worldId: WorldId): MergeView | null {
+  const world = getWorldDef(content, worldId);
+  const worldState = state.worlds[worldId];
+  if (world.mechanic !== 'merge' || !worldState) return null;
+  const first = world.generators[0];
+  if (!first) return null;
+  const m = globalMultiplier(state, content, worldId);
+  const levels = world.generators.map((gen, index) => ({
+    index,
+    genId: gen.id,
+    name: gen.name,
+    count: Math.round(worldState.generators[gen.id]?.owned.toNumber() ?? 0),
+    unitProd: D(gen.baseProd).mul(m),
+    canMerge: canMerge(world, worldState, index),
+  }));
+  const delta = perkCostGrowthDelta(state, content, worldId);
+  const mult = totalCostMultiplier(state, content, worldId);
+  const bought = worldState.generators[first.id]?.bought ?? 0;
+  const amount = state.settings.buyAmount;
+  const wanted = amount === 'max' ? maxAffordable(world, first, bought, worldState.currency, delta, mult) : amount;
+  const buyCount = Math.min(wanted, freeSlots(world, worldState));
+  const buyCost = bulkCost(world, first, bought, Math.max(1, buyCount), delta, mult);
+  return {
+    slots: slotsOf(world),
+    used: Math.round(totalPigs(world, worldState)),
+    levels,
+    buyName: first.name,
+    buyCount,
+    buyCost,
+    canBuy: buyCount > 0 && worldState.currency.gte(buyCost),
+  };
 }

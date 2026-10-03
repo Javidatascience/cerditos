@@ -11,6 +11,7 @@ import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { generatorIcon } from '../art.ts';
 import { mountFarmScene } from '../farmScene.ts';
+import { mountMergeBoard } from './mergeBoard.ts';
 import { mountUpgradesList } from './upgradesList.ts';
 import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
@@ -118,7 +119,21 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
   const upgradesSlot = h('div', { className: 'upgrades-slot' });
   const upgrades = mountUpgradesList(upgradesSlot, ctx);
 
-  const container = h('div', { className: 'farm-view' }, [sceneSlot, tapButton, upgradesSlot, basketBlock, harmonyBlock, calmBlock, amountRow, list, moreHint]);
+  // La Pocilga (fusión): un tablero en lugar de la lista de cerditos.
+  const isMerge = world.mechanic === 'merge';
+  const boardSlot = h('div', { className: 'board-slot' });
+  const board = isMerge ? mountMergeBoard(boardSlot, ctx) : null;
+  if (isMerge) list.classList.add('hidden');
+
+  // En La Pocilga el tablero es lo principal: va arriba, sin la granja animada.
+  if (isMerge) sceneSlot.classList.add('hidden');
+  const container = h(
+    'div',
+    { className: 'farm-view' },
+    isMerge
+      ? [sceneSlot, amountRow, boardSlot, tapButton, upgradesSlot, basketBlock, list, moreHint]
+      : [sceneSlot, tapButton, upgradesSlot, basketBlock, harmonyBlock, calmBlock, amountRow, boardSlot, list, moreHint],
+  );
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -126,6 +141,7 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
 
     upgrades.update(state);
+    board?.update(state);
     setText(tapText, `Rascar la barriga (+${formatNumber(tapValue(state, ctx.content, worldId), notation)})`);
 
     const basket = basketView(state, ctx.content, worldId);
@@ -185,6 +201,7 @@ export function mountFarmView(root: HTMLElement, ctx: UiContext): View {
     update,
     destroy: () => {
       scene.destroy();
+      board?.destroy();
       upgrades.destroy();
       container.remove();
     },

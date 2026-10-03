@@ -1,7 +1,7 @@
 // Cerditos descubiertos (docs/01 §4): al empezar solo se ven los que ya puedes comprar; el
 // siguiente aparece difuminado y los demás quedan ocultos ("hay más por descubrir"). Un cerdito
 // se descubre cuando se ha podido pagar su primera unidad, o ya se compró alguna vez. Solo
-// avanza (ascender no vuelve a ocultar nada). En armonía se ven todos desde el inicio.
+// avanza (ascender no vuelve a ocultar nada). En armonía y fusión se ven todos desde el inicio.
 
 import type { Content } from '../content/types.ts';
 import { generatorCost, perkCostGrowthDelta, totalCostMultiplier } from './formulas.ts';
@@ -12,7 +12,7 @@ export function updateReveals(state: GameState, content: Content): void {
   for (const world of content.worlds) {
     const ws = state.worlds[world.id];
     if (!ws || !ws.unlocked) continue;
-    if (world.mechanic === 'harmony') {
+    if (world.mechanic === 'harmony' || world.mechanic === 'merge') {
       ws.revealed = world.generators.length;
       continue;
     }

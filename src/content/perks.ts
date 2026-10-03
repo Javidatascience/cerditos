@@ -6,6 +6,7 @@
 import { balneario } from './worlds/balneario.ts';
 import { bosque } from './worlds/bosque.ts';
 import { huerta } from './worlds/huerta.ts';
+import { pocilga } from './worlds/pocilga.ts';
 import { valle } from './worlds/valle.ts';
 import type { PerkDef, PerkEffect } from './types.ts';
 import type { WorldId } from '../core/state.ts';
@@ -15,8 +16,8 @@ import type { WorldId } from '../core/state.ts';
 // Valle se completaba en las primeras 12 h de juego (decisiones sin peso); con ×10 se reparte
 // entre el día 1 y el día 6 (03 §6, §10). La segunda fila (Establo, Raíces) tiene un coste
 // base propio por mundo, ya absoluto y proporcional a las plumas típicas de cada uno.
-const FIRST_ROW_SCALE: Record<WorldId, number> = { [valle.id]: 10, [bosque.id]: 10, [huerta.id]: 1, [balneario.id]: 1 };
-const LATE_ROW_BASE: Record<WorldId, number> = { [valle.id]: 200000, [bosque.id]: 200000, [huerta.id]: 5000, [balneario.id]: 5000 };
+const FIRST_ROW_SCALE: Record<WorldId, number> = { [valle.id]: 10, [bosque.id]: 10, [huerta.id]: 1, [balneario.id]: 1, [pocilga.id]: 3 };
+const LATE_ROW_BASE: Record<WorldId, number> = { [valle.id]: 200000, [bosque.id]: 200000, [huerta.id]: 5000, [balneario.id]: 5000, [pocilga.id]: 20000 };
 
 function perksForWorld(world: WorldId): PerkDef[] {
   const scale = FIRST_ROW_SCALE[world] ?? 1;
@@ -87,6 +88,6 @@ function perksForWorld(world: WorldId): PerkDef[] {
   ];
 }
 
-const WORLD_IDS: WorldId[] = [valle.id, bosque.id, huerta.id, balneario.id];
+const WORLD_IDS: WorldId[] = [valle.id, pocilga.id, bosque.id, huerta.id, balneario.id];
 
 export const PERKS: PerkDef[] = WORLD_IDS.flatMap((w) => perksForWorld(w));
