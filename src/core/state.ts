@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 9;
+export const STATE_VERSION = 10;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -76,6 +76,10 @@ export interface GameState {
   activeCompanions: string[];
   /** Avance de la habilidad de cada compañero (picos o segundos hasta su próximo premio). */
   companionProgress: Record<string, number>;
+  /** Nivel de mejora (con bellotas) de cada compañero. */
+  companionLevels: Record<string, number>;
+  /** El Jardín: parcelas (null = vacía; `plantedAt` en epoch ms) y flores ya recogidas. */
+  garden: { plots: ({ flower: string; plantedAt: number } | null)[]; found: Record<string, { count: number; shiny: boolean }> };
   /** La Cueva del Dragón: brasas, hornos y ventajas. Permanente (no se reinicia al ascender). */
   cave: { embers: Decimal; furnaces: Record<string, number>; nodes: Record<string, true>; /** `time` del último soplido. */ blowAt: number };
   /** Estadísticas sueltas. */
@@ -115,6 +119,8 @@ export function createInitialState(content: Content, now: number): GameState {
     companions: {},
     activeCompanions: [],
     companionProgress: {},
+    companionLevels: {},
+    garden: { plots: Array.from({ length: content.garden.plots }, () => null), found: {} },
     cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000 },
     stats: { visitors: 0, bestIncome: D(0) },
     basketSince: 0,

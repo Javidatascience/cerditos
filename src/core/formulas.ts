@@ -1,8 +1,9 @@
 // Fórmulas del juego. Ver docs/06-mina.md. Todo número sale de `content.game` y de los datos de
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
-import type { CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
+import type { CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
 import { caveProduct, caveSum } from './cave.ts';
+import { gardenProduct, gardenSum } from './garden.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
 
@@ -100,7 +101,7 @@ export function nextUpgradeUnlocked(state: GameState, content: Content, id: Tool
 
 /** m_coste: Regateo en la feria. */
 export function costMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'costMult');
+  return perkProduct(state, content, 'costMult') * gardenProduct(state, content, 'costMult');
 }
 
 /** Coste de comprar `k` unidades a partir de las `n` ya tenidas. */
@@ -128,12 +129,12 @@ export function globalMultiplier(state: GameState, content: Content): number {
 
 /** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult');
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * gardenProduct(state, content, 'prodMult');
 }
 
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
 export function momentumMaxMult(state: GameState, content: Content): number {
-  return content.game.momentumMax + perkSum(state, content, 'momentumMax');
+  return content.game.momentumMax + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax');
 }
 
 /** Multiplicador de la inercia con la barra en `momentum` (0..1): 1 + (máx − 1) · barra. */
@@ -160,7 +161,8 @@ function bestToolMult(state: GameState, content: Content, tool: ToolDef): number
   if (content.tools[bestToolIndex(state, content)]?.id !== tool.id) return 1;
   let mult = 1;
   for (const c of content.companions) {
-    if (c.ability.kind === 'bestToolMult' && state.activeCompanions.includes(c.id)) mult *= c.ability.mult;
+    const ability = companionAbility(state, c);
+    if (ability.kind === 'bestToolMult' && state.activeCompanions.includes(c.id)) mult *= ability.mult;
   }
   return mult;
 }
@@ -169,9 +171,21 @@ function bestToolMult(state: GameState, content: Content, tool: ToolDef): number
 export function visitorModifiers(state: GameState, content: Content): { speed: number; stayBonus: number } {
   let speed = 1;
   for (const c of content.companions) {
-    if (c.ability.kind === 'visitorSpeed' && state.activeCompanions.includes(c.id)) speed *= c.ability.speed;
+    const ability = companionAbility(state, c);
+    if (ability.kind === 'visitorSpeed' && state.activeCompanions.includes(c.id)) speed *= ability.speed;
   }
   return { speed, stayBonus: caveSum(state, content, 'visitorStay') };
+}
+
+/** Nivel de mejora de un compañero (0 = sin mejorar). */
+export function companionLevel(state: GameState, id: string): number {
+  return state.companionLevels[id] ?? 0;
+}
+
+/** Habilidad vigente de un compañero según su nivel. */
+export function companionAbility(state: GameState, companion: CompanionDef): CompanionAbility {
+  const level = companionLevel(state, companion.id);
+  return level > 0 ? (companion.upgrades[level - 1]?.ability ?? companion.ability) : companion.ability;
 }
 
 /** Producción por segundo de todas las unidades de la herramienta. */
@@ -194,7 +208,7 @@ export function incomePerSecond(state: GameState, content: Content): Decimal {
 /** Lo que da un toque: `tapSeconds` de producción (mínimo 1 moneda) × Manos de acero × impulso del visitante. */
 export function tapGain(state: GameState, content: Content): Decimal {
   const base = Decimal.max(1, incomePerSecond(state, content).mul(content.game.tapSeconds));
-  return base.mul(1 + perkSum(state, content, 'tapMult')).mul(state.buff?.mult ?? 1);
+  return base.mul(1 + perkSum(state, content, 'tapMult') + gardenSum(state, content, 'tapMult')).mul(state.buff?.mult ?? 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +246,7 @@ export function startCoins(state: GameState, content: Content): Decimal {
 
 /** Segundos máximos de producción mientras no estás (2 h + Siesta larga). */
 export function offlineCapSeconds(state: GameState, content: Content): number {
-  return (content.game.offlineHours + perkSum(state, content, 'offlineHours') + caveSum(state, content, 'offlineHours')) * 3600;
+  return (content.game.offlineHours + perkSum(state, content, 'offlineHours') + caveSum(state, content, 'offlineHours') + gardenSum(state, content, 'offlineHours')) * 3600;
 }
 
 /** Coste de la siguiente mejora de la herramienta (5× el precio de la unidad que la desbloquea); null si no quedan. */

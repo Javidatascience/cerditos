@@ -70,3 +70,10 @@ Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, si
 ## Compañeros y Cueva del Dragón
 
 Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mejor herramienta. Pájaro: el cerdito viajero llega un tercio más rápido. Gato: regalo de monedas cada 2 min. Conejo: 1 herramienta gratis cada 6 h reales. Dragoncito (logro de 10 ascensiones): sopla la inercia al máximo cada 3 min y abre la **Cueva** (pestaña propia, permanente): brasas, 4 hornos y un árbol por ramas (Fuego, Escamas, Tesoro) que da hasta ~×1,33 a la producción, más cesta, estancia del visitante y offline. Contenido en `src/content/cave.ts`.
+
+### Mejoras de compañeros, Jardín y visitante dorado
+
+- **Mejoras de compañeros** (todos menos el dragón): 3 niveles con bellotas en la pestaña Cerdito; cada nivel sustituye la habilidad por una mejor (`upgrades` en `content/game.ts`).
+- **Jardín** (`content/garden.ts`): 4 parcelas, 8 flores que tardan de 1 a 24 h de reloj real (también con el juego cerrado). Se abre al ganar 1 millón en total. La semilla cuesta 5 min de ingresos. Cada flor distinta recogida da un bono pasivo permanente; 10 % de que salga brillante (bono ×2). Cada flor se desbloquea al recoger la anterior.
+- **Cerdito viajero dorado**: 10 % de las visitas; da 30 min de ingresos, ×7 durante 90 s y 3 bellotas. La tarjeta del visitante es ahora flotante sobre la navegación, con cuenta atrás y vibración.
+- **Costes**: `costGrowth` 1,15 → 1,17 y mejoras de herramienta ×7 (antes ×5).

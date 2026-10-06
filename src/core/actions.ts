@@ -6,6 +6,8 @@ import { basketValue } from './basket.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
+  companionAbility,
+  companionLevel,
   companionOwned,
   getPerk,
   globalUpgradeCost,
@@ -24,6 +26,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, breathSeconds, furnaceCost } from './cave.ts';
+import { flowerAvailable, gardenUnlocked, growMs, seedCost } from './garden.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
@@ -153,20 +156,27 @@ export function collectBasket(state: GameState, content: Content): Decimal {
   return amount;
 }
 
-export type VisitorKind = 'injection' | 'boost';
+export type VisitorKind = 'injection' | 'boost' | 'golden';
 
 /** Segundos de ingresos que da la inyección de un visitante. */
 export const VISITOR_INJECTION_SECONDS = 600;
 /** Multiplicador y duración del impulso de un visitante. */
 export const VISITOR_BOOST = { mult: 5, seconds: 60 };
+/** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 3 bellotas. */
+export const VISITOR_GOLDEN = { injectionSeconds: 1800, mult: 7, seconds: 90, acorns: 3 };
 
 /**
  * Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción
  * y picos durante 60 s. Además siempre da 1 bellota (la segunda moneda, para cosméticos).
  */
 export function claimVisitor(state: GameState, content: Content, kind: VisitorKind): void {
-  state.acorns += 1;
+  state.acorns += kind === 'golden' ? VISITOR_GOLDEN.acorns : 1;
   state.stats.visitors += 1;
+  if (kind === 'golden') {
+    state.buff = { mult: VISITOR_GOLDEN.mult, until: state.time + VISITOR_GOLDEN.seconds };
+    gain(state, content, baseIncomePerSecond(state, content).mul(VISITOR_GOLDEN.injectionSeconds));
+    return;
+  }
   if (kind === 'boost') {
     state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
     return;
@@ -207,6 +217,18 @@ export function buyCompanion(state: GameState, content: Content, id: string): bo
 }
 
 /** Máximo de compañeros a la vez en la escena. */
+/** Mejora un compañero con bellotas (un nivel). */
+export function upgradeCompanion(state: GameState, content: Content, id: string): boolean {
+  const companion = content.companions.find((c) => c.id === id);
+  if (!companion || !companionOwned(state, companion)) return false;
+  const level = companionLevel(state, id);
+  const next = companion.upgrades[level];
+  if (!next || state.acorns < next.cost) return false;
+  state.acorns -= next.cost;
+  state.companionLevels[id] = level + 1;
+  return true;
+}
+
 export const MAX_ACTIVE_COMPANIONS = 2;
 
 /** Pone o quita un compañero que ya se tiene de la escena (si hay demasiados, sale el más antiguo). */
@@ -232,9 +254,10 @@ function activeCompanionDefs(state: GameState, content: Content) {
 /** Cada pico avanza al compañero que cuenta picos (el topo). */
 function companionTap(state: GameState, content: Content): void {
   for (const c of activeCompanionDefs(state, content)) {
-    if (c.ability.kind !== 'tapAcorn') continue;
+    const ability = companionAbility(state, c);
+    if (ability.kind !== 'tapAcorn') continue;
     const progress = (state.companionProgress[c.id] ?? 0) + 1;
-    if (progress >= c.ability.every) {
+    if (progress >= ability.every) {
       state.companionProgress[c.id] = 0;
       state.acorns += 1;
     } else {
@@ -246,7 +269,7 @@ function companionTap(state: GameState, content: Content): void {
 /** Avanza `dt` segundos de juego abierto las habilidades por tiempo (el gato y el dragón). */
 export function companionTick(state: GameState, content: Content, dt: number): void {
   for (const c of activeCompanionDefs(state, content)) {
-    const ability = c.ability;
+    const ability = companionAbility(state, c);
     if (ability.kind !== 'coinGift' && ability.kind !== 'fireBreath') continue;
     const every = ability.kind === 'fireBreath' ? breathSeconds(state, content, ability.everySeconds) : ability.everySeconds;
     const progress = (state.companionProgress[c.id] ?? 0) + dt;
@@ -271,10 +294,11 @@ export function companionTick(state: GameState, content: Content, dt: number): v
 /** Segundos de espera que quedan hasta poder usar al conejo (0 = listo). `now` en epoch ms. */
 export function rabbitWaitSeconds(state: GameState, content: Content, now: number): number {
   const rabbit = content.companions.find((c) => c.ability.kind === 'freeTool');
-  if (!rabbit || rabbit.ability.kind !== 'freeTool') return 0;
+  if (!rabbit) return 0;
+  const ability = companionAbility(state, rabbit);
   const last = state.companionProgress[rabbit.id];
-  if (last === undefined) return 0;
-  return Math.max(0, (last + rabbit.ability.cooldownHours * 3600_000 - now) / 1000);
+  if (last === undefined || ability.kind !== 'freeTool') return 0;
+  return Math.max(0, (last + ability.cooldownHours * 3600_000 - now) / 1000);
 }
 
 /** Compra gratis 1 unidad de una herramienta ya descubierta, con el conejo puesto y sin espera. */
@@ -326,4 +350,32 @@ export function buyCaveNode(state: GameState, content: Content, id: string): boo
   state.cave.embers = state.cave.embers.sub(node.cost);
   state.cave.nodes[id] = true;
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Jardín (tiempo real: `now` en epoch ms; `roll` es un número al azar en [0,1) que pone la UI)
+// ---------------------------------------------------------------------------
+
+/** Planta una flor en una parcela vacía pagando la semilla. */
+export function plantFlower(state: GameState, content: Content, plot: number, flowerId: string, now: number): boolean {
+  const index = content.garden.flowers.findIndex((f) => f.id === flowerId);
+  if (index < 0 || plot < 0 || plot >= content.garden.plots || state.garden.plots[plot] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
+  const cost = seedCost(baseIncomePerSecond(state, content), content);
+  if (state.coins.lt(cost)) return false;
+  state.coins = state.coins.sub(cost);
+  state.garden.plots[plot] = { flower: flowerId, plantedAt: now };
+  return true;
+}
+
+/** Recoge una flor crecida. Devuelve null si no está lista; si no, si ha salido brillante. */
+export function harvestFlower(state: GameState, content: Content, plot: number, now: number, roll: number): { shiny: boolean; isNew: boolean } | null {
+  const planted = state.garden.plots[plot];
+  const flower = planted ? content.garden.flowers.find((f) => f.id === planted.flower) : undefined;
+  if (!planted || !flower || now - planted.plantedAt < growMs(flower)) return null;
+  const before = state.garden.found[flower.id];
+  const shiny = roll < content.garden.shinyChance;
+  state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny };
+  state.garden.plots[plot] = null;
+  addEntry(state, shiny ? `¡Ha salido una ${flower.name} brillante!` : `Has recogido una ${flower.name}.`, gameClockMs(state));
+  return { shiny, isNew: before === undefined };
 }

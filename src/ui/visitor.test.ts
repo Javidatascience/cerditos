@@ -12,9 +12,17 @@ describe('visitante', () => {
     const early = createVisitorScheduler(() => 0);
     early.tick(VISITOR_MIN_DELAY);
     expect(early.current()).toBe('injection');
-    const late = createVisitorScheduler(() => 0.99);
+    // 1.ª llamada: espera; 2.ª: tipo; 3.ª: ¿dorado?
+    const seq = (...values: number[]) => {
+      let i = 0;
+      return () => values[Math.min(i++, values.length - 1)]!;
+    };
+    const late = createVisitorScheduler(seq(0.99, 0.99, 0.5));
     late.tick(VISITOR_MAX_DELAY);
     expect(late.current()).toBe('boost');
+    const golden = createVisitorScheduler(seq(0, 0.2, 0.95));
+    golden.tick(VISITOR_MIN_DELAY);
+    expect(golden.current()).toBe('golden');
   });
 
   it('se queda 20 s y se va si no se acepta; luego llega otro', () => {

@@ -39,6 +39,21 @@ export function normalize(state: GameState, content: Content): GameState {
     const v = state.companionProgress[id];
     if (!companionIds.has(id) || typeof v !== 'number' || !Number.isFinite(v) || v < 0) delete state.companionProgress[id];
   }
+  for (const id of Object.keys(state.companionLevels)) {
+    const def = content.companions.find((c) => c.id === id);
+    if (!def) delete state.companionLevels[id];
+    else state.companionLevels[id] = clampInt(state.companionLevels[id] ?? 0, 0, def.upgrades.length);
+  }
+  const flowerIds = new Set(content.garden.flowers.map((f) => f.id));
+  state.garden.plots = Array.from({ length: content.garden.plots }, (_, i) => {
+    const p = state.garden.plots[i];
+    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt } : null;
+  });
+  for (const id of Object.keys(state.garden.found)) {
+    const f = state.garden.found[id];
+    if (!flowerIds.has(id) || !f) delete state.garden.found[id];
+    else state.garden.found[id] = { count: clampInt(f.count, 1, Number.MAX_SAFE_INTEGER), shiny: f.shiny === true };
+  }
   const furnaceIds = new Set(content.cave.furnaces.map((f) => f.id));
   for (const id of Object.keys(state.cave.furnaces)) {
     if (!furnaceIds.has(id)) delete state.cave.furnaces[id];

@@ -111,6 +111,8 @@ export interface CompanionDef {
   cost: number | null;
   achievement: string | null;
   ability: CompanionAbility;
+  /** Mejoras con bellotas: cada nivel sustituye la habilidad por una mejor. */
+  upgrades: { cost: number; ability: CompanionAbility }[];
 }
 
 /** Reliquia: bono permanente que se consigue al lograr un logro concreto (no se compra). */
@@ -171,8 +173,33 @@ export interface CaveDef {
   nodes: CaveNodeDef[];
 }
 
+/** Efecto pasivo de una flor del jardín. */
+export interface GardenEffect {
+  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'basketSeconds' | 'offlineHours';
+  value: number;
+}
+
+export interface GardenFlowerDef {
+  id: string;
+  name: string;
+  emoji: string;
+  flavor: string;
+  growHours: number;
+  effect: GardenEffect;
+}
+
+export interface GardenDef {
+  plots: number;
+  shinyChance: number;
+  seedSeconds: number;
+  minSeedCost: number;
+  unlockLifetime: number;
+  flowers: GardenFlowerDef[];
+}
+
 export interface Content {
   cave: CaveDef;
+  garden: GardenDef;
   game: GameDef;
   tools: ToolDef[];
   perks: PerkDef[];

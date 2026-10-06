@@ -1406,3 +1406,109 @@ body {
   opacity: 0.75;
 }
 
+
+.cosmetic-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+/* Cerdito viajero: tarjeta flotante sobre la navegación, con cuenta atrás, para que no pase desapercibido */
+.visitor-slot {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  z-index: 20;
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.visitor-slot > * {
+  pointer-events: auto;
+}
+
+.visitor-card {
+  flex-wrap: wrap;
+  border-width: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  animation: visitor-pop 0.35s ease-out, visitor-glow 1.2s ease-in-out infinite;
+}
+
+.visitor-card-golden {
+  background: linear-gradient(135deg, #fff3c4, #f2c94c);
+  border-color: #c9962a;
+  color: #4a3200;
+}
+
+.visitor-card-golden .visitor-left {
+  color: #6b4b00;
+}
+
+.visitor-timer {
+  flex-basis: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.visitor-timer > div {
+  height: 100%;
+  background: var(--btn-orange, #e0902f);
+}
+
+@keyframes visitor-pop {
+  from {
+    transform: translateY(24px) scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes visitor-glow {
+  0%,
+  100% {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 0 0 rgba(242, 201, 76, 0.7);
+  }
+  50% {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3), 0 0 0 8px rgba(242, 201, 76, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visitor-card {
+    animation: none;
+  }
+}
+
+/* Jardín */
+.garden-plots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 8px 0 12px;
+}
+
+.garden-plot {
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 3px 0 var(--color-shadow);
+  padding: 10px;
+  text-align: center;
+  background: var(--color-surface);
+}
+
+.garden-plot-emoji {
+  font-size: 2rem;
+}
+
+.shiny-mark {
+  color: #c9962a;
+  font-weight: 800;
+}

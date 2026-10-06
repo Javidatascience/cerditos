@@ -1,14 +1,17 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
 // llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import type { AchievementReq, Content, PerkDef, PerkEffect } from '../content/types.ts';
+import type { AchievementReq, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
 import { rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
+import { flowerAvailable, flowerValue, gardenUnlocked, growMs, seedCost } from './garden.ts';
 import { blowGain, blowReady, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
+  companionAbility,
+  companionLevel,
   companionOwned,
   globalUpgradeCost,
   globalUpgradeUnlocked,
@@ -352,6 +355,12 @@ export interface CosmeticView {
   canBuy: boolean;
   /** Nombre del logro que lo regala, si lo hay. */
   achievementName: string | null;
+  /** Solo compañeros: nivel, máximo, coste de la siguiente mejora y qué hace ahora. */
+  level: number;
+  maxLevel: number;
+  upgradeCost: number | null;
+  canUpgrade: boolean;
+  abilityText: string;
 }
 
 export interface RelicView {
@@ -384,6 +393,11 @@ export function cosmeticViews(state: GameState, content: Content): { acorns: num
         cost: s.cost,
         canBuy: !owned && s.cost !== null && state.acorns >= s.cost,
         achievementName: achievementName(content, s.achievement),
+        level: 0,
+        maxLevel: 0,
+        upgradeCost: null,
+        canUpgrade: false,
+        abilityText: '',
       };
     }),
     companions: content.companions.map((c) => {
@@ -399,6 +413,11 @@ export function cosmeticViews(state: GameState, content: Content): { acorns: num
         cost: c.cost,
         canBuy: !owned && c.cost !== null && state.acorns >= c.cost,
         achievementName: achievementName(content, c.achievement),
+        level: companionLevel(state, c.id),
+        maxLevel: c.upgrades.length,
+        upgradeCost: c.upgrades[companionLevel(state, c.id)]?.cost ?? null,
+        canUpgrade: owned && (c.upgrades[companionLevel(state, c.id)]?.cost ?? Infinity) <= state.acorns,
+        abilityText: abilityText(companionAbility(state, c)),
       };
     }),
     relics: content.relics.map((r) => ({
@@ -447,6 +466,24 @@ export function statsView(state: GameState, content: Content): StatsView {
   };
 }
 
+/** Descripción corta de lo que hace una habilidad. */
+export function abilityText(a: CompanionAbility): string {
+  switch (a.kind) {
+    case 'tapAcorn':
+      return `1 bellota cada ${a.every} picos`;
+    case 'coinGift':
+      return `${a.incomeSeconds} s de ingresos cada ${a.everySeconds} s`;
+    case 'fireBreath':
+      return `inercia al máximo cada ${a.everySeconds} s`;
+    case 'bestToolMult':
+      return `tu mejor herramienta ×${a.mult}`;
+    case 'visitorSpeed':
+      return `el cerdito viajero llega ×${a.speed} más rápido`;
+    case 'freeTool':
+      return `herramienta gratis cada ${a.cooldownHours} h`;
+  }
+}
+
 export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'fireBreath' | 'bestToolMult' | 'visitorSpeed' | 'freeTool';
 
 export interface CompanionStatusView {
@@ -454,6 +491,7 @@ export interface CompanionStatusView {
   name: string;
   emoji: string;
   kind: CompanionAbilityKind;
+  describe: string;
   progress: number;
   target: number;
   /** Segundos que faltan (solo en las habilidades por tiempo). */
@@ -465,8 +503,8 @@ export function companionStatusViews(state: GameState, content: Content, now: nu
   return state.activeCompanions.flatMap((id): CompanionStatusView[] => {
     const c = content.companions.find((x) => x.id === id);
     if (!c) return [];
-    const ability = c.ability;
-    const base = { id, name: c.name, emoji: c.emoji, kind: ability.kind };
+    const ability = companionAbility(state, c);
+    const base = { id, name: c.name, emoji: c.emoji, kind: ability.kind, describe: abilityText(ability) };
     const progress = state.companionProgress[id] ?? 0;
     switch (ability.kind) {
       case 'tapAcorn':
@@ -532,3 +570,64 @@ export function caveUnlocked(state: GameState, content: Content): boolean {
   return content.companions.some((c) => c.ability.kind === 'fireBreath' && companionOwned(state, c));
 }
 
+
+export interface GardenView {
+  unlocked: boolean;
+  unlockAt: Decimal;
+  seedCost: Decimal;
+  canAffordSeed: boolean;
+  shinyPercent: number;
+  plots: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean }[];
+  flowers: { id: string; name: string; emoji: string; flavor: string; growHours: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; requires: string | null }[];
+}
+
+function gardenEffectText(kind: GardenEffect['kind'], value: number): string {
+  switch (kind) {
+    case 'prodMult':
+      return `producción ×${value.toFixed(2)}`;
+    case 'costMult':
+      return `costes ×${value.toFixed(2)}`;
+    case 'tapMult':
+      return `+${Math.round(value * 100)} % a los picos`;
+    case 'momentumMax':
+      return `+${value} al tope de la inercia`;
+    case 'basketSeconds':
+      return `+${Math.round(value / 60)} min de cesta`;
+    case 'offlineHours':
+      return `+${value} h fuera`;
+  }
+}
+
+export function gardenView(state: GameState, content: Content, now: number): GardenView {
+  const flowers = content.garden.flowers;
+  return {
+    unlocked: gardenUnlocked(state, content),
+    unlockAt: D(content.garden.unlockLifetime),
+    seedCost: seedCost(baseIncomePerSecond(state, content), content),
+    canAffordSeed: state.coins.gte(seedCost(baseIncomePerSecond(state, content), content)),
+    shinyPercent: Math.round(content.garden.shinyChance * 100),
+    plots: state.garden.plots.map((p, index) => {
+      const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
+      if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
+      const total = growMs(flower);
+      const elapsed = Math.max(0, now - p.plantedAt);
+      return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total };
+    }),
+    flowers: flowers.map((f, i) => {
+      const got = state.garden.found[f.id];
+      return {
+        id: f.id,
+        name: f.name,
+        emoji: f.emoji,
+        flavor: f.flavor,
+        growHours: f.growHours,
+        available: flowerAvailable(state, content, i),
+        found: got !== undefined,
+        shiny: got?.shiny === true,
+        count: got?.count ?? 0,
+        effectText: gardenEffectText(f.effect.kind, flowerValue(f, got?.shiny === true)) + (got === undefined || got.shiny ? '' : ` (brillante: ${gardenEffectText(f.effect.kind, flowerValue(f, true))})`),
+        requires: i === 0 ? null : (flowers[i - 1]?.name ?? null),
+      };
+    }),
+  };
+}

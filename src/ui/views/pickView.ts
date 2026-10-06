@@ -207,11 +207,9 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
             ? `te trae monedas en ${formatDuration(c.secondsLeft ?? 0)}`
             : c.kind === 'fireBreath'
               ? `sopla fuego en ${formatDuration(c.secondsLeft ?? 0)}`
-              : c.kind === 'bestToolMult'
-                ? 'hace rendir ×1,1 tu mejor herramienta'
-                : c.kind === 'visitorSpeed'
-                  ? 'avisa al cerdito viajero para que venga antes'
-                  : (c.secondsLeft ?? 0) > 0
+              : c.kind === 'bestToolMult' || c.kind === 'visitorSpeed'
+                ? c.describe
+                : (c.secondsLeft ?? 0) > 0
                     ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
                     : 'te deja elegir una herramienta gratis:';
       setText(line.text, `${c.emoji} ${c.name} ${what}`);

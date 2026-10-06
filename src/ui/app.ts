@@ -2,7 +2,8 @@
 // contenedor de vista + navegación inferior. Las vistas son módulos independientes con el patrón
 // mount/update/destroy. Ver docs/06-mina.md.
 
-import { claimVisitor, VISITOR_BOOST } from '../core/actions.ts';
+import { VISITOR_INJECTION_SECONDS } from '../core/actions.ts';
+import { claimVisitor, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
 import { caveUnlocked, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
@@ -11,6 +12,7 @@ import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
 import { mountAchievementsView } from './views/achievementsView.ts';
 import { mountCaveView } from './views/caveView.ts';
+import { mountGardenView } from './views/gardenView.ts';
 import { mountCosmeticsView } from './views/cosmeticsView.ts';
 import { mountFlyView } from './views/flyView.ts';
 import { mountJournalView } from './views/journalView.ts';
@@ -45,6 +47,7 @@ const TABS: TabDef[] = [
   { id: 'pick', label: 'Picar', icon: '⛏️', mount: mountPickView },
   { id: 'fly', label: 'Ascender', icon: '🪶', mount: mountFlyView },
   { id: 'cosmetics', label: 'Cerdito', icon: '🐷', mount: mountCosmeticsView },
+  { id: 'garden', label: 'Jardín', icon: '🌱', mount: mountGardenView },
   { id: 'cave', label: 'Cueva', icon: '🐉', mount: mountCaveView },
   { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountAchievementsView },
   { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
@@ -113,13 +116,17 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   const visitorSlot = h('div', { className: 'visitor-slot' });
   let shownVisitor: string | null = null;
   let visitorLeft: Text | null = null;
+  let visitorBar: HTMLElement | null = null;
+  let visitorTotal = 1;
 
   function renderVisitor(): void {
     const kind = visitor?.current() ?? null;
     if (kind && kind !== shownVisitor) {
       const notation = state.settings.notation;
       const text =
-        kind === 'injection'
+        kind === 'golden'
+          ? `¡Un cerdito viajero DORADO! Trae un saco de ${formatNumber(visitorInjectionValue(state, content).mul(VISITOR_GOLDEN.injectionSeconds / VISITOR_INJECTION_SECONDS), notation)} monedas, ×${VISITOR_GOLDEN.mult} de producción y de picos durante ${formatDuration(VISITOR_GOLDEN.seconds)} y ${VISITOR_GOLDEN.acorns} 🌰.`
+          : kind === 'injection'
           ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas y 1 🌰.`
           : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}, y 1 🌰.`;
       const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
@@ -129,19 +136,24 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
         renderVisitor();
       });
       visitorLeft = document.createTextNode('');
+      visitorTotal = Math.max(1, visitor?.secondsLeft() ?? 1);
+      visitorBar = h('div', {});
       visitorSlot.replaceChildren(
-        h('div', { className: 'visitor-card' }, [
-          h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, ['🐷']),
+        h('div', { className: kind === 'golden' ? 'visitor-card visitor-card-golden' : 'visitor-card', role: 'alert' }, [
+          h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, [kind === 'golden' ? '✨🐷' : '🐷']),
           h('span', { className: 'visitor-text' }, [text, h('span', { className: 'visitor-left' }, [visitorLeft])]),
           accept,
+          h('div', { className: 'visitor-timer', 'aria-hidden': 'true' }, [visitorBar]),
         ]),
       );
+      if (ctx.effectsOn()) navigator.vibrate?.(150);
       shownVisitor = kind;
     } else if (!kind && shownVisitor !== null) {
       visitorSlot.replaceChildren();
       shownVisitor = null;
     }
     if (kind && visitorLeft) setText(visitorLeft, ` Se va en ${Math.ceil(visitor?.secondsLeft() ?? 0)} s.`);
+    if (kind && visitorBar) visitorBar.style.width = `${Math.min(100, ((visitor?.secondsLeft() ?? 0) / visitorTotal) * 100).toFixed(1)}%`;
   }
 
   root.appendChild(h('div', { className: 'app' }, [header, visitorSlot, viewContainer, nav]));

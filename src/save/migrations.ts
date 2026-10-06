@@ -61,12 +61,19 @@ function v8ToV9(old: RawSave): RawSave {
   return { ...old, version: 9, state: { ...old['state'], version: 9, cave: { embers: '0', furnaces: {}, nodes: {}, blowAt: -1000 } } };
 }
 
+/** v9 → v10: mejoras de compañeros y el Jardín (parcelas vacías; normalize las ajusta al contenido). */
+function v9ToV10(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 10 };
+  return { ...old, version: 10, state: { ...old['state'], version: 10, companionLevels: {}, garden: { plots: [], found: {} } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
   6: v6ToV7,
   7: v7ToV8,
   8: v8ToV9,
+  9: v9ToV10,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

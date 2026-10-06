@@ -9,6 +9,8 @@ import type { VisitorKind } from '../core/actions.ts';
 /** Espera entre visitantes, en segundos de juego abierto. */
 export const VISITOR_MIN_DELAY = 60;
 export const VISITOR_MAX_DELAY = 120;
+/** Probabilidad de que el visitante sea el dorado (recompensa mayor). */
+export const VISITOR_GOLDEN_CHANCE = 0.1;
 /** Segundos que se queda el visitante esperando antes de irse. */
 export const VISITOR_STAY_SECONDS = 20;
 
@@ -45,6 +47,7 @@ export function createVisitorScheduler(rng: () => number = Math.random, modifier
       untilNext -= dt * modifiers().speed;
       if (untilNext <= 0) {
         waiting = rng() < 0.5 ? 'injection' : 'boost';
+        if (rng() >= 1 - VISITOR_GOLDEN_CHANCE) waiting = 'golden';
         stayLeft = VISITOR_STAY_SECONDS + modifiers().stayBonus;
       }
     },

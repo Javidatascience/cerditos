@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { harvestFlower, plantFlower, upgradeCompanion, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
@@ -272,6 +272,87 @@ describe('cueva del dragón', () => {
     ascend(state, CONTENT, 0);
     expect(state.cave.nodes['fuego-interior']).toBe(true);
     expect(state.cave.embers.toNumber()).toBeGreaterThan(0);
+  });
+});
+
+describe('mejoras de compañeros', () => {
+  it('se mejoran con bellotas por niveles y cambian la habilidad', () => {
+    const state = fresh();
+    state.acorns = 100;
+    expect(upgradeCompanion(state, CONTENT, 'perro')).toBe(false); // no lo tengo
+    buyCompanion(state, CONTENT, 'perro');
+    state.activeCompanions = ['perro'];
+    const before = baseIncomePerSecond(state, CONTENT).toNumber();
+    expect(upgradeCompanion(state, CONTENT, 'perro')).toBe(true);
+    expect(baseIncomePerSecond(state, CONTENT).toNumber()).toBeCloseTo((before / 1.1) * 1.15, 9);
+    upgradeCompanion(state, CONTENT, 'perro');
+    upgradeCompanion(state, CONTENT, 'perro');
+    expect(upgradeCompanion(state, CONTENT, 'perro')).toBe(false); // nivel máximo
+    expect(state.companionLevels['perro']).toBe(3);
+  });
+
+  it('el topo mejorado da bellotas antes', () => {
+    const state = fresh();
+    state.acorns = 50;
+    buyCompanion(state, CONTENT, 'topo');
+    state.activeCompanions = ['topo'];
+    upgradeCompanion(state, CONTENT, 'topo');
+    const acorns = state.acorns;
+    for (let i = 0; i < 30; i++) tap(state, CONTENT);
+    expect(state.acorns).toBe(acorns + 1);
+  });
+});
+
+describe('cerdito viajero dorado', () => {
+  it('da ingresos grandes, un impulso mayor y 3 bellotas', () => {
+    const state = fresh();
+    const base = baseIncomePerSecond(state, CONTENT).toNumber();
+    claimVisitor(state, CONTENT, 'golden');
+    expect(state.acorns).toBe(VISITOR_GOLDEN.acorns);
+    expect(state.coins.toNumber()).toBeCloseTo(base * VISITOR_GOLDEN.injectionSeconds, 6);
+    expect(state.buff?.mult).toBe(VISITOR_GOLDEN.mult);
+  });
+});
+
+describe('jardín', () => {
+  const DAY = 24 * 3600_000;
+  function garden(): GameState {
+    const state = fresh();
+    state.lifetime = D(1e7);
+    state.coins = D(1e6);
+    return state;
+  }
+
+  it('está cerrado hasta ganar la cantidad indicada', () => {
+    const state = fresh();
+    state.coins = D(1e6);
+    expect(plantFlower(state, CONTENT, 0, 'margarita', 0)).toBe(false);
+  });
+
+  it('planta pagando la semilla, crece con el tiempo real y se recoge', () => {
+    const state = garden();
+    const coins = state.coins.toNumber();
+    expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(false); // aún no disponible
+    expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(true);
+    expect(state.coins.toNumber()).toBeLessThan(coins);
+    expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(false); // parcela ocupada
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 3600_000 - 1, 0.5)).toBeNull();
+    const r = harvestFlower(state, CONTENT, 0, 1000 + 3600_000, 0.5)!;
+    expect(r).toEqual({ shiny: false, isNew: true });
+    expect(state.garden.plots[0]).toBeNull();
+    expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(true); // ya disponible
+  });
+
+  it('la flor da su bono y la brillante lo duplica', () => {
+    const state = garden();
+    state.tools[PICO.id] = 20;
+    const before = prodMultiplier(state, CONTENT);
+    plantFlower(state, CONTENT, 0, 'margarita', 0);
+    harvestFlower(state, CONTENT, 0, DAY, 0.5);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.02, 9);
+    plantFlower(state, CONTENT, 0, 'margarita', 0);
+    expect(harvestFlower(state, CONTENT, 0, DAY, 0.05)?.shiny).toBe(true);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.04, 9);
   });
 });
 

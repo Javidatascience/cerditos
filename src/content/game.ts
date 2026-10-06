@@ -3,10 +3,10 @@
 import type { CompanionDef, GameDef, GlobalUpgradeDef, RelicDef, SkinDef, ToolDef } from './types.ts';
 
 export const GAME: GameDef = {
-  costGrowth: 1.15,
+  costGrowth: 1.17,
   milestones: [5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500],
   milestoneMult: 2,
-  upgradeCostFactor: 5,
+  upgradeCostFactor: 7,
   tapSeconds: 1,
   startCoins: 0,
   ascendTool: 7,
@@ -59,14 +59,58 @@ export const SKINS: SkinDef[] = [
   { id: 'lila', name: 'Lila de feria', flavor: 'El premio a diez mil picos.', color: '#d7b8e6', cost: null, achievement: 'picar-10000' },
 ];
 
-/** Compañeros que van con el cerdito en el fondo; cada uno hace algo mientras lo llevas puesto. */
+/** Compañeros que van con el cerdito en el fondo; cada uno hace algo mientras lo llevas y se mejora con bellotas. */
 export const COMPANIONS: CompanionDef[] = [
-  { id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas: cada 40 picos desentierra una bellota.', cost: 4, achievement: null, ability: { kind: 'tapAcorn', every: 40 } },
-  { id: 'perro', name: 'Perro pastor', emoji: '🐶', flavor: 'Olfatea tu mejor herramienta y la hace rendir ×1,1.', cost: 6, achievement: null, ability: { kind: 'bestToolMult', mult: 1.1 } },
-  { id: 'pajaro', name: 'Pájaro cantor', emoji: '🐦', flavor: 'Avisa al cerdito viajero: llega un tercio más rápido.', cost: 6, achievement: null, ability: { kind: 'visitorSpeed', speed: 1.33 } },
-  { id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'De vez en cuando se despierta y te trae un regalo de monedas.', cost: 10, achievement: null, ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 90 } },
-  { id: 'conejo', name: 'Conejo veloz', emoji: '🐰', flavor: 'Cada 6 horas te deja coger una herramienta gratis.', cost: 10, achievement: null, ability: { kind: 'freeTool', cooldownHours: 6 } },
-  { id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo y abre su cueva.', cost: null, achievement: 'ascender-10', ability: { kind: 'fireBreath', everySeconds: 180 } },
+  {
+    id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas y desentierra bellotas.', cost: 4, achievement: null,
+    ability: { kind: 'tapAcorn', every: 40 },
+    upgrades: [
+      { cost: 3, ability: { kind: 'tapAcorn', every: 30 } },
+      { cost: 6, ability: { kind: 'tapAcorn', every: 22 } },
+      { cost: 10, ability: { kind: 'tapAcorn', every: 15 } },
+    ],
+  },
+  {
+    id: 'perro', name: 'Perro pastor', emoji: '🐶', flavor: 'Olfatea tu mejor herramienta y la hace rendir más.', cost: 6, achievement: null,
+    ability: { kind: 'bestToolMult', mult: 1.1 },
+    upgrades: [
+      { cost: 4, ability: { kind: 'bestToolMult', mult: 1.15 } },
+      { cost: 8, ability: { kind: 'bestToolMult', mult: 1.2 } },
+      { cost: 14, ability: { kind: 'bestToolMult', mult: 1.3 } },
+    ],
+  },
+  {
+    id: 'pajaro', name: 'Pájaro cantor', emoji: '🐦', flavor: 'Avisa al cerdito viajero para que llegue antes.', cost: 6, achievement: null,
+    ability: { kind: 'visitorSpeed', speed: 1.33 },
+    upgrades: [
+      { cost: 4, ability: { kind: 'visitorSpeed', speed: 1.6 } },
+      { cost: 8, ability: { kind: 'visitorSpeed', speed: 2 } },
+      { cost: 14, ability: { kind: 'visitorSpeed', speed: 2.5 } },
+    ],
+  },
+  {
+    id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'De vez en cuando se despierta y te trae un regalo de monedas.', cost: 10, achievement: null,
+    ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 90 },
+    upgrades: [
+      { cost: 5, ability: { kind: 'coinGift', everySeconds: 100, incomeSeconds: 120 } },
+      { cost: 10, ability: { kind: 'coinGift', everySeconds: 80, incomeSeconds: 150 } },
+      { cost: 16, ability: { kind: 'coinGift', everySeconds: 60, incomeSeconds: 200 } },
+    ],
+  },
+  {
+    id: 'conejo', name: 'Conejo veloz', emoji: '🐰', flavor: 'De vez en cuando te deja coger una herramienta gratis.', cost: 10, achievement: null,
+    ability: { kind: 'freeTool', cooldownHours: 6 },
+    upgrades: [
+      { cost: 5, ability: { kind: 'freeTool', cooldownHours: 5 } },
+      { cost: 10, ability: { kind: 'freeTool', cooldownHours: 4 } },
+      { cost: 16, ability: { kind: 'freeTool', cooldownHours: 3 } },
+    ],
+  },
+  {
+    id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo y abre su cueva.', cost: null, achievement: 'ascender-10',
+    ability: { kind: 'fireBreath', everySeconds: 180 },
+    upgrades: [],
+  },
 ];
 
 /** Reliquias: bonos permanentes que dan algunos logros. */

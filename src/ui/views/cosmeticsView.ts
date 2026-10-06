@@ -2,7 +2,7 @@
 // los regala un logro) y las reliquias (bonos permanentes que dan algunos logros). Todo es opcional:
 // las pieles y los compañeros son de adorno. Ver docs/06-mina.md.
 
-import { buyCompanion, buySkin, equipSkin, MAX_ACTIVE_COMPANIONS, toggleCompanion } from '../../core/actions.ts';
+import { buyCompanion, buySkin, equipSkin, MAX_ACTIVE_COMPANIONS, toggleCompanion, upgradeCompanion } from '../../core/actions.ts';
 import { cosmeticViews, type CosmeticView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -16,7 +16,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
   const relicList = h('ul', { className: 'cosmetic-list' });
   const container = h('div', { className: 'cosmetics-view' }, [
     h('p', { className: 'acorn-line' }, [acornsText]),
-    h('p', { className: 'settings-hint' }, ['Las bellotas te las da siempre el cerdito viajero cuando lo aceptas. Sirven para pieles y compañeros.']),
+    h('p', { className: 'settings-hint' }, ['Las bellotas te las da siempre el cerdito viajero cuando lo aceptas. Sirven para pieles, compañeros y sus mejoras.']),
     h('h3', { className: 'fly-heading' }, ['Pieles']),
     skinList,
     h('h3', { className: 'fly-heading' }, ['Compañeros']),
@@ -76,8 +76,18 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
               ? actionButton(`Comprar (${c.cost} 🌰)`, () => ctx.dispatch((s) => void buyCompanion(s, ctx.content, c.id)), !c.canBuy)
               : h('span', { className: 'perk-locked' }, [costLine(c)]);
         return h('li', { className: c.owned ? 'cosmetic-row' : 'cosmetic-row cosmetic-row-locked' }, [
-          h('div', { className: 'row-art' }, [emojiBadge(c.emoji ?? '🐾', !c.owned), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [c.name]), h('span', { className: 'generator-flavor' }, [c.flavor])])]),
-          action,
+          h('div', { className: 'row-art' }, [
+            emojiBadge(c.emoji ?? '🐾', !c.owned),
+            h('div', { className: 'upgrade-info' }, [
+              h('span', { className: 'upgrade-name' }, [c.maxLevel > 0 && c.owned ? `${c.name} (nivel ${c.level}/${c.maxLevel})` : c.name]),
+              h('span', { className: 'generator-flavor' }, [c.flavor]),
+              h('span', { className: 'upgrade-effect' }, [c.abilityText]),
+            ]),
+          ]),
+          h('div', { className: 'cosmetic-actions' }, [
+            action,
+            ...(c.owned && c.upgradeCost !== null ? [actionButton(`Mejorar (${c.upgradeCost} 🌰)`, () => ctx.dispatch((s) => void upgradeCompanion(s, ctx.content, c.id)), !c.canUpgrade, true)] : []),
+          ]),
         ]);
       }),
     );
