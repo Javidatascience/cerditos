@@ -71,3 +71,31 @@ describe('selectores', () => {
     expect(views.length).toBe(CONTENT.achievements.length);
   });
 });
+
+describe('lo que falta para comprar', () => {
+  it('la herramienta siguiente dice cuántas monedas faltan y cuánto tardará', async () => {
+    const { goalView } = await import('./selectors.ts');
+    const state = createInitialState(CONTENT, 0);
+    state.coins = D(4);
+    const goal = goalView(state, CONTENT)!;
+    expect(goal.name).toBe('Pico de madera');
+    expect(goal.missing.toNumber()).toBe(6);
+    expect(goal.etaSeconds).toBeNull(); // sin producción no hay estimación
+    state.tools['pico-de-madera'] = 1;
+    state.coins = D(0);
+    const next = goalView(state, CONTENT)!;
+    expect(next.name).toBe('Cubo y pala');
+    expect(next.missing.toNumber()).toBe(110);
+    expect(next.etaSeconds).toBeCloseTo(110 / 0.1, 6);
+  });
+
+  it('cada herramienta que no se puede pagar informa de lo que falta', () => {
+    const state = createInitialState(CONTENT, 0);
+    state.coins = D(4);
+    const first = toolViews(state, CONTENT)[0]!;
+    expect(first.canAfford).toBe(false);
+    expect(first.missing.toNumber()).toBe(6);
+    state.coins = D(100);
+    expect(toolViews(state, CONTENT)[0]!.missing.toNumber()).toBe(0);
+  });
+});

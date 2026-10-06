@@ -4,16 +4,16 @@
 // recreen cada 250 ms y un clic nunca se pierda. Ver docs/06-mina.md.
 
 import { buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
-import { basketView, headerView, toolViews, type ToolView } from '../../core/selectors.ts';
+import { basketView, goalView, headerView, toolViews, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { emojiBadge, minerPig } from '../art.ts';
 import { createListSync, h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
-import { formatNumber } from '../format.ts';
+import { formatDuration, formatNumber } from '../format.ts';
 
 const AMOUNTS: BuyAmount[] = [1, 10, 'max'];
 
-type ToolRow = ToolView & { costText: string; prodText: string; milestoneText: string; upgradeText: string };
+type ToolRow = ToolView & { costText: string; prodText: string; milestoneText: string; upgradeText: string; needText: string };
 
 export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // --- Escena: cerdito + pico ---
@@ -71,6 +71,8 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       return btn;
     }),
   );
+  const goalText = document.createTextNode('');
+  const goalLine = h('p', { className: 'goal-line hidden' }, [goalText]);
   const toolList = h('ul', { className: 'generator-list' });
   const moreHint = h('p', { className: 'more-hint hidden' }, ['Hay más herramientas por descubrir.']);
 
@@ -85,6 +87,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       const costText = document.createTextNode('');
       const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
       buyButton.addEventListener('click', () => ctx.dispatch((state) => void buyTool(state, ctx.content, tool.id, state.settings.buyAmount)));
+      const needText = document.createTextNode('');
       const upgradeText = document.createTextNode('');
       const upgradeButton = h('button', { className: 'buy-button upgrade-button hidden' }, [upgradeText]) as HTMLButtonElement;
       upgradeButton.addEventListener('click', () => ctx.dispatch((state) => void buyUpgrade(state, ctx.content, tool.id)));
@@ -96,6 +99,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
             h('span', { className: 'generator-flavor' }, [tool.flavor]),
             h('span', { className: 'generator-prod' }, [prodText]),
             h('span', { className: 'generator-flavor' }, [milestoneText]),
+            h('span', { className: 'need-line' }, [needText]),
           ]),
         ]),
         buyButton,
@@ -111,6 +115,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           setText(ownedText, `× ${t.owned}`);
           setText(prodText, t.prodText);
           setText(milestoneText, t.milestoneText);
+          setText(needText, t.needText);
           setText(costText, t.costText);
           setDisabled(buyButton, teaser || !t.canAfford);
           buyButton.tabIndex = teaser ? -1 : 0;
@@ -123,7 +128,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     },
   );
 
-  const container = h('div', { className: 'mine-view' }, [scene, tapButton, basketBlock, amountRow, toolList, moreHint]);
+  const container = h('div', { className: 'mine-view' }, [scene, tapButton, basketBlock, goalLine, amountRow, toolList, moreHint]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -151,6 +156,13 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     setDisabled(basketButton, basket.value.lte(0));
     setClass(basketBlock, 'hidden', head.income.lte(0));
 
+    const goal = goalView(state, ctx.content);
+    setClass(goalLine, 'hidden', goal === null);
+    if (goal) {
+      const wait = goal.missing.lte(0) ? ' ¡Ya puedes comprarla!' : goal.etaSeconds === null ? ' Pica para conseguirlas.' : ` (≈ ${formatDuration(goal.etaSeconds)})`;
+      setText(goalText, goal.missing.lte(0) ? `Siguiente herramienta: ${goal.emoji} ${goal.name}.${wait}` : `Siguiente herramienta: ${goal.emoji} ${goal.name} — te faltan ${formatNumber(goal.missing, notation)} monedas${wait}`);
+    }
+
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
     const views = toolViews(state, ctx.content);
     syncTools(
@@ -167,6 +179,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
               : t.nextUpgrade.unlocked
                 ? `¡Mejora desbloqueada! ×${ctx.content.game.milestoneMult} de producción${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`
                 : `Mejora ×${ctx.content.game.milestoneMult} al tener ${t.nextUpgrade.threshold}${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`,
+            needText: t.canAfford || t.reveal === 'teaser' ? '' : t.etaSeconds === null ? `Te faltan ${formatNumber(t.missing, notation)} monedas` : `Te faltan ${formatNumber(t.missing, notation)} monedas (≈ ${formatDuration(t.etaSeconds)})`,
             upgradeText: t.nextUpgrade ? `Mejora ×${ctx.content.game.milestoneMult} (${formatNumber(t.nextUpgrade.cost, notation)})` : '',
           };
         }),

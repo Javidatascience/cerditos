@@ -63,10 +63,21 @@ export interface ToolView {
   nextCost: Decimal;
   amountToBuy: number;
   canAfford: boolean;
+  /** Monedas que faltan para pagar `amountToBuy` (0 si ya se puede) y segundos hasta tenerlas al ritmo actual (null si no se produce nada). */
+  missing: Decimal;
+  etaSeconds: number | null;
   /** 'visible' = descubierta; 'teaser' = la siguiente, difuminada; 'hidden' = aún no se muestra. */
   reveal: 'visible' | 'teaser' | 'hidden';
   /** 0..1: lo cerca que está de poder pagar la primera unidad (para difuminar menos). */
   closeness: number;
+}
+
+/** Lo que falta para pagar `cost` y el tiempo que tardará al ritmo de producción actual. */
+function missingOf(state: GameState, content: Content, cost: Decimal): { missing: Decimal; etaSeconds: number | null } {
+  const missing = cost.sub(state.coins);
+  if (missing.lte(0)) return { missing: D(0), etaSeconds: 0 };
+  const income = incomePerSecond(state, content);
+  return { missing, etaSeconds: income.gt(0) ? missing.div(income).toNumber() : null };
 }
 
 function upgradeView(state: GameState, content: Content, id: string, tool: Content['tools'][number]): ToolView['nextUpgrade'] {
@@ -99,10 +110,31 @@ export function toolViews(state: GameState, content: Content): ToolView[] {
       nextCost,
       amountToBuy,
       canAfford: amountToBuy > 0 && state.coins.gte(nextCost),
+      missing: missingOf(state, content, nextCost).missing,
+      etaSeconds: missingOf(state, content, nextCost).etaSeconds,
       reveal: index < state.revealed ? 'visible' : index === state.revealed ? 'teaser' : 'hidden',
       closeness: Math.min(1, Math.max(0, state.coins.div(first).toNumber())),
     };
   });
+}
+
+export interface GoalView {
+  name: string;
+  emoji: string;
+  cost: Decimal;
+  missing: Decimal;
+  etaSeconds: number | null;
+  /** 0..1 */
+  progress: number;
+}
+
+/** La siguiente herramienta que todavía no tienes (la primera de la lista con 0 unidades) y lo que te falta para comprarla; null si ya tienes todas. */
+export function goalView(state: GameState, content: Content): GoalView | null {
+  const tool = content.tools.find((t) => toolOwned(state, t.id) === 0);
+  if (!tool) return null;
+  const cost = toolBulkCost(state, content, tool, 0, 1);
+  const { missing, etaSeconds } = missingOf(state, content, cost);
+  return { name: tool.name, emoji: tool.emoji, cost, missing, etaSeconds, progress: Math.min(1, Math.max(0, state.coins.div(cost).toNumber())) };
 }
 
 // ---------------------------------------------------------------------------
