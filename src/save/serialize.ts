@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 4;
+export const CURRENT_VERSION = 5;
 
 export interface SerializedGameState {
   version: number;
@@ -12,20 +12,15 @@ export interface SerializedGameState {
   lastTickAt: number;
   time: number;
   coins: string;
-  depth: number;
-  blockHp: number;
-  runMaxDepth: number;
-  materials: Record<string, string>;
-  gear: Record<string, number>;
-  farmZone: number | null;
-  runSeconds: number;
+  tools: Record<string, number>;
+  revealed: number;
+  lifetime: string;
   plumas: string;
   plumasTotal: string;
   perks: Record<string, number>;
   ascensions: number;
-  records: { maxDepth: number; blocks: number };
+  maxOwned: Record<string, number>;
   taps: number;
-  burstReadyAt: number;
   basketSince: number;
   achievements: Record<string, { at: number }>;
   buff: Buff | null;
@@ -52,20 +47,15 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       lastTickAt: state.lastTickAt,
       time: state.time,
       coins: state.coins.toString(),
-      depth: state.depth,
-      blockHp: state.blockHp,
-      runMaxDepth: state.runMaxDepth,
-      materials: Object.fromEntries(Object.entries(state.materials).map(([id, v]) => [id, v.toString()])),
-      gear: { ...state.gear },
-      farmZone: state.farmZone,
-      runSeconds: state.runSeconds,
+      tools: { ...state.tools },
+      revealed: state.revealed,
+      lifetime: state.lifetime.toString(),
       plumas: state.plumas.toString(),
       plumasTotal: state.plumasTotal.toString(),
       perks: { ...state.perks },
       ascensions: state.ascensions,
-      records: { ...state.records },
+      maxOwned: { ...state.maxOwned },
       taps: state.taps,
-      burstReadyAt: state.burstReadyAt,
       basketSince: state.basketSince,
       achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
       buff: state.buff ? { ...state.buff } : null,
@@ -83,20 +73,15 @@ export function deserialize(data: SaveData): GameState {
     lastTickAt: s.lastTickAt,
     time: s.time,
     coins: new Decimal(s.coins),
-    depth: s.depth,
-    blockHp: s.blockHp,
-    runMaxDepth: s.runMaxDepth,
-    materials: Object.fromEntries(Object.entries(s.materials).map(([id, v]) => [id, new Decimal(v)])),
-    gear: { ...s.gear },
-    farmZone: s.farmZone,
-    runSeconds: s.runSeconds,
+    tools: { ...s.tools },
+    revealed: s.revealed,
+    lifetime: new Decimal(s.lifetime),
     plumas: new Decimal(s.plumas),
     plumasTotal: new Decimal(s.plumasTotal),
     perks: { ...s.perks },
     ascensions: s.ascensions,
-    records: { ...s.records },
+    maxOwned: { ...s.maxOwned },
     taps: s.taps,
-    burstReadyAt: s.burstReadyAt,
     basketSince: s.basketSince,
     achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),
     buff: s.buff ? { ...s.buff } : null,

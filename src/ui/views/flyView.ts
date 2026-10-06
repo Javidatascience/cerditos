@@ -1,5 +1,5 @@
-// Vista "Volar": la ascensión arriba y, debajo, el árbol de ventajas permanentes que se
-// compra con las plumas que deja cada vuelo (antes eran dos pestañas). Ver docs/01 §5-§6.
+// Vista "Ascender": la ascensión arriba y, debajo, el árbol de ventajas permanentes que se
+// compra con las plumas que deja cada vuelo. Ver docs/06-mina.md.
 
 import type { UiContext, View } from '../app.ts';
 import { h } from '../dom.ts';

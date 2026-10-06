@@ -18,10 +18,6 @@ export interface OfflineSummary {
   totalAwaySeconds: number;
   /** Monedas ganadas durante la ausencia. */
   coinsEarned: Decimal;
-  /** Niveles que se ha bajado durante la ausencia. */
-  levelsGained: number;
-  /** Bloques rotos durante la ausencia. */
-  blocks: number;
 }
 
 /**
@@ -29,22 +25,13 @@ export interface OfflineSummary {
  * mucho 2000 trozos). `seconds <= 0` no hace nada (reloj del sistema atrasado). Muta `state`.
  */
 export function simulateOffline(state: GameState, content: Content, seconds: number): OfflineSummary {
-  const coinsBefore = state.coins;
-  const depthBefore = state.depth;
-  const blocksBefore = state.records.blocks;
-
-  if (seconds <= 0) return { awaySeconds: 0, totalAwaySeconds: 0, coinsEarned: coinsBefore.sub(coinsBefore), levelsGained: 0, blocks: 0 };
+  const before = state.coins;
+  if (seconds <= 0) return { awaySeconds: 0, totalAwaySeconds: 0, coinsEarned: before.sub(before) };
 
   const capped = Math.min(seconds, offlineCapSeconds(state, content));
   const chunks = Math.min(MAX_CHUNKS, Math.max(1, Math.ceil(capped / CHUNK_SECONDS)));
   const chunkSeconds = capped / chunks;
   for (let i = 0; i < chunks; i++) advance(state, content, chunkSeconds);
 
-  return {
-    awaySeconds: capped,
-    totalAwaySeconds: seconds,
-    coinsEarned: state.coins.sub(coinsBefore),
-    levelsGained: Math.max(0, state.depth - depthBefore),
-    blocks: state.records.blocks - blocksBefore,
-  };
+  return { awaySeconds: capped, totalAwaySeconds: seconds, coinsEarned: state.coins.sub(before) };
 }

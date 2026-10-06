@@ -14,20 +14,23 @@ describe('validateContent', () => {
 
   it('detecta ids duplicados', () => {
     const c = clone();
-    c.pieces.push({ ...c.pieces[0]! });
-    expect(validateContent(c).some((e) => e.includes('Pieza duplicado'))).toBe(true);
+    c.tools.push({ ...c.tools[0]! });
+    expect(validateContent(c).some((e) => e.includes('Herramienta duplicado'))).toBe(true);
   });
 
-  it('detecta una zona con material inexistente', () => {
+  it('detecta herramientas con números no válidos y una herramienta de ascensión inexistente', () => {
     const c = clone();
-    c.zones[0]!.material = 'fantasma';
-    expect(validateContent(c).some((e) => e.includes('material desconocido'))).toBe(true);
+    c.tools[0]!.baseProd = 0;
+    c.game.ascendTool = 99;
+    const errors = validateContent(c);
+    expect(errors.some((e) => e.includes('baseProd'))).toBe(true);
+    expect(errors.some((e) => e.includes('ascendTool'))).toBe(true);
   });
 
-  it('detecta un peligro de zona que ninguna pieza resiste', () => {
+  it('exige hitos crecientes', () => {
     const c = clone();
-    c.pieces = c.pieces.filter((p) => !(p.effect.kind === 'resist' && p.effect.hazard === 'frio'));
-    expect(validateContent(c).some((e) => e.includes('ninguna pieza resiste frio'))).toBe(true);
+    c.game.milestones = [5, 5, 10];
+    expect(validateContent(c).some((e) => e.includes('milestones'))).toBe(true);
   });
 
   it('detecta una ventaja que requiere otra inexistente y un ciclo', () => {
@@ -39,9 +42,9 @@ describe('validateContent', () => {
     expect(validateContent(d).some((e) => e.includes('Ciclo de ventajas'))).toBe(true);
   });
 
-  it('detecta un logro de una pieza inexistente', () => {
+  it('detecta un logro de una herramienta inexistente', () => {
     const c = clone();
-    c.achievements.push({ id: 'x', name: 'x', flavor: 'x', requires: { kind: 'pieceLevel', piece: 'fantasma', count: 1 } });
-    expect(validateContent(c).some((e) => e.includes('pieza desconocida'))).toBe(true);
+    c.achievements.push({ id: 'x', name: 'x', flavor: 'x', requires: { kind: 'toolCount', tool: 'fantasma', count: 1 } });
+    expect(validateContent(c).some((e) => e.includes('herramienta desconocida'))).toBe(true);
   });
 });

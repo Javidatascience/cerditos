@@ -1,310 +1,128 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
 // llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import type { AchievementReq, Content, PerkDef, PerkEffect, PieceDef } from '../content/types.ts';
+import type { AchievementReq, Content, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
+import { VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
 import {
-  blockCoins,
-  blockHpAt,
-  burstCooldown,
-  digPower,
-  hazardFactor,
+  ascendUnlocked,
   incomePerSecond,
   milestoneMult,
+  nextMilestone,
   perkAvailable,
   perkCost,
   perkLevelOf,
-  pieceCost,
-  pieceLevel,
-  pieceUnlocked,
-  pieceValue,
+  perkSum,
   plumaBonus,
-  tapSeconds,
   plumasPending,
-  zoneAt,
-  zoneEndDepth,
-  zoneIndexOf,
-  zoneStartDepth,
+  tapGain,
+  toolBulkCost,
+  toolMaxAffordable,
+  toolOwned,
+  unitProduction,
+  toolProduction,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
-import { VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import type { GameState } from './state.ts';
 
 // ---------------------------------------------------------------------------
-// Cabecera y mina
+// Cabecera y herramientas
 // ---------------------------------------------------------------------------
 
 export interface HeaderView {
   coins: Decimal;
   income: Decimal;
-  depth: number;
-  zoneName: string;
-  zoneEmoji: string;
+  /** Lo que da un pico ahora mismo. */
+  tapGain: Decimal;
 }
 
 export function headerView(state: GameState, content: Content): HeaderView {
-  const zone = zoneAt(content, state.depth);
-  return { coins: state.coins, income: incomePerSecond(state, content), depth: state.depth, zoneName: zone.name, zoneEmoji: zone.emoji };
+  return { coins: state.coins, income: incomePerSecond(state, content), tapGain: tapGain(state, content) };
 }
 
-export interface HazardView {
-  name: string;
-  emoji: string;
-  /** Fracción del cavado que se conserva (0..1). */
-  factor: number;
-  pieceName: string;
-  pieceLevel: number;
-  needLevel: number;
-}
-
-export interface ZoneOptionView {
-  index: number;
-  name: string;
-  emoji: string;
-  /** Se puede elegir (la has alcanzado en esta ronda). */
-  reachable: boolean;
-  /** Es en la que se está cavando ahora. */
-  current: boolean;
-}
-
-export interface MaterialView {
-  id: string;
-  name: string;
-  emoji: string;
-  amount: Decimal;
-}
-
-export interface MineView {
-  depth: number;
-  recordDepth: number;
-  zoneIndex: number;
-  zoneName: string;
-  zoneEmoji: string;
-  zoneFlavor: string;
-  /** Primer y último nivel de la zona actual (el último es `null` en la zona final). */
-  zoneStart: number;
-  zoneEnd: number | null;
-  materialName: string;
-  materialEmoji: string;
-  /** Fracción de vida que le queda al bloque (1 = entero). */
-  blockFraction: number;
-  /** Cavado por segundo ahora mismo, con el impulso del visitante incluido. */
-  dps: number;
-  /** Monedas que suelta este bloque al romperse. */
-  blockCoinsValue: Decimal;
-  hazard: HazardView | null;
-  farmZone: number | null;
-  zones: ZoneOptionView[];
-  materials: MaterialView[];
-  /** Cavado que aporta un pico (daño al bloque), con el impulso del visitante incluido. */
-  tapDamage: number;
-  boostMult: number;
-}
-
-export function mineView(state: GameState, content: Content): MineView {
-  const zoneIndex = zoneIndexOf(content, state.depth);
-  const zone = content.zones[zoneIndex]!;
-  const boostMult = state.buff?.mult ?? 1;
-  const material = content.materials.find((m) => m.id === zone.material);
-  const hazardDef = zone.hazard === null ? null : content.hazards.find((h) => h.id === zone.hazard);
-  const resistPiece = hazardDef ? content.pieces.find((p) => p.effect.kind === 'resist' && p.effect.hazard === hazardDef.id) : undefined;
-
-  let hazard: HazardView | null = null;
-  if (hazardDef && resistPiece && resistPiece.effect.kind === 'resist') {
-    hazard = {
-      name: hazardDef.name,
-      emoji: hazardDef.emoji,
-      factor: hazardFactor(state, content, zoneIndex),
-      pieceName: resistPiece.name,
-      pieceLevel: pieceLevel(state, resistPiece.id),
-      needLevel: resistPiece.effect.needBase + resistPiece.effect.needStep * zoneIndex,
-    };
-  }
-
-  const reachableZone = zoneIndexOf(content, state.runMaxDepth);
-  const end = zoneEndDepth(content, zoneIndex);
-  const hp = blockHpAt(content, state.depth);
-  return {
-    depth: state.depth,
-    recordDepth: state.records.maxDepth,
-    zoneIndex,
-    zoneName: zone.name,
-    zoneEmoji: zone.emoji,
-    zoneFlavor: zone.flavor,
-    zoneStart: zoneStartDepth(content, zoneIndex),
-    zoneEnd: zoneIndex >= content.zones.length - 1 ? null : end,
-    materialName: material?.name ?? zone.material,
-    materialEmoji: material?.emoji ?? '',
-    blockFraction: Math.max(0, Math.min(1, state.blockHp / hp)),
-    dps: digPower(state, content, zoneIndex) * boostMult,
-    blockCoinsValue: blockCoins(state, content, state.depth),
-    hazard,
-    farmZone: state.farmZone,
-    zones: content.zones.map((z, index) => ({ index, name: z.name, emoji: z.emoji, reachable: index <= reachableZone, current: index === zoneIndex })),
-    materials: content.materials
-      .filter((m) => state.materials[m.id] !== undefined || content.zones.some((z) => z.material === m.id && zoneIndexOf(content, state.records.maxDepth) >= content.zones.indexOf(z)))
-      .map((m) => ({ id: m.id, name: m.name, emoji: m.emoji, amount: (state.materials[m.id] ?? D(0)).floor() })),
-    tapDamage: digPower(state, content, zoneIndex) * tapSeconds(state, content) * boostMult,
-    boostMult,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Piezas
-// ---------------------------------------------------------------------------
-
-export interface PieceEffectView {
-  kind: PieceDef['effect']['kind'];
-  /** Valor al nivel actual y al siguiente (según el efecto: dps, multiplicador, %, segundos…). */
-  value: number;
-  nextValue: number;
-  /** Solo "resist": peligro, nivel necesario para anularlo y fracción conservada ahora. */
-  hazardName?: string;
-  needLevel?: number;
-  factor?: number;
-  /** Solo "burst": enfriamiento en segundos. */
-  cooldown?: number;
-}
-
-export interface PieceView {
+export interface ToolView {
   id: string;
   name: string;
   emoji: string;
   flavor: string;
-  level: number;
-  maxLevel: number;
-  maxed: boolean;
-  unlocked: boolean;
-  /** Mientras está bloqueada: qué falta. */
-  lockedReason: string | null;
-  effect: PieceEffectView;
-  /** A partir de qué nivel el siguiente hito duplica su efecto, o null si ya pasó todos. */
+  index: number;
+  owned: number;
+  /** Producción de una unidad / de todas (por segundo). */
+  unitProd: Decimal;
+  totalProd: Decimal;
+  /** Siguiente hito de cantidad (×mult) y el multiplicador que ya llevas por los hitos. */
   nextMilestone: number | null;
-  costCoins: Decimal;
-  material: { name: string; emoji: string; cost: Decimal; have: Decimal } | null;
-  canAfford: boolean;
-  /** Niveles que compraría el botón ahora mismo (según ajustes: 1, 10 o máx; 0 si ninguno). */
+  milestoneMult: number;
+  /** Coste de comprar `amountToBuy` unidades ahora (según los ajustes). */
+  nextCost: Decimal;
   amountToBuy: number;
+  canAfford: boolean;
+  /** 'visible' = descubierta; 'teaser' = la siguiente, difuminada; 'hidden' = aún no se muestra. */
+  reveal: 'visible' | 'teaser' | 'hidden';
+  /** 0..1: lo cerca que está de poder pagar la primera unidad (para difuminar menos). */
+  closeness: number;
 }
 
-function effectView(state: GameState, content: Content, piece: PieceDef): PieceEffectView {
-  const level = pieceLevel(state, piece.id);
-  const e = piece.effect;
-  if (e.kind === 'burst') {
-    return { kind: 'burst', value: level > 0 ? e.baseSeconds + e.perLevel * level : 0, nextValue: e.baseSeconds + e.perLevel * (level + 1), cooldown: e.cooldown };
-  }
-  if (e.kind === 'resist') {
-    const hazard = content.hazards.find((h) => h.id === e.hazard);
-    const zoneIndex = content.zones.findIndex((z) => z.hazard === e.hazard);
-    const need = e.needBase + e.needStep * Math.max(0, zoneIndex);
-    return {
-      kind: 'resist',
-      value: level,
-      nextValue: level + 1,
-      hazardName: hazard?.name ?? e.hazard,
-      needLevel: need,
-      factor: hazardFactor(state, content, Math.max(0, zoneIndex)),
-    };
-  }
-  return { kind: e.kind, value: pieceValue(content, piece, level), nextValue: pieceValue(content, piece, level + 1) };
-}
-
-function lockedReason(state: GameState, piece: PieceDef): string | null {
-  if (pieceUnlocked(state, piece)) return null;
-  const parts: string[] = [];
-  if (state.records.maxDepth < piece.unlock.depth) parts.push(`llega al nivel ${piece.unlock.depth}`);
-  if (state.ascensions < piece.unlock.ascensions) parts.push(`sube a la superficie ${piece.unlock.ascensions} ${piece.unlock.ascensions === 1 ? 'vez' : 'veces'}`);
-  return `Se desbloquea cuando ${parts.join(' y ')}.`;
-}
-
-export function pieceViews(state: GameState, content: Content): PieceView[] {
+export function toolViews(state: GameState, content: Content): ToolView[] {
   const amount: BuyAmount = state.settings.buyAmount;
-  return content.pieces.map((piece) => {
-    const level = pieceLevel(state, piece.id);
-    const unlocked = pieceUnlocked(state, piece);
-    const cost = pieceCost(state, content, piece, level);
-    const mat = piece.material === null ? undefined : content.materials.find((m) => m.id === piece.material);
-    const have = piece.material === null ? D(0) : (state.materials[piece.material] ?? D(0)).floor();
-    const canAfford = unlocked && level < piece.maxLevel && state.coins.gte(cost.coins) && (cost.material === null || have.gte(cost.material));
-
-    // Cuántos niveles compraría el botón ahora (simulando el gasto sin tocar el estado).
-    let amountToBuy = 0;
-    if (unlocked) {
-      const wanted = amount === 'max' ? 1000 : amount;
-      let coins = state.coins;
-      let material = state.materials[piece.material ?? ''] ?? D(0);
-      for (let l = level; amountToBuy < wanted && l < piece.maxLevel; l++) {
-        const c = pieceCost(state, content, piece, l);
-        if (coins.lt(c.coins) || (c.material !== null && material.lt(c.material))) break;
-        coins = coins.sub(c.coins);
-        if (c.material !== null) material = material.sub(c.material);
-        amountToBuy++;
-      }
-    }
-
-    // Los hitos (×2) solo valen para efectos con valor por nivel, no para resistencias ni dinamita.
-    const milestones = piece.effect.kind === 'resist' || piece.effect.kind === 'burst' ? [] : content.mine.milestones.filter((m) => m > level);
+  return content.tools.map((tool, index) => {
+    const owned = toolOwned(state, tool.id);
+    const amountToBuy = amount === 'max' ? toolMaxAffordable(state, content, tool, owned, state.coins) : amount;
+    const nextCost = toolBulkCost(state, content, tool, owned, Math.max(1, amountToBuy));
+    const first = toolBulkCost(state, content, tool, owned, 1);
     return {
-      id: piece.id,
-      name: piece.name,
-      emoji: piece.emoji,
-      flavor: piece.flavor,
-      level,
-      maxLevel: piece.maxLevel,
-      maxed: level >= piece.maxLevel,
-      unlocked,
-      lockedReason: lockedReason(state, piece),
-      effect: effectView(state, content, piece),
-      nextMilestone: milestones[0] ?? null,
-      costCoins: cost.coins,
-      material: mat && cost.material ? { name: mat.name, emoji: mat.emoji, cost: cost.material, have } : null,
-      canAfford,
+      id: tool.id,
+      name: tool.name,
+      emoji: tool.emoji,
+      flavor: tool.flavor,
+      index,
+      owned,
+      unitProd: unitProduction(state, content, tool),
+      totalProd: toolProduction(state, content, tool),
+      nextMilestone: nextMilestone(content, owned),
+      milestoneMult: milestoneMult(content, owned),
+      nextCost,
       amountToBuy,
+      canAfford: amountToBuy > 0 && state.coins.gte(nextCost),
+      reveal: index < state.revealed ? 'visible' : index === state.revealed ? 'teaser' : 'hidden',
+      closeness: Math.min(1, Math.max(0, state.coins.div(first).toNumber())),
     };
   });
 }
 
-/** ×N que aporta el siguiente hito de la pieza (para el texto "a nivel 25: ×2"). */
-export function milestoneFactor(content: Content): number {
-  return content.mine.milestoneMult;
-}
-
-/** Dinamita: segundos que faltan para que vuelva a estar lista (0 si lista). */
-export function burstStatus(state: GameState, content: Content): { owned: boolean; ready: boolean; secondsLeft: number; cooldown: number } {
-  const owned = pieceLevel(state, content.pieces.find((p) => p.effect.kind === 'burst')?.id ?? '') > 0;
-  const secondsLeft = Math.max(0, state.burstReadyAt - state.time);
-  return { owned, ready: owned && secondsLeft <= 0, secondsLeft, cooldown: burstCooldown(content) };
-}
-
 // ---------------------------------------------------------------------------
-// Subir a la superficie y ventajas
+// Ascensión y ventajas
 // ---------------------------------------------------------------------------
 
 export interface AscendView {
   plumas: Decimal;
   plumasTotal: Decimal;
   pendingGain: number;
-  runMaxDepth: number;
   currentBonusMultiplier: number;
   nextBonusMultiplier: number;
+  /** ¿Ya se llegó a la herramienta que permite ascender? */
+  unlocked: boolean;
+  /** Herramienta que hay que tener (nombre y emoji) y cuántas se llevan de ella como máximo. */
+  requiredTool: { name: string; emoji: string; index: number };
   canAscend: boolean;
-  startDepthNext: number;
 }
 
 export function ascendView(state: GameState, content: Content): AscendView {
+  const tool = content.tools[content.game.ascendTool]!;
   const pendingGain = plumasPending(state, content);
   const current = plumaBonus(state, content);
-  const rate = current > 0 ? (current - 1) / Math.max(1, state.plumasTotal.toNumber()) : 0;
+  const rate = content.game.perPluma + perkSum(state, content, 'perPlumaBonus');
+  const unlocked = ascendUnlocked(state, content);
   return {
     plumas: state.plumas,
     plumasTotal: state.plumasTotal,
     pendingGain,
-    runMaxDepth: state.runMaxDepth,
     currentBonusMultiplier: current,
-    nextBonusMultiplier: state.plumasTotal.gt(0) ? 1 + rate * (state.plumasTotal.toNumber() + pendingGain) : 1 + content.mine.perPluma * pendingGain,
-    canAscend: pendingGain > 0,
-    startDepthNext: 1,
+    nextBonusMultiplier: 1 + rate * (state.plumasTotal.toNumber() + pendingGain),
+    unlocked,
+    requiredTool: { name: tool.name, emoji: tool.emoji, index: content.game.ascendTool },
+    canAscend: unlocked && pendingGain > 0,
   };
 }
 
@@ -325,15 +143,15 @@ export interface PerkView {
 function perkEffectValueText(effect: PerkEffect, level: number): string {
   switch (effect.kind) {
     case 'prodMult':
-      return `×${(effect.perLevel ** level).toFixed(2)} cavado`;
+      return `×${(effect.perLevel ** level).toFixed(2)} producción`;
     case 'costMult':
-      return `×${(effect.perLevel ** level).toFixed(2)} coste de las piezas`;
+      return `×${(effect.perLevel ** level).toFixed(2)} coste de las herramientas`;
     case 'startCurrency':
-      return `×${Math.round(effect.perLevel ** level)} monedas iniciales`;
-    case 'startDepth':
-      return `empiezas en el nivel ${1 + effect.perLevel * level}`;
+      return level === 0 ? 'sin monedas iniciales' : `${100 * (effect.perLevel ** level - 1)} monedas iniciales`;
+    case 'tapMult':
+      return `cada pico ×${(1 + effect.perLevel * level).toFixed(1)}`;
     case 'plumaMult':
-      return `+${Math.round(effect.perLevel * level * 100)} % plumas al subir`;
+      return `+${Math.round(effect.perLevel * level * 100)} % plumas al ascender`;
     case 'perPlumaBonus':
       return `+${Math.round(effect.perLevel * level * 100)} % extra en el bono de plumas`;
     case 'offlineHours':
@@ -381,37 +199,36 @@ export interface AchievementView {
   flavor: string;
   owned: boolean;
   requirement: RequirementView;
-  /** Si es de "sube una pieza a nivel N": la pieza (la UI las agrupa por pieza). */
-  piece: { id: string; name: string; emoji: string; count: number } | null;
+  /** Si es de "tener N de una herramienta": la herramienta (la UI las agrupa por herramienta). */
+  tool: { id: string; name: string; emoji: string; count: number } | null;
 }
 
 function describeRequirement(content: Content, req: AchievementReq): (format: (n: Decimal) => string) => string {
   switch (req.kind) {
-    case 'depth':
-      return (f) => `Llega al nivel ${f(D(req.count))} de la mina`;
-    case 'blocks':
-      return (f) => `Rompe ${f(D(req.count))} bloques`;
+    case 'toolCount':
+      return (f) => `Ten ${f(D(req.count))} ${content.tools.find((t) => t.id === req.tool)?.name ?? req.tool}`;
     case 'taps':
       return (f) => `Pica ${f(D(req.count))} veces`;
     case 'ascensions':
-      return (f) => `Sube a la superficie ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'}`;
+      return (f) => `Asciende ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'}`;
     case 'plumasTotal':
       return (f) => `Consigue ${f(D(req.count))} plumas en total`;
-    case 'pieceLevel':
-      return (f) => `Sube ${content.pieces.find((p) => p.id === req.piece)?.name ?? req.piece} al nivel ${f(D(req.count))}`;
+    case 'lifetime':
+      return (f) => `Gana ${f(D(req.amount))} monedas en total`;
   }
 }
 
 export function achievementViews(state: GameState, content: Content): AchievementView[] {
   return content.achievements.map((a) => {
-    const piece = a.requires.kind === 'pieceLevel' ? content.pieces.find((p) => p.id === (a.requires as { piece: string }).piece) : undefined;
+    const req = a.requires;
+    const tool = req.kind === 'toolCount' ? content.tools.find((t) => t.id === req.tool) : undefined;
     return {
       id: a.id,
       name: a.name,
       flavor: a.flavor,
       owned: state.achievements[a.id] !== undefined,
-      requirement: { ...achievementProgress(state, a.requires), describe: describeRequirement(content, a.requires) },
-      piece: piece && a.requires.kind === 'pieceLevel' ? { id: piece.id, name: piece.name, emoji: piece.emoji, count: a.requires.count } : null,
+      requirement: { ...achievementProgress(state, req), describe: describeRequirement(content, req) },
+      tool: tool && req.kind === 'toolCount' ? { id: tool.id, name: tool.name, emoji: tool.emoji, count: req.count } : null,
     };
   });
 }
@@ -438,5 +255,3 @@ export function visitorInjectionValue(state: GameState, content: Content): Decim
 export function journalEntries(state: GameState): { at: number; text: string }[] {
   return [...state.journal].reverse();
 }
-
-export { milestoneMult, Decimal };

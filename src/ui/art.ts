@@ -1,5 +1,5 @@
-// Ilustraciones sencillas: el cerdito minero en SVG plano, con los complementos que lleva puestos
-// según las piezas que tienes, y emojis para piezas, zonas y materiales. Es solo presentación:
+// Ilustraciones sencillas: el cerdito picador en SVG plano, con complementos según las herramientas
+// que tiene, y emojis para las herramientas. Es solo presentación:
 // el contenido (src/content) no sabe de colores. (El arte definitivo llega al final del proyecto.)
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -116,24 +116,13 @@ export function pigIcon(skin: string, accessory: Accessory = 'none', locked = fa
   return svg;
 }
 
-/** Piel del cerdito minero. */
+/** Piel del cerdito picador. */
 export const PIG_SKIN = '#f4c7c3';
 
-/** Complemento que se le ve puesto al cerdito según una pieza que tiene (id de pieza → complemento). */
-export const PIECE_ACCESSORY: Record<string, Accessory> = {
-  corona: 'crown',
-  casco: 'cap',
-  linterna: 'star',
-  capa: 'scarf',
-  gafas: 'glasses',
-  botas: 'none',
-};
-
-/** El cerdito minero con los complementos de las piezas que tiene (el primero que aplique). */
-export function minerPig(ownedPieceIds: string[]): SVGSVGElement {
-  const order = ['corona', 'gafas', 'casco', 'capa', 'linterna'];
-  const accessory = order.find((id) => ownedPieceIds.includes(id));
-  return pigIcon(PIG_SKIN, accessory ? PIECE_ACCESSORY[accessory] ?? 'none' : 'none');
+/** El cerdito picador, con más complementos cuanto más lejos ha llegado en herramientas (índice de la mejor que tiene, o -1). */
+export function minerPig(bestToolIndex: number): SVGSVGElement {
+  const accessory: Accessory = bestToolIndex >= 8 ? 'crown' : bestToolIndex >= 5 ? 'glasses' : bestToolIndex >= 0 ? 'cap' : 'none';
+  return pigIcon(PIG_SKIN, accessory);
 }
 
 /** Insignia con un emoji (piezas, materiales, zonas…). */

@@ -1,20 +1,18 @@
-// Modelo de estado del juego (la mina). Ver docs/06-mina.md.
+// Modelo de estado del juego. Ver docs/06-mina.md.
 // GameState es plano y serializable: la UI se pinta a partir de él y solo lo cambia llamando a
 // funciones de core/actions.ts (y las del tick: tick.ts, offline.ts).
 
 import type { Content } from '../content/types.ts';
-import { blockHpAt } from './formulas.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
-export type PieceId = string;
+export type ToolId = string;
 export type PerkId = string;
-export type MaterialId = string;
 
 export interface Buff {
-  /** Multiplicador del cavado. */
+  /** Multiplicador de la producción y de los picos. */
   mult: number;
   /** Instante (en segundos de GameState.time) en que termina. */
   until: number;
@@ -28,7 +26,7 @@ export interface JournalEntry {
 
 export interface Settings {
   notation: 'es' | 'cientifica';
-  /** Cuántos niveles de pieza compra el botón. */
+  /** Cuántas unidades compra el botón de una herramienta. */
   buyAmount: 1 | 10 | 'max';
   /** Efectos y animaciones. Se ignora con prefers-reduced-motion. */
   effects: boolean;
@@ -44,36 +42,25 @@ export interface GameState {
   /** Segundos de juego simulados en total (reloj interno monótono, no epoch). */
   time: number;
 
-  // --- La ronda actual (se reinicia al subir a la superficie) ---
+  // --- La ronda actual (se reinicia al ascender) ---
   coins: Decimal;
-  /** Nivel de la mina en el que se está cavando (1 = superficie). */
-  depth: number;
-  /** Vida que le queda al bloque actual. */
-  blockHp: number;
-  /** Nivel más hondo alcanzado en esta ronda (base de las plumas). */
-  runMaxDepth: number;
-  materials: Record<MaterialId, Decimal>;
-  gear: Record<PieceId, number>;
-  /** Zona en la que se quiere quedar cavando (índice), o null para ir avanzando. */
-  farmZone: number | null;
-  runSeconds: number;
+  /** Unidades que se tienen de cada herramienta. */
+  tools: Record<ToolId, number>;
+  /** Cuántas herramientas (por orden) ya se han descubierto: las demás se ven difuminadas u ocultas. Solo crece. */
+  revealed: number;
 
   // --- Permanente ---
+  /** Monedas ganadas en toda la vida (base de las plumas; no se reinicia). */
+  lifetime: Decimal;
   plumas: Decimal;
   /** Plumas ganadas en total (histórico); gastar no la reduce. Base del bono pasivo. */
   plumasTotal: Decimal;
   perks: Record<PerkId, number>;
   ascensions: number;
-  records: {
-    /** Nivel más hondo alcanzado alguna vez. */
-    maxDepth: number;
-    /** Bloques rotos en total. */
-    blocks: number;
-  };
+  /** Máximo histórico de unidades de cada herramienta (para logros y para poder ascender). */
+  maxOwned: Record<ToolId, number>;
   /** Veces que se ha picado (para logros). */
   taps: number;
-  /** Instante (segundos de `time`) a partir del cual la dinamita vuelve a estar lista. */
-  burstReadyAt: number;
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
   basketSince: number;
   achievements: Record<string, { at: number }>;
@@ -90,21 +77,16 @@ export function createInitialState(content: Content, now: number): GameState {
     createdAt: now,
     lastTickAt: now,
     time: 0,
-    coins: D(content.mine.startCoins),
-    depth: 1,
-    blockHp: blockHpAt(content, 1),
-    runMaxDepth: 1,
-    materials: {},
-    gear: {},
-    farmZone: null,
-    runSeconds: 0,
+    coins: D(content.game.startCoins),
+    tools: {},
+    revealed: 1,
+    lifetime: D(0),
     plumas: D(0),
     plumasTotal: D(0),
     perks: {},
     ascensions: 0,
-    records: { maxDepth: 1, blocks: 0 },
+    maxOwned: {},
     taps: 0,
-    burstReadyAt: 0,
     basketSince: 0,
     achievements: {},
     buff: null,

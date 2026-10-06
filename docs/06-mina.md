@@ -1,81 +1,59 @@
-# 06 · Cerdito minero (diseño y guía)
+# 06 · Cerdito picador (diseño y guía)
 
-> Desde 2026-10-06 el juego es **una sola mina** con un cerdito minero. Sustituye al juego de las granjas y los mundos (diseño, economía y plan antiguos en [archivo-granjas/](archivo-granjas/), solo como referencia histórica). Este documento dice cómo es el juego y sirve de guía de juego.
+> Desde 2026-10-06 el juego es **un solo cerdito que pica**. Sustituye al juego de las granjas con mundos (documentos antiguos en [archivo-granjas/](archivo-granjas/), solo como referencia) y a una primera versión "mina" con zonas, recursos y piezas que no convenció. Este documento dice cómo es el juego y sirve de guía de juego.
 
-## Por qué el cambio
+## Idea
 
-El juego de granjas era un incremental puro: números que suben y cinco mundos que repetían el mismo bucle con otra regla, sin una razón propia cada uno. Se rehízo con la idea de los idle de mina (personaje que cava, zonas por profundidad, piezas, subir a la superficie por mejoras permanentes): **un personaje, una escena, una acción activa que importa y progreso por zonas**, dejando el juego tranquilo y "para dejar en idle".
+Un idle clásico y claro, con un único personaje:
 
-## Bucle
+- Al empezar **no ganas nada por segundo**: picas tú. Cada pico da 1 moneda.
+- Con 10 monedas compras el **Pico de madera**: ahora el cerdito gana **0,1 monedas por segundo**.
+- Hay **12 herramientas**, cada una más cara y que da muchísimo más que la anterior. Cada compra encarece la siguiente unidad un 15 %.
+- Al **tener 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500** unidades de una herramienta, esa herramienta **produce ×2** (acumulable).
+- Al **conseguir la herramienta 8** (la Grúa perforadora) puedes **ascender**: reinicias monedas y herramientas a cambio de **plumas**, que dan un bono de producción y se gastan en **ventajas permanentes**.
 
-```
-el cerdito cava solo ──► rompe bloques ──► monedas + material de la zona ──► sube piezas ──► cava más
-        ▲                                                                                         │
-        └── subir a la superficie: pierdes la ronda, ganas plumas ──► ventajas permanentes ◄──────┘
-```
+Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas funcionan igual y solo cambian los números.
 
-- **Cavar**: el cerdito rompe un bloque por nivel. La vida del bloque crece ×1,16 por nivel y sus monedas ×1,12. Mientras no tocas nada, cava solo, también offline.
-- **Picar** (activo): cada toque equivale a 1 s de cavado (más con los Guantes). Con el ×5 del visitante, también ×5.
-- **Zonas**: cada 20 niveles cambia la zona (8 zonas; la última no acaba). Cada una suelta su **material** y tiene su **peligro**.
-- **Peligros**: sin la pieza que lo resiste, cavas al 25 %. Cada pieza de resistencia pide un nivel (5 + 3 por zona) para anular su peligro; a medias, frena a medias.
-- **Elegir zona**: puedes quedarte cavando en una zona ya alcanzada (en su último nivel) para juntar sus materiales, o ir avanzando. Es la decisión central de la ronda.
-- **Piezas** (14): suben de nivel con monedas y, casi todas, con el material de una zona. Cada ×2 a los niveles 10, 25, 50 y 100 de la pieza.
-- **Subir a la superficie** (ascensión): cobras plumas según el nivel más hondo de la ronda (`0,05 · nivel^1,6`, más con *Plumas al viento*), pierdes monedas, materiales y piezas, y conservas plumas, ventajas, logros y récords. Cada pluma da +2 % de cavado de forma permanente.
-- **Ventajas permanentes** (plumas): Abono (×1,1 cavado, sin tope), Buen comienzo (monedas iniciales), Atajo conocido (empiezas más hondo), Siesta larga (+1 h de producción offline por nivel), Regateo (piezas más baratas), Plumas al viento, Raíces profundas.
+## Mecánicas
 
-## Las 14 piezas
+| Mecánica | Cómo funciona |
+|---|---|
+| **Picar** | Da 1 s de tu producción (mínimo 1 moneda). Con *Manos de acero* da más. |
+| **Herramientas** | Coste de la unidad *n*: `baseCost · 1,15^n`. Compra ×1, ×10 (todo o nada) o Máx. |
+| **Hitos** | ×2 de producción de esa herramienta en 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500 unidades. Se ven en cada fila ("×2 al tener 15"). |
+| **Descubrir** | Solo ves las herramientas que ya has podido comprar; la siguiente sale difuminada (menos cuanto más cerca) y un aviso dice que hay más. |
+| **Ascender** | Se desbloquea al tener la herramienta 8 (para siempre). Plumas: `floor((ganado en la vida / 100.000)^0,25 · (1 + Plumas al viento))` menos las ya cobradas, así que nunca se pierde nada por ascender pronto. Cada pluma da +2 % de producción. |
+| **Ventajas** | Abono (×1,1 producción, sin tope), Buen comienzo (monedas al empezar), Manos de acero (pico ×), Siesta larga (+1 h offline), Regateo (herramientas más baratas), Plumas al viento, Raíces profundas. |
+| **Cesta** | Se llena con el 25 % de tus ingresos (tope 30 min); "Recoger" la suma a tus monedas. |
+| **Cerdito viajero** | Aparece al azar cada 1-2 min con el juego abierto: 10 min de ingresos de golpe, o ×5 de producción y de picos durante 60 s. Se va a los 10 s. |
+| **Offline** | Al volver cuentan solo las primeras 2 horas de ausencia (más con *Siesta larga*). |
+| **Logros** | 126, sin bonos: generales (picos, ascensiones, plumas, monedas) y uno por herramienta y cantidad (1, 5, 15, 25, 50, 75, 100, 150, 200, 250). |
 
-Las 5 primeras están desde el principio; el resto necesita llegar a cierto nivel de la mina **y** haber subido a la superficie varias veces (así hacen falta varias subidas para tenerlas todas, hasta 6).
+## Las 12 herramientas
 
-| Pieza | Efecto | Se desbloquea |
-|---|---|---|
-| ⛏️ Rascador de hocico | +1 de cavado por nivel | desde el inicio |
-| 🥾 Botas de goma | resiste la Humedad (Arcilla) | nivel 5 |
-| 🧤 Guantes de lana | cada pico ×(1 + 0,25·nivel) | nivel 3 |
-| 👑 Corona de latón | +10 % de monedas por nivel | nivel 8 |
-| ⛑️ Casco minero | resiste los Derrumbes (Roca) | nivel 18 |
-| 🎒 Mochila con remiendos | +15 % de materiales por nivel | nivel 15 + 1 subida |
-| 🏮 Linterna de luciérnagas | resiste la Oscuridad (Cueva) | nivel 38 + 1 subida |
-| 🧨 Dinamita de feria | habilidad activa: avanza 30 s + 6 s/nivel de cavado de golpe (recarga 90 s) | nivel 30 + 2 subidas |
-| 🧣 Capa para el frío | resiste el Frío (Hielo) | nivel 58 + 2 subidas |
-| 🦔 Topo ayudante | +6 de cavado por nivel | nivel 50 + 3 subidas |
-| 🕶️ Gafas de sol | resiste el Resplandor (Cristales) | nivel 78 + 3 subidas |
-| 🛠️ Taladro de vapor | cavado ×(1 + 0,2·nivel) | nivel 70 + 4 subidas |
-| 🧯 Traje ignífugo | resiste el Calor (Magma) | nivel 98 + 5 subidas |
-| 😷 Máscara de aire | resiste el Gas (Abismo) | nivel 118 + 6 subidas |
-
-Las piezas bloqueadas se ven siempre con lo que falta para desbloquearlas.
-
-## Zonas y materiales
-
-| Niveles | Zona | Material | Peligro |
+| # | Herramienta | Coste base | Da por unidad |
 |---|---|---|---|
-| 1-20 | 🟫 Tierra blanda | Raíces | — |
-| 21-40 | 🧱 Arcilla | Arcilla | Humedad |
-| 41-60 | 🪨 Roca | Piedra | Derrumbes |
-| 61-80 | 🕳️ Cueva oscura | Cobre | Oscuridad |
-| 81-100 | 🧊 Cueva de hielo | Hielo | Frío |
-| 101-120 | 💎 Cristales | Cristal | Resplandor |
-| 121-140 | 🌋 Magma | Obsidiana | Calor |
-| 141+ | 🌌 El abismo | Polvo de estrella | Gas |
+| 1 | ⛏️ Pico de madera | 10 | 0,1/s |
+| 2 | 🪣 Cubo y pala | 110 | 0,8/s |
+| 3 | 🔨 Martillo de piedra | 1.210 | 6,4/s |
+| 4 | 🪓 Hacha de hierro | 13.300 | 51/s |
+| 5 | 🧨 Dinamita de feria | 146.000 | 410/s |
+| 6 | 🛠️ Taladro de vapor | 1,61 M | 3.277/s |
+| 7 | 🚜 Excavadora | 17,7 M | 26.214/s |
+| 8 | 🏗️ Grúa perforadora (**permite ascender**) | 195 M | 209.715/s |
+| 9 | 🔦 Láser de cristal | 2,1 mil M | 1,68 M/s |
+| 10 | ⚡ Taladro de plasma | 24 mil M | 13,4 M/s |
+| 11 | 🚀 Cohete excavador | 260 mil M | 107 M/s |
+| 12 | 🌌 Agujero negro portátil | 2,9 B | 860 M/s |
 
-Cada pieza de resistencia cuesta el material de la zona **anterior** a la que protege (por eso conviene "quedarse" en una zona a farmear).
-
-## Cuando no estás
-
-- Al volver se calcula lo ocurrido con las mismas reglas, pero **solo cuentan las primeras 2 horas** de ausencia (más con *Siesta larga*).
-- Dentro del juego: la **cesta de la mina** se llena con un 25 % de tus ingresos (tope 30 min) y se recoge con un botón. Un **cerdito viajero** aparece cada 1-2 min (al azar) con una inyección de 10 min de ingresos o un ×5 de cavado durante 60 s, y se va a los 10 s.
-
-## Logros (82)
-
-Sin bonos. Generales (profundidad, bloques, picos, subidas, plumas) y uno por pieza y nivel (10, 25, 50, 100). Los generales se anotan en el Diario.
+Todos los números están en `src/content/game.ts`.
 
 ## Reglas de diseño que se mantienen
 
-El juego sigue siendo tranquilo: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones, sin monetización, sin comparación social, requisitos siempre visibles. Excepciones decididas por el usuario: el cerdito viajero (azar en cuándo llega y qué trae, y se va a los 10 s) y el tope offline de 2 h. Ver CLAUDE.md.
+Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones, sin monetización, sin comparación social, requisitos siempre visibles. Excepciones decididas por el usuario: el cerdito viajero (azar y se va a los 10 s), picar como acción activa y el tope offline de 2 h. Ver CLAUDE.md.
 
 ## Estado de la implementación
 
-- Núcleo, guardado (versión 4), interfaz básica y tests: hechos.
-- **Pendiente**: arte (cerdito animado, escena de la mina y piezas: por ahora son emojis y un cerdito SVG con complementos), sonido opcional, y afinar el equilibrio jugando (`npm run calibrate` simula a un jugador y muestra la curva; hoy sube a la superficie por primera vez casi enseguida y llega al nivel ~100 en unas 6 h y ~140 en un día).
-- Las partidas de la versión de las granjas (1-3) no se pueden convertir y se descartan.
+- Núcleo, guardado (versión 5), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
+- **Calibración** (`npm run calibrate`, un jugador simulado que ve el juego cada minuto): primera ascensión a la hora y media, las 12 herramientas en unas 6 horas y estancamiento tras ~1 día. Es una primera pasada: a afinar jugando (coste, hitos, plumas).
+- **Pendiente**: arte (hoy un cerdito SVG con complementos y emojis), sonido opcional y más contenido si hace falta.

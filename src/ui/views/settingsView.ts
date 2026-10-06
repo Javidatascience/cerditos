@@ -144,7 +144,7 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     ]),
 
     h('h3', {}, ['Borrar partida']),
-    h('p', { className: 'settings-hint' }, ['Esto reinicia la mina por completo. No se puede deshacer.']),
+    h('p', { className: 'settings-hint' }, ['Esto reinicia el juego por completo. No se puede deshacer.']),
     deleteInput,
     deleteButton,
   ]);
@@ -152,7 +152,7 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
 
   function summarize(state: GameState): string {
     const notation = state.settings.notation;
-    return `Nivel ${state.records.maxDepth} alcanzado, ${formatNumber(state.plumasTotal, notation)} plumas en total y ${state.ascensions} subidas. ¿Reemplazar la partida actual?`;
+    return `${formatNumber(state.lifetime, notation)} monedas ganadas, ${formatNumber(state.plumasTotal, notation)} plumas en total y ${state.ascensions} ascensiones. ¿Reemplazar la partida actual?`;
   }
 
   function update(state: GameState): void {

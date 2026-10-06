@@ -1,6 +1,6 @@
-// Cascarón de la app: cabecera fija (monedas, nivel y zona, ingresos/s) + tarjeta del cerdito
-// viajero + contenedor de vista + navegación inferior. Las vistas son módulos independientes con
-// el patrón mount/update/destroy. Ver docs/06-mina.md.
+// Cascarón de la app: cabecera fija (monedas e ingresos/s) + tarjeta del cerdito viajero +
+// contenedor de vista + navegación inferior. Las vistas son módulos independientes con el patrón
+// mount/update/destroy. Ver docs/06-mina.md.
 
 import { claimVisitor, VISITOR_BOOST } from '../core/actions.ts';
 import { headerView, visitorInjectionValue } from '../core/selectors.ts';
@@ -12,7 +12,7 @@ import type { VisitorScheduler } from './visitor.ts';
 import { mountAchievementsView } from './views/achievementsView.ts';
 import { mountFlyView } from './views/flyView.ts';
 import { mountJournalView } from './views/journalView.ts';
-import { mountMineView } from './views/mineView.ts';
+import { mountPickView } from './views/pickView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 
 /** Una vista montada: `update` repinta a partir del estado, `destroy` limpia sus nodos. */
@@ -26,7 +26,7 @@ export interface UiContext {
   content: Content;
   /** Aplica una mutación del estado (vía core/actions.ts o save/) y repinta. */
   dispatch(action: (state: GameState) => void): void;
-  /** Fuerza un guardado inmediato (tras subir a la superficie, tras importar). */
+  /** Fuerza un guardado inmediato (tras ascender, tras importar). */
   requestSave(): void;
   /** ¿Están activados los efectos? (ajuste, y no `prefers-reduced-motion`). */
   effectsOn(): boolean;
@@ -40,8 +40,8 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: 'mine', label: 'Mina', icon: '⛏️', mount: mountMineView },
-  { id: 'fly', label: 'Subir', icon: '🪶', mount: mountFlyView },
+  { id: 'pick', label: 'Picar', icon: '⛏️', mount: mountPickView },
+  { id: 'fly', label: 'Ascender', icon: '🪶', mount: mountFlyView },
   { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountAchievementsView },
   { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
   { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
@@ -53,7 +53,6 @@ export interface App {
 
 export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}, visitor: VisitorScheduler | null = null): App {
   const coinsText = document.createTextNode('');
-  const depthText = document.createTextNode('');
   const incomeText = document.createTextNode('');
 
   const viewContainer = h('div', { className: 'view-container' });
@@ -100,7 +99,6 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
 
   const header = h('header', { className: 'app-header' }, [
     h('div', { className: 'header-text' }, [
-      h('div', { className: 'world-name' }, [depthText]),
       h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [coinsText]), h('span', { className: 'currency-name' }, ['Monedas'])]),
       h('div', { className: 'per-second-row' }, [incomeText]),
     ]),
@@ -118,7 +116,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       const text =
         kind === 'injection'
           ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas.`
-          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de cavado durante ${formatDuration(VISITOR_BOOST.seconds)}.`;
+          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}.`;
       const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
       accept.addEventListener('click', () => {
         dispatch((s) => claimVisitor(s, content, kind));
@@ -142,13 +140,12 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   }
 
   root.appendChild(h('div', { className: 'app' }, [header, visitorSlot, viewContainer, nav]));
-  switchTab('mine');
+  switchTab('pick');
 
   function render(): void {
     renderVisitor();
     const head = headerView(state, content);
     const notation = state.settings.notation;
-    setText(depthText, `${head.zoneEmoji} ${head.zoneName} · nivel ${formatNumber(head.depth, notation)}`);
     setText(coinsText, `🪙 ${formatNumber(head.coins, notation)}`);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
     setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);

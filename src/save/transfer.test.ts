@@ -20,7 +20,7 @@ describe('exportSave / parseImport', () => {
   it('exportar e importar reproduce el mismo estado', () => {
     const state = createInitialState(CONTENT, 0);
     state.coins = D('1.2345e42');
-    state.gear['rascador'] = 9;
+    state.tools['pico-de-madera'] = 9;
 
     const code = exportSave(state, 1000);
     const result = parseImport(code);
@@ -29,7 +29,7 @@ describe('exportSave / parseImport', () => {
     if (!result.ok) return;
     expect(result.data.version).toBe(CURRENT_VERSION);
     expect(result.data.state.coins).toBe('1.2345e+42');
-    expect(result.data.state.gear['rascador']).toBe(9);
+    expect(result.data.state.tools['pico-de-madera']).toBe(9);
   });
 
   it('empieza por el prefijo esperado', () => {

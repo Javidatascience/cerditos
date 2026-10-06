@@ -2,12 +2,11 @@
 //
 // Una migración por salto de versión, pura (sin acceder al contenido del juego: eso lo hace
 // normalize.ts, para contenido nuevo que no necesita subir de versión). Cambiar la FORMA del
-// GameState exige: subir CURRENT_VERSION, añadir una migración aquí y un fixture nuevo en
-// save/fixtures/.
+// GameState exige: subir CURRENT_VERSION, añadir una migración aquí y un test.
 //
-// Las versiones 1-3 eran el juego de las granjas y los mundos (antes de la mina): no se pueden
-// convertir (no hay equivalente a piezas, zonas ni profundidad), así que se rechazan con un
-// mensaje claro y el juego empieza una partida nueva.
+// Las versiones 1-4 eran juegos anteriores (granjas con mundos y una primera mina con zonas y
+// piezas): no se pueden convertir (no hay equivalente a las herramientas actuales), así que se
+// rechazan con un mensaje claro y el juego empieza una partida nueva.
 
 import { CURRENT_VERSION, type SaveData } from './serialize.ts';
 
@@ -15,10 +14,10 @@ export class SaveValidationError extends Error {}
 
 type RawSave = Record<string, unknown>;
 
-/** Primera versión del formato "mina". */
-const FIRST_MINE_VERSION = 4;
+/** Primera versión del formato actual (el cerdito picador con herramientas). */
+const FIRST_VERSION = 5;
 
-/** v(n) → v(n+1). Vacío de momento: la 4 es la primera versión de la mina. */
+/** v(n) → v(n+1). Vacío de momento: la 5 es la primera versión del juego actual. */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {};
 
 function isPlainObject(value: unknown): value is RawSave {
@@ -27,8 +26,8 @@ function isPlainObject(value: unknown): value is RawSave {
 
 /**
  * Valida la forma mínima de un guardado, lo migra hasta CURRENT_VERSION y lo devuelve tipado
- * como SaveData. Lanza SaveValidationError si no es un guardado válido, es de la versión
- * anterior al rediseño de la mina, o de una versión más nueva que esta.
+ * como SaveData. Lanza SaveValidationError si no es un guardado válido, es de un juego anterior
+ * o de una versión más nueva que esta.
  */
 export function migrate(raw: unknown): SaveData {
   if (!isPlainObject(raw)) throw new SaveValidationError('No es un guardado de Cerditos válido.');
@@ -39,8 +38,8 @@ export function migrate(raw: unknown): SaveData {
   if (typeof initialVersion !== 'number' || !Number.isInteger(initialVersion) || initialVersion < 1) {
     throw new SaveValidationError('El guardado no tiene una versión reconocible.');
   }
-  if (initialVersion < FIRST_MINE_VERSION) {
-    throw new SaveValidationError('Esta partida es de la versión anterior del juego (las granjas) y no se puede usar en la mina.');
+  if (initialVersion < FIRST_VERSION) {
+    throw new SaveValidationError('Esta partida es de una versión anterior del juego (granjas o mina con zonas) y no se puede usar.');
   }
   if (initialVersion > CURRENT_VERSION) {
     throw new SaveValidationError('Este guardado es de una versión más nueva del juego. Actualiza antes de importarlo.');

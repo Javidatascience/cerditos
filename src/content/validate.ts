@@ -15,45 +15,21 @@ function duplicates(ids: string[], what: string): string[] {
 
 export function validateContent(content: Content): string[] {
   const errors: string[] = [];
-  const m = content.mine;
-  if (m.zoneLength < 1) errors.push('mine.zoneLength debe ser ≥ 1');
-  if (m.hpBase <= 0 || m.hpGrowth < 1) errors.push('mine: hpBase > 0 y hpGrowth ≥ 1');
-  if (m.coinBase <= 0 || m.coinGrowth < 1) errors.push('mine: coinBase > 0 y coinGrowth ≥ 1');
-  if (m.baseDps <= 0) errors.push('mine.baseDps debe ser > 0');
-  if (m.hazardFloor < 0 || m.hazardFloor > 1) errors.push('mine.hazardFloor debe estar entre 0 y 1');
+  const g = content.game;
+  if (g.costGrowth <= 1) errors.push('game.costGrowth debe ser > 1');
+  if (g.milestoneMult < 1) errors.push('game.milestoneMult debe ser ≥ 1');
+  if (g.milestones.some((m, i) => m <= 0 || (i > 0 && m <= g.milestones[i - 1]!))) errors.push('game.milestones debe ser creciente y positivo');
+  if (g.ascendTool < 0 || g.ascendTool >= content.tools.length) errors.push('game.ascendTool no es una herramienta válida');
+  if (g.plumaE0 <= 0 || g.plumaExponent <= 0) errors.push('game: plumaE0 y plumaExponent deben ser > 0');
+  if (content.tools.length === 0) errors.push('Debe haber al menos una herramienta');
 
-  errors.push(...duplicates(content.materials.map((x) => x.id), 'Material'));
-  errors.push(...duplicates(content.hazards.map((x) => x.id), 'Peligro'));
-  errors.push(...duplicates(content.zones.map((x) => x.id), 'Zona'));
-  errors.push(...duplicates(content.pieces.map((x) => x.id), 'Pieza'));
+  errors.push(...duplicates(content.tools.map((x) => x.id), 'Herramienta'));
   errors.push(...duplicates(content.perks.map((x) => x.id), 'Ventaja'));
   errors.push(...duplicates(content.achievements.map((x) => x.id), 'Logro'));
-  if (content.zones.length === 0) errors.push('Debe haber al menos una zona');
 
-  const materialIds = new Set(content.materials.map((x) => x.id));
-  const hazardIds = new Set(content.hazards.map((x) => x.id));
-  const pieceIds = new Set(content.pieces.map((x) => x.id));
-
-  for (const zone of content.zones) {
-    if (!materialIds.has(zone.material)) errors.push(`${zone.id}: material desconocido (${zone.material})`);
-    if (zone.hazard !== null && !hazardIds.has(zone.hazard)) errors.push(`${zone.id}: peligro desconocido (${zone.hazard})`);
-  }
-
-  for (const piece of content.pieces) {
-    if (piece.baseCost <= 0 || piece.costGrowth < 1) errors.push(`${piece.id}: baseCost > 0 y costGrowth ≥ 1`);
-    if (piece.maxLevel < 1) errors.push(`${piece.id}: maxLevel debe ser ≥ 1`);
-    if (piece.material !== null && !materialIds.has(piece.material)) errors.push(`${piece.id}: material desconocido (${piece.material})`);
-    if (piece.material !== null && piece.materialBase <= 0) errors.push(`${piece.id}: materialBase debe ser > 0`);
-    if (piece.effect.kind === 'resist') {
-      const hazard = piece.effect.hazard;
-      if (!hazardIds.has(hazard)) errors.push(`${piece.id}: peligro desconocido (${hazard})`);
-      else if (!content.zones.some((z) => z.hazard === hazard)) errors.push(`${piece.id}: ninguna zona tiene el peligro ${hazard}`);
-    }
-  }
-  // Cada peligro de una zona debe poder resistirse con alguna pieza.
-  for (const zone of content.zones) {
-    if (zone.hazard === null) continue;
-    if (!content.pieces.some((p) => p.effect.kind === 'resist' && p.effect.hazard === zone.hazard)) errors.push(`${zone.id}: ninguna pieza resiste ${zone.hazard}`);
+  for (const tool of content.tools) {
+    if (tool.baseCost <= 0) errors.push(`${tool.id}: baseCost debe ser > 0`);
+    if (tool.baseProd <= 0) errors.push(`${tool.id}: baseProd debe ser > 0`);
   }
 
   const perkIds = new Set(content.perks.map((p) => p.id));
@@ -63,9 +39,12 @@ export function validateContent(content: Content): string[] {
   }
   errors.push(...findPerkCycles(content.perks));
 
+  const toolIds = new Set(content.tools.map((t) => t.id));
   for (const a of content.achievements) {
-    if (a.requires.kind === 'pieceLevel' && !pieceIds.has(a.requires.piece)) errors.push(`${a.id}: pieza desconocida (${a.requires.piece})`);
-    if (a.requires.count <= 0) errors.push(`${a.id}: count debe ser > 0`);
+    const r = a.requires;
+    if (r.kind === 'toolCount' && !toolIds.has(r.tool)) errors.push(`${a.id}: herramienta desconocida (${r.tool})`);
+    const amount = r.kind === 'lifetime' ? r.amount : r.count;
+    if (amount <= 0) errors.push(`${a.id}: el requisito debe ser > 0`);
   }
   return errors;
 }

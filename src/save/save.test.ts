@@ -10,36 +10,34 @@ describe('serialize / deserialize', () => {
   it('ida y vuelta conserva todo el estado, incluidos Decimal enormes', () => {
     const state = createInitialState(CONTENT, 123);
     state.coins = D('1.5e400'); // fuera del rango de number
-    state.materials['piedra'] = D('2.5e30');
-    state.gear['rascador'] = 7;
+    state.lifetime = D('2.5e500');
+    state.tools['pico-de-madera'] = 7;
+    state.maxOwned['pico-de-madera'] = 9;
+    state.revealed = 3;
     state.perks['abono'] = 3;
     state.plumas = D(9);
     state.plumasTotal = D(40);
-    state.depth = 33;
-    state.blockHp = 12.5;
-    state.runMaxDepth = 40;
-    state.records = { maxDepth: 77, blocks: 1234 };
-    state.farmZone = 1;
+    state.ascensions = 2;
     state.taps = 5;
+    state.basketSince = 11;
     state.buff = { mult: 5, until: 99 };
-    state.achievements['nivel-10'] = { at: 1 };
+    state.achievements['picar-100'] = { at: 1 };
     state.journal.push({ at: 2, text: 'hola' });
 
     const back = deserialize(serialize(state, 456));
     expect(back.coins.toString()).toBe(state.coins.toString());
-    expect(back.materials['piedra']!.toString()).toBe(state.materials['piedra']!.toString());
+    expect(back.lifetime.toString()).toBe(state.lifetime.toString());
     expect(back).toMatchObject({
       createdAt: 123,
-      depth: 33,
-      blockHp: 12.5,
-      runMaxDepth: 40,
-      records: { maxDepth: 77, blocks: 1234 },
-      farmZone: 1,
-      taps: 5,
-      buff: { mult: 5, until: 99 },
-      gear: { rascador: 7 },
+      tools: { 'pico-de-madera': 7 },
+      maxOwned: { 'pico-de-madera': 9 },
+      revealed: 3,
       perks: { abono: 3 },
-      achievements: { 'nivel-10': { at: 1 } },
+      ascensions: 2,
+      taps: 5,
+      basketSince: 11,
+      buff: { mult: 5, until: 99 },
+      achievements: { 'picar-100': { at: 1 } },
     });
     expect(back.plumasTotal.toNumber()).toBe(40);
     expect(back.journal).toEqual([{ at: 2, text: 'hola' }]);
@@ -57,15 +55,15 @@ describe('migrate', () => {
     expect(data.version).toBe(CURRENT_VERSION);
   });
 
-  it('rechaza las partidas de las granjas (versiones 1 a 3) con un mensaje claro', () => {
-    for (const version of [1, 2, 3]) {
+  it('rechaza las partidas de juegos anteriores (versiones 1 a 4) con un mensaje claro', () => {
+    for (const version of [1, 2, 3, 4]) {
       expect(() => migrate({ format: 'cerditos', version, savedAt: 0, state: {} })).toThrow(/versión anterior/);
     }
   });
 
   it('rechaza una versión futura, datos basura y versiones inválidas', () => {
     expect(() => migrate({ format: 'cerditos', version: CURRENT_VERSION + 1, savedAt: 0, state: {} })).toThrow(SaveValidationError);
-    for (const bad of [null, 'texto', 42, [], { hola: 'mundo' }, { format: 'otro', version: 4 }, { format: 'cerditos', version: 'uno' }, { format: 'cerditos', version: 0 }]) {
+    for (const bad of [null, 'texto', 42, [], { hola: 'mundo' }, { format: 'otro', version: 5 }, { format: 'cerditos', version: 'uno' }, { format: 'cerditos', version: 0 }]) {
       expect(() => migrate(bad)).toThrow(SaveValidationError);
     }
     expect(() => migrate({ format: 'cerditos', version: CURRENT_VERSION })).toThrow(SaveValidationError); // sin state
@@ -73,36 +71,33 @@ describe('migrate', () => {
 });
 
 describe('normalize', () => {
-  it('descarta piezas, materiales, ventajas y logros que ya no existen', () => {
+  it('descarta herramientas, ventajas y logros que ya no existen', () => {
     const state = createInitialState(CONTENT, 0);
-    state.gear['fantasma'] = 3;
-    state.materials['humo'] = D(1);
+    state.tools['fantasma'] = 3;
+    state.maxOwned['fantasma'] = 3;
     state.perks['fantasma'] = 1;
     state.achievements['fantasma'] = { at: 0 };
     normalize(state, CONTENT);
-    expect(state.gear['fantasma']).toBeUndefined();
-    expect(state.materials['humo']).toBeUndefined();
+    expect(state.tools['fantasma']).toBeUndefined();
+    expect(state.maxOwned['fantasma']).toBeUndefined();
     expect(state.perks['fantasma']).toBeUndefined();
     expect(state.achievements['fantasma']).toBeUndefined();
   });
 
-  it('acota niveles de pieza y profundidades fuera de rango y repara la vida del bloque', () => {
+  it('acota niveles de ventaja y repara las herramientas descubiertas', () => {
     const state = createInitialState(CONTENT, 0);
-    state.gear['rascador'] = 9999;
-    state.depth = -5;
-    state.runMaxDepth = 0;
-    state.blockHp = NaN;
-    state.farmZone = 99;
+    state.perks['comienzo'] = 99;
+    state.revealed = 0;
+    state.tools['cubo-y-pala'] = 4;
     normalize(state, CONTENT);
-    expect(state.gear['rascador']).toBe(CONTENT.pieces[0]!.maxLevel);
-    expect(state.depth).toBe(1);
-    expect(state.runMaxDepth).toBe(1);
-    expect(state.blockHp).toBe(CONTENT.mine.hpBase);
-    expect(state.farmZone).toBeNull();
+    expect(state.perks['comienzo']).toBe(5);
+    expect(state.maxOwned['cubo-y-pala']).toBe(4);
+    expect(state.revealed).toBeGreaterThanOrEqual(2); // si se tiene la 2.ª, ya está descubierta
   });
 
   it('es seguro llamarlo siempre: un estado correcto no cambia', () => {
     const state = createInitialState(CONTENT, 0);
+    normalize(state, CONTENT);
     const before = JSON.stringify(serialize(state, 0));
     normalize(state, CONTENT);
     expect(JSON.stringify(serialize(state, 0))).toBe(before);

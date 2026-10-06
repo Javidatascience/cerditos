@@ -1,6 +1,6 @@
-// Cesta de la mina: se va llenando con una fracción de lo que ganas por segundo; "Recoger" la
-// vacía y la suma a las monedas. Determinista, no caduca y tiene tope. Es un empujoncito para quien
-// visita a menudo, no una obligación.
+// Cesta: se va llenando con una fracción de lo que ganas por segundo; "Recoger" la vacía y la
+// suma a las monedas. Determinista, no caduca y tiene tope. Es un empujoncito para quien visita a
+// menudo, no una obligación.
 
 import type { Content } from '../content/types.ts';
 import { incomePerSecond } from './formulas.ts';
