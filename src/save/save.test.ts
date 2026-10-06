@@ -133,13 +133,13 @@ describe('normalize', () => {
     state.upgrades['pico-de-madera'] = 99;
     state.revealed = 0;
     state.activeSkin = 'fantasma';
-    state.activeCompanions = ['fantasma', 'topo', 'topo', 'perro', 'pajaro'];
+    state.activeCompanions = ['fantasma', 'topo', 'topo', 'perro', 'gato'];
     state.momentum = 7;
     state.tools['cubo-y-pala'] = 4;
     normalize(state, CONTENT);
     expect(state.perks['comienzo']).toBe(5);
     expect(state.activeSkin).toBe('rosa');
-    expect(state.activeCompanions).toEqual(['perro', 'pajaro']);
+    expect(state.activeCompanions).toEqual(['topo', 'gato']);
     expect(state.momentum).toBe(1);
     expect(state.upgrades['pico-de-madera']).toBe(CONTENT.game.milestones.length);
     expect(state.maxOwned['cubo-y-pala']).toBe(4);

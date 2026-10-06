@@ -444,3 +444,26 @@ export function statsView(state: GameState, content: Content): StatsView {
     relics: { done: content.relics.filter((r) => relicOwned(state, r)).length, total: content.relics.length },
   };
 }
+
+export interface CompanionStatusView {
+  id: string;
+  name: string;
+  emoji: string;
+  kind: 'tapAcorn' | 'coinGift' | 'fireBreath';
+  progress: number;
+  target: number;
+  /** Segundos que faltan (solo en las habilidades por tiempo). */
+  secondsLeft: number | null;
+}
+
+/** Estado de la habilidad de cada compañero que se lleva puesto. */
+export function companionStatusViews(state: GameState, content: Content): CompanionStatusView[] {
+  return state.activeCompanions.flatMap((id) => {
+    const c = content.companions.find((x) => x.id === id);
+    if (!c) return [];
+    const progress = state.companionProgress[id] ?? 0;
+    const timed = c.ability.kind !== 'tapAcorn';
+    const target = c.ability.kind === 'tapAcorn' ? c.ability.every : c.ability.everySeconds;
+    return [{ id, name: c.name, emoji: c.emoji, kind: c.ability.kind, progress: Math.min(progress, target), target, secondsLeft: timed ? Math.max(0, target - progress) : null }];
+  });
+}

@@ -46,14 +46,14 @@ npm run calibrate      # simula a un jugador y muestra la curva de progreso (too
 
 Por defecto el juego es tranquilo: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones push ni badges, sin pantallazos de recompensa (los logros van al Diario), sin monetización ni publicidad, sin comparación social, y toda condición de progreso es visible. **Excepciones decididas por el usuario:**
 
-1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un ×5 de producción y picos de 60 s, y se va a los 10 s.
+1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un ×5 de producción y picos de 60 s, y se va a los 20 s.
 2. Picar da 1 s de producción (y también ×5 con el impulso): es la acción activa.
 3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*).
-4. Segunda moneda (bellotas): solo la da el cerdito viajero (siempre 1) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
+4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 1) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
 5. Efectos y animaciones (números que suben) con interruptor en Ajustes; se apagan con `prefers-reduced-motion`.
 
 Si una tarea parece requerir romper otra regla, parar y preguntar.
 
 ## Estado actual
 
-Jugable de punta a punta: picar, 12 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v7, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.
+Jugable de punta a punta: picar, 12 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v8, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.

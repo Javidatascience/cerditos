@@ -4,6 +4,7 @@
 // página en blanco se enseña el motivo y un botón para borrar los datos guardados.
 
 import { CONTENT } from './content/index.ts';
+import { companionTick } from './core/actions.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { registerPwa } from './pwa/register.ts';
@@ -92,6 +93,7 @@ function start(): void {
         simulateOffline(state, CONTENT, dt);
       } else {
         advance(state, CONTENT, dt);
+        companionTick(state, CONTENT, dt); // solo con el juego abierto
         visitor.tick(dt); // solo cuenta el tiempo con el juego abierto, nunca el offline
       }
       app.update(state);

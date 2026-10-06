@@ -87,7 +87,16 @@ export interface SkinDef {
   achievement: string | null;
 }
 
-/** Compañero que acompaña al cerdito en la escena. Hoy solo es de adorno (la idea es que cada uno traiga su propio minijuego). */
+/** Lo que hace un compañero mientras se lleva puesto. */
+export type CompanionAbility =
+  /** Cada `every` picos encuentra 1 bellota. */
+  | { kind: 'tapAcorn'; every: number }
+  /** Cada `everySeconds` de juego abierto trae un regalo de `incomeSeconds` segundos de ingresos. */
+  | { kind: 'coinGift'; everySeconds: number; incomeSeconds: number }
+  /** Cada `everySeconds` de juego abierto llena la barra de inercia al máximo. */
+  | { kind: 'fireBreath'; everySeconds: number };
+
+/** Compañero que acompaña al cerdito en la escena y hace algo útil en el fondo. */
 export interface CompanionDef {
   id: string;
   name: string;
@@ -95,6 +104,7 @@ export interface CompanionDef {
   flavor: string;
   cost: number | null;
   achievement: string | null;
+  ability: CompanionAbility;
 }
 
 /** Reliquia: bono permanente que se consigue al lograr un logro concreto (no se compra). */

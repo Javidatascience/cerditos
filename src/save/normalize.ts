@@ -35,6 +35,10 @@ export function normalize(state: GameState, content: Content): GameState {
   const companionIds = new Set(content.companions.map((c) => c.id));
   for (const id of Object.keys(state.companions)) if (!companionIds.has(id)) delete state.companions[id];
   state.activeCompanions = state.activeCompanions.filter((id, i, all) => companionIds.has(id) && all.indexOf(id) === i).slice(-2);
+  for (const id of Object.keys(state.companionProgress)) {
+    const v = state.companionProgress[id];
+    if (!companionIds.has(id) || typeof v !== 'number' || !Number.isFinite(v) || v < 0) delete state.companionProgress[id];
+  }
   state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
 
   const perkById = new Map(content.perks.map((p) => [p.id, p]));

@@ -20,7 +20,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
     h('h3', { className: 'fly-heading' }, ['Pieles']),
     skinList,
     h('h3', { className: 'fly-heading' }, ['Compañeros']),
-    h('p', { className: 'settings-hint' }, [`Acompañan al cerdito en la escena (hasta ${MAX_ACTIVE_COMPANIONS} a la vez). Más adelante cada uno traerá su propio minijuego.`]),
+    h('p', { className: 'settings-hint' }, [`Acompañan al cerdito en la escena (hasta ${MAX_ACTIVE_COMPANIONS} a la vez). Cada uno hace algo en el fondo mientras lo llevas.`]),
     companionList,
     h('h3', { className: 'fly-heading' }, ['Reliquias']),
     h('p', { className: 'settings-hint' }, ['Bonos permanentes que da un logro concreto. No se compran.']),

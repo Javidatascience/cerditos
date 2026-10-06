@@ -1286,6 +1286,15 @@ body {
   background: linear-gradient(90deg, #f2c94c, var(--btn-orange));
 }
 
+.companion-status {
+  display: grid;
+  gap: 8px;
+}
+
+.companion-status:not(:empty) {
+  margin-bottom: 12px;
+}
+
 .global-block {
   margin-bottom: 12px;
 }

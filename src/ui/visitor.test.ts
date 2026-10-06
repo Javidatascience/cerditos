@@ -17,7 +17,7 @@ describe('visitante', () => {
     expect(late.current()).toBe('boost');
   });
 
-  it('se queda 10 s y se va si no se acepta; luego llega otro', () => {
+  it('se queda 20 s y se va si no se acepta; luego llega otro', () => {
     const v = createVisitorScheduler(() => 0);
     v.tick(VISITOR_MIN_DELAY);
     expect(v.secondsLeft()).toBe(VISITOR_STAY_SECONDS);

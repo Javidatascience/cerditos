@@ -49,10 +49,17 @@ function v6ToV7(old: RawSave): RawSave {
   };
 }
 
+/** v7 → v8: progreso de las habilidades de los compañeros (vacío). */
+function v7ToV8(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 8 };
+  return { ...old, version: 8, state: { ...old['state'], version: 8, companionProgress: {} } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
   6: v6ToV7,
+  7: v7ToV8,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

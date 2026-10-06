@@ -1,5 +1,5 @@
 // Cerdito viajero: cada 1-2 minutos (al azar), mientras el juego está abierto, aparece un visitante
-// con una recompensa (una inyección de moneda o un impulso de producción). Se queda solo 10
+// con una recompensa (una inyección de moneda o un impulso de producción). Se queda 20
 // segundos: si no lo aceptas, se va y llegará otro más adelante. El azar (cuándo llega y qué
 // trae) vive aquí, fuera de `core`, que solo aplica la recompensa (`actions.claimVisitor`).
 // Ver docs/01 §11 (reglas 1 y 2, revisadas por el usuario).
@@ -10,7 +10,7 @@ import type { VisitorKind } from '../core/actions.ts';
 export const VISITOR_MIN_DELAY = 60;
 export const VISITOR_MAX_DELAY = 120;
 /** Segundos que se queda el visitante esperando antes de irse. */
-export const VISITOR_STAY_SECONDS = 10;
+export const VISITOR_STAY_SECONDS = 20;
 
 export interface VisitorScheduler {
   /** Avanza `dt` segundos de juego abierto; puede hacer aparecer o marcharse al visitante. */

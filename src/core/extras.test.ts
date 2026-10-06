@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { ascend, buyCompanion, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { ascend, buyCompanion, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
@@ -131,15 +131,16 @@ describe('bellotas, pieles, compañeros y reliquias', () => {
   it('los compañeros se compran, se llevan (máximo 2) y el sobrante quita el más antiguo', () => {
     const state = fresh();
     state.acorns = 100;
-    for (const id of ['topo', 'perro', 'pajaro']) expect(buyCompanion(state, CONTENT, id)).toBe(true);
-    expect(toggleCompanion(state, CONTENT, 'gato')).toBe(false);
+    for (const id of ['topo', 'gato']) expect(buyCompanion(state, CONTENT, id)).toBe(true);
+    expect(toggleCompanion(state, CONTENT, 'dragon')).toBe(false);
     toggleCompanion(state, CONTENT, 'topo');
-    toggleCompanion(state, CONTENT, 'perro');
-    toggleCompanion(state, CONTENT, 'pajaro');
-    expect(state.activeCompanions).toEqual(['perro', 'pajaro']);
+    toggleCompanion(state, CONTENT, 'gato');
+    state.achievements['ascender-10'] = { at: 0 };
+    toggleCompanion(state, CONTENT, 'dragon');
+    expect(state.activeCompanions).toEqual(['gato', 'dragon']);
     expect(state.activeCompanions.length).toBeLessThanOrEqual(MAX_ACTIVE_COMPANIONS);
-    toggleCompanion(state, CONTENT, 'perro');
-    expect(state.activeCompanions).toEqual(['pajaro']);
+    toggleCompanion(state, CONTENT, 'gato');
+    expect(state.activeCompanions).toEqual(['dragon']);
   });
 
   it('las reliquias se consiguen con su logro y dan su bono', () => {
@@ -152,6 +153,41 @@ describe('bellotas, pieles, compañeros y reliquias', () => {
     expect(relicOwned(state, relic)).toBe(true);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
     expect(cosmeticViews(state, CONTENT).relics.find((r) => r.id === 'pico-ancestral')!.owned).toBe(true);
+  });
+});
+
+describe('habilidades de los compañeros', () => {
+  it('el topo da una bellota cada 40 picos, solo mientras se lleva', () => {
+    const state = fresh();
+    for (let i = 0; i < 40; i++) tap(state, CONTENT);
+    expect(state.acorns).toBe(0);
+    state.acorns = 10;
+    state.activeCompanions = ['topo'];
+    for (let i = 0; i < 39; i++) tap(state, CONTENT);
+    expect(state.acorns).toBe(10);
+    tap(state, CONTENT);
+    expect(state.acorns).toBe(11);
+    expect(state.companionProgress['topo']).toBe(0);
+  });
+
+  it('el gato trae monedas cada 120 s y lo anota en el diario', () => {
+    const state = fresh();
+    state.activeCompanions = ['gato'];
+    const base = baseIncomePerSecond(state, CONTENT).toNumber();
+    companionTick(state, CONTENT, 119);
+    expect(state.coins.toNumber()).toBe(0);
+    companionTick(state, CONTENT, 1);
+    expect(state.coins.toNumber()).toBeCloseTo(base * 90, 6);
+    expect(state.journal.at(-1)?.text).toContain('Gato');
+  });
+
+  it('el dragón enciende la inercia al máximo cada 180 s', () => {
+    const state = fresh();
+    state.activeCompanions = ['dragon'];
+    companionTick(state, CONTENT, 179);
+    expect(state.momentum).toBe(0);
+    companionTick(state, CONTENT, 1);
+    expect(state.momentum).toBe(1);
   });
 });
 

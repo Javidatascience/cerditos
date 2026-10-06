@@ -4,7 +4,7 @@
 // recreen cada 250 ms y un clic nunca se pierda. Ver docs/06-mina.md.
 
 import { buyGlobalUpgrade, buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
-import { basketView, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
+import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { emojiBadge, minerPig } from '../art.ts';
@@ -56,6 +56,11 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const momentumText = document.createTextNode('');
   const momentumFill = h('div', { className: 'progress-bar-inner' });
   const momentumBlock = h('div', { className: 'momentum-block' }, [h('span', { className: 'basket-text' }, [momentumText]), h('div', { className: 'progress-bar', role: 'presentation' }, [momentumFill])]);
+
+  // --- Compañeros: lo que está haciendo cada uno ---
+  const companionBlock = h('div', { className: 'companion-status' });
+  let companionStatusKey = '';
+  let companionLines: { text: Text; fill: HTMLElement }[] = [];
 
   // --- Mejoras globales (×1,5 a todo) ---
   const globalNote = h('p', { className: 'settings-hint hidden' });
@@ -155,7 +160,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     },
   );
 
-  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, globalBlock, basketBlock, amountRow, toolList, moreHint]);
+  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, companionBlock, globalBlock, basketBlock, amountRow, toolList, moreHint]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -169,6 +174,27 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       pigSignature = signature;
       pigSlot.replaceChildren(minerPig(best, skinColor));
     }
+    const statuses = companionStatusViews(state, ctx.content);
+    const statusKey = statuses.map((c) => c.id).join(',');
+    if (statusKey !== companionStatusKey) {
+      companionStatusKey = statusKey;
+      companionLines = statuses.map(() => ({ text: document.createTextNode(''), fill: h('div', { className: 'progress-bar-inner' }) }));
+      companionBlock.replaceChildren(
+        ...companionLines.map((line) => h('div', { className: 'companion-line' }, [h('span', { className: 'basket-text' }, [line.text]), h('div', { className: 'progress-bar', role: 'presentation' }, [line.fill])])),
+      );
+    }
+    statuses.forEach((c, i) => {
+      const line = companionLines[i];
+      if (!line) return;
+      const what =
+        c.kind === 'tapAcorn'
+          ? `desentierra una bellota en ${Math.ceil(c.target - c.progress)} picos`
+          : c.kind === 'coinGift'
+            ? `te trae monedas en ${formatDuration(c.secondsLeft ?? 0)}`
+            : `sopla fuego en ${formatDuration(c.secondsLeft ?? 0)}`;
+      setText(line.text, `${c.emoji} ${c.name} ${what}`);
+      setStyleProp(line.fill, 'width', `${((c.progress / c.target) * 100).toFixed(1)}%`);
+    });
     const companionIds = state.activeCompanions.join(',');
     if (companionIds !== companionsSignature) {
       companionsSignature = companionIds;
@@ -216,7 +242,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
               : t.nextUpgrade.unlocked
                 ? `¡Mejora desbloqueada! ×${ctx.content.game.milestoneMult} de producción${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`
                 : `Mejora ×${ctx.content.game.milestoneMult} al tener ${t.nextUpgrade.threshold}${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`,
-            needText: t.canAfford ? '' : t.etaSeconds === null ? `Te faltan ${formatNumber(t.missing, notation)} monedas` : `Te faltan ${formatNumber(t.missing, notation)} monedas (≈ ${formatDuration(t.etaSeconds)})`,
+            needText: '',
             upgradeText: t.nextUpgrade ? `Mejora ×${ctx.content.game.milestoneMult} (${formatNumber(t.nextUpgrade.cost, notation)})` : '',
           };
         }),

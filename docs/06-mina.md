@@ -32,7 +32,7 @@ Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas func
 | **Reliquias** | 7 bonos permanentes que da un logro concreto (callo de oro = pico ×2, pico ancestral = producción ×1,1, pluma eterna, reloj de bolsillo…). No se compran. |
 | **Estadísticas** | En la pestaña *Logros*: monedas ganadas, mejor ingreso por segundo, picos, tiempo de juego, ascensiones, plumas, herramientas, mejoras, cerditos viajeros, logros y reliquias. |
 | **Cesta** | Se llena con el 25 % de tus ingresos (tope 30 min); "Recoger" la suma a tus monedas. |
-| **Cerdito viajero** | Aparece al azar cada 1-2 min con el juego abierto: 10 min de ingresos de golpe, o ×5 de producción y de picos durante 60 s. Se va a los 10 s. |
+| **Cerdito viajero** | Aparece al azar cada 1-2 min con el juego abierto: 10 min de ingresos de golpe, o ×5 de producción y de picos durante 60 s. Se va a los 20 s. Siempre da 1 bellota. |
 | **Offline** | Al volver cuentan solo las primeras 2 horas de ausencia (más con *Siesta larga*). |
 | **Logros** | 126, sin bonos: generales (picos, ascensiones, plumas, monedas) y uno por herramienta y cantidad (1, 5, 15, 25, 50, 75, 100, 150, 200, 250). |
 
@@ -57,7 +57,7 @@ Todos los números están en `src/content/game.ts`.
 
 ## Reglas de diseño que se mantienen
 
-Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones, sin monetización, sin comparación social, requisitos siempre visibles. Excepciones decididas por el usuario: el cerdito viajero (azar y se va a los 10 s), picar como acción activa y el tope offline de 2 h. Ver CLAUDE.md.
+Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones, sin monetización, sin comparación social, requisitos siempre visibles. Excepciones decididas por el usuario: el cerdito viajero (azar y se va a los 20 s), picar como acción activa y el tope offline de 2 h. Ver CLAUDE.md.
 
 ## Estado de la implementación
 

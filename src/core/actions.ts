@@ -23,7 +23,7 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
-import { addEntry } from './journal.ts';
+import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
 import type { GameState, PerkId, Settings, ToolId } from './state.ts';
@@ -42,6 +42,7 @@ export function tap(state: GameState, content: Content): Decimal {
   gain(state, content, amount);
   state.taps += 1;
   state.momentum = Math.min(1, state.momentum + content.game.momentumPerTap); // cada pico sube la inercia
+  companionTap(state, content);
   return amount;
 }
 
@@ -217,4 +218,46 @@ export function toggleCompanion(state: GameState, content: Content, id: string):
     state.activeCompanions = [...state.activeCompanions, id].slice(-MAX_ACTIVE_COMPANIONS);
   }
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Habilidades de los compañeros (solo con el juego abierto: no cuentan offline)
+// ---------------------------------------------------------------------------
+
+function activeCompanionDefs(state: GameState, content: Content) {
+  return content.companions.filter((c) => state.activeCompanions.includes(c.id));
+}
+
+/** Cada pico avanza al compañero que cuenta picos (el topo). */
+function companionTap(state: GameState, content: Content): void {
+  for (const c of activeCompanionDefs(state, content)) {
+    if (c.ability.kind !== 'tapAcorn') continue;
+    const progress = (state.companionProgress[c.id] ?? 0) + 1;
+    if (progress >= c.ability.every) {
+      state.companionProgress[c.id] = 0;
+      state.acorns += 1;
+    } else {
+      state.companionProgress[c.id] = progress;
+    }
+  }
+}
+
+/** Avanza `dt` segundos de juego abierto las habilidades por tiempo (el gato y el dragón). */
+export function companionTick(state: GameState, content: Content, dt: number): void {
+  for (const c of activeCompanionDefs(state, content)) {
+    const ability = c.ability;
+    if (ability.kind === 'tapAcorn') continue;
+    const progress = (state.companionProgress[c.id] ?? 0) + dt;
+    if (progress < ability.everySeconds) {
+      state.companionProgress[c.id] = progress;
+      continue;
+    }
+    state.companionProgress[c.id] = 0;
+    if (ability.kind === 'coinGift') {
+      gain(state, content, baseIncomePerSecond(state, content).mul(ability.incomeSeconds));
+      addEntry(state, `${c.name} te ha traído un regalo de monedas.`, gameClockMs(state));
+    } else {
+      state.momentum = 1;
+    }
+  }
 }

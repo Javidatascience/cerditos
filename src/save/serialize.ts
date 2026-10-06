@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 7;
+export const CURRENT_VERSION = 8;
 
 export interface SerializedGameState {
   version: number;
@@ -29,6 +29,7 @@ export interface SerializedGameState {
   activeSkin: string;
   companions: Record<string, true>;
   activeCompanions: string[];
+  companionProgress: Record<string, number>;
   stats: { visitors: number; bestIncome: string };
   basketSince: number;
   achievements: Record<string, { at: number }>;
@@ -73,6 +74,7 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       activeSkin: state.activeSkin,
       companions: { ...state.companions },
       activeCompanions: [...state.activeCompanions],
+      companionProgress: { ...state.companionProgress },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       basketSince: state.basketSince,
       achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
@@ -108,6 +110,7 @@ export function deserialize(data: SaveData): GameState {
     activeSkin: s.activeSkin,
     companions: { ...s.companions },
     activeCompanions: [...s.activeCompanions],
+    companionProgress: { ...s.companionProgress },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     basketSince: s.basketSince,
     achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),

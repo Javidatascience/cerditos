@@ -118,8 +118,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       const notation = state.settings.notation;
       const text =
         kind === 'injection'
-          ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas.`
-          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}.`;
+          ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas y 1 🌰.`
+          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}, y 1 🌰.`;
       const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
       accept.addEventListener('click', () => {
         dispatch((s) => claimVisitor(s, content, kind));

@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 7;
+export const STATE_VERSION = 8;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -74,6 +74,8 @@ export interface GameState {
   activeSkin: string;
   companions: Record<string, true>;
   activeCompanions: string[];
+  /** Avance de la habilidad de cada compañero (picos o segundos hasta su próximo premio). */
+  companionProgress: Record<string, number>;
   /** Estadísticas sueltas. */
   stats: { visitors: number; /** Mejor ingreso por segundo alcanzado. */ bestIncome: Decimal };
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
@@ -110,6 +112,7 @@ export function createInitialState(content: Content, now: number): GameState {
     activeSkin: content.skins[0]?.id ?? '',
     companions: {},
     activeCompanions: [],
+    companionProgress: {},
     stats: { visitors: 0, bestIncome: D(0) },
     basketSince: 0,
     achievements: {},

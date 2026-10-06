@@ -59,14 +59,11 @@ export const SKINS: SkinDef[] = [
   { id: 'lila', name: 'Lila de feria', flavor: 'El premio a diez mil picos.', color: '#d7b8e6', cost: null, achievement: 'picar-10000' },
 ];
 
-/** Compañeros que van con el cerdito en el fondo (de momento solo de adorno). */
+/** Compañeros que van con el cerdito en el fondo; cada uno hace algo mientras lo llevas puesto. */
 export const COMPANIONS: CompanionDef[] = [
-  { id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava a su aire y no pide nada a cambio.', cost: 4, achievement: null },
-  { id: 'perro', name: 'Perro pastor', emoji: '🐶', flavor: 'Vigila la mina y mueve la cola.', cost: 6, achievement: null },
-  { id: 'pajaro', name: 'Pájaro cantor', emoji: '🐦', flavor: 'Silba para que el trabajo sea más ligero.', cost: 6, achievement: null },
-  { id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'Supervisa desde un saco de harina.', cost: 10, achievement: null },
-  { id: 'conejo', name: 'Conejo veloz', emoji: '🐰', flavor: 'Siempre llega antes que los demás.', cost: 10, achievement: null },
-  { id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones.', cost: null, achievement: 'ascender-10' },
+  { id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas: cada 40 picos desentierra una bellota.', cost: 4, achievement: null, ability: { kind: 'tapAcorn', every: 40 } },
+  { id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'De vez en cuando se despierta y te trae un regalo de monedas.', cost: 10, achievement: null, ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 90 } },
+  { id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo.', cost: null, achievement: 'ascender-10', ability: { kind: 'fireBreath', everySeconds: 180 } },
 ];
 
 /** Reliquias: bonos permanentes que dan algunos logros. */
