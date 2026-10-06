@@ -1,22 +1,16 @@
-// Formato de números y tiempos en español. Ver docs/02-arquitectura.md §8.
-// - < 1e6: separador de miles; decimales solo si el valor es < 100.
-// - 1e6..1e27: sufijos de escala larga española (M, mil M, B, mil B, T, mil T, C, mil C).
-// - >= 1e30 o notación "cientifica": notación científica "1,23e45".
+// Formato de números y tiempos en español.
+// - < 10.000: número entero con separador de miles (con un decimal si es < 100).
+// - >= 10.000: sufijos de escala corta (K, M, B, T, Qa, Qi, Sx, Sp, Oc, No, Dc) con 3 cifras
+//   significativas: 12,3 K · 123 K · 1,23 M…
+// - >= 1e36 o notación "cientifica": notación científica "1,23e45".
 
 import { D, Decimal } from '../core/num.ts';
 
 export type Notation = 'es' | 'cientifica';
 
-const SCALE: { exp: number; suffix: string }[] = [
-  { exp: 27, suffix: 'mil C' },
-  { exp: 24, suffix: 'C' },
-  { exp: 21, suffix: 'mil T' },
-  { exp: 18, suffix: 'T' },
-  { exp: 15, suffix: 'mil B' },
-  { exp: 12, suffix: 'B' },
-  { exp: 9, suffix: 'mil M' },
-  { exp: 6, suffix: 'M' },
-];
+const SUFFIXES = ['K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+const SUFFIX_FROM = 1e4;
+const SCIENTIFIC_FROM_EXPONENT = 36;
 
 function formatScientific(abs: Decimal): string {
   // abs.toExponential(2) da algo como "1.23e+45" (número normal) o "9.99e+308" (Decimal
@@ -30,6 +24,12 @@ function formatInt(value: number): string {
   return Math.round(value).toLocaleString('es-ES');
 }
 
+/** 3 cifras significativas: 1,23 · 12,3 · 123. */
+function threeDigits(scaled: number): string {
+  const text = scaled < 10 ? scaled.toFixed(2) : scaled < 100 ? scaled.toFixed(1) : String(Math.round(scaled));
+  return text.replace('.', ',');
+}
+
 export function formatNumber(value: number | Decimal, notation: Notation = 'es'): string {
   const dec = value instanceof Decimal ? value : D(value);
   if (dec.eq(0)) return '0';
@@ -39,11 +39,11 @@ export function formatNumber(value: number | Decimal, notation: Notation = 'es')
   const sign = negative ? '-' : '';
   const exponent = abs.exponent; // floor(log10(abs)) para abs != 0
 
-  if (notation === 'cientifica' || exponent >= 30) {
+  if (notation === 'cientifica' || exponent >= SCIENTIFIC_FROM_EXPONENT) {
     return sign + formatScientific(abs);
   }
 
-  if (exponent < 6) {
+  if (abs.lt(SUFFIX_FROM)) {
     const num = abs.toNumber();
     if (num < 100) {
       const rounded = Math.round(num * 10) / 10;
@@ -53,10 +53,10 @@ export function formatNumber(value: number | Decimal, notation: Notation = 'es')
     return sign + formatInt(num);
   }
 
-  const scale = SCALE.find((s) => exponent >= s.exp);
-  if (!scale) return sign + formatInt(abs.toNumber());
-  const scaled = abs.div(Decimal.pow(10, scale.exp)).toNumber();
-  return `${sign}${scaled.toFixed(2).replace('.', ',')} ${scale.suffix}`;
+  const group = Math.floor(exponent / 3); // 1 = K, 2 = M…
+  const suffix = SUFFIXES[group - 1] ?? '';
+  const scaled = abs.div(Decimal.pow(10, group * 3)).toNumber();
+  return `${sign}${threeDigits(scaled)} ${suffix}`;
 }
 
 export function formatDuration(totalSeconds: number): string {

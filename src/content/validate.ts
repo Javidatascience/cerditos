@@ -22,6 +22,7 @@ export function validateContent(content: Content): string[] {
   if (g.milestones.some((m, i) => m <= 0 || (i > 0 && m <= g.milestones[i - 1]!))) errors.push('game.milestones debe ser creciente y positivo');
   if (g.ascendTool < 0 || g.ascendTool >= content.tools.length) errors.push('game.ascendTool no es una herramienta válida');
   if (g.plumaE0 <= 0 || g.plumaExponent <= 0) errors.push('game: plumaE0 y plumaExponent deben ser > 0');
+  if (g.momentumMax < 1 || g.momentumPerTap <= 0 || g.momentumDecay < 0) errors.push('game: momentumMax ≥ 1, momentumPerTap > 0 y momentumDecay ≥ 0');
   if (content.tools.length === 0) errors.push('Debe haber al menos una herramienta');
 
   errors.push(...duplicates(content.tools.map((x) => x.id), 'Herramienta'));
@@ -39,6 +40,23 @@ export function validateContent(content: Content): string[] {
     for (const req of perk.requires) if (!perkIds.has(req)) errors.push(`${perk.id}: requiere una ventaja inexistente (${req})`);
   }
   errors.push(...findPerkCycles(content.perks));
+
+  const achievementIds = new Set(content.achievements.map((a) => a.id));
+  errors.push(...duplicates(content.globalUpgrades.map((x) => x.id), 'Mejora global'));
+  errors.push(...duplicates(content.skins.map((x) => x.id), 'Piel'));
+  errors.push(...duplicates(content.companions.map((x) => x.id), 'Compañero'));
+  errors.push(...duplicates(content.relics.map((x) => x.id), 'Reliquia'));
+  for (const u of content.globalUpgrades) {
+    if (u.cost <= 0 || u.unlockAt <= 0 || u.mult < 1) errors.push(`${u.id}: cost y unlockAt > 0 y mult ≥ 1`);
+  }
+  for (const item of [...content.skins, ...content.companions]) {
+    if (item.cost === null && item.achievement === null) errors.push(`${item.id}: debe poder conseguirse (cost o achievement)`);
+    if (item.achievement !== null && !achievementIds.has(item.achievement)) errors.push(`${item.id}: logro desconocido (${item.achievement})`);
+  }
+  for (const relic of content.relics) {
+    if (!achievementIds.has(relic.achievement)) errors.push(`${relic.id}: logro desconocido (${relic.achievement})`);
+  }
+  if (!content.skins.some((s) => s.cost === 0)) errors.push('Debe haber una piel gratis (cost 0) para empezar');
 
   const toolIds = new Set(content.tools.map((t) => t.id));
   for (const a of content.achievements) {

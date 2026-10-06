@@ -4,6 +4,7 @@ import { ascend, buyPerk, buyTool, buyUpgrade, claimVisitor, collectBasket, tap,
 import { BASKET_CAP_SECONDS, BASKET_RATE, basketSeconds } from './basket.ts';
 import {
   ascendUnlocked,
+  baseIncomePerSecond,
   incomePerSecond,
   nextUpgradeCost,
   nextUpgradeThreshold,
@@ -45,7 +46,9 @@ describe('al empezar', () => {
     expect(state.taps).toBe(10);
     expect(buyTool(state, CONTENT, PICO.id, 1)).toBe(1);
     expect(state.coins.toNumber()).toBe(0);
-    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1, 9);
+    expect(baseIncomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1, 9);
+    // y picar sube la inercia: 10 picos = 0,3 de barra = ×2,2
+    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1 * (1 + 4 * 0.3), 9);
   });
 });
 

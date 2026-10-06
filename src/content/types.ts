@@ -26,6 +26,10 @@ export interface GameDef {
   perPluma: number;
   /** Horas de producción offline base (las ventajas las amplían). */
   offlineHours: number;
+  /** Inercia: cuanto más picas, más sube la producción hasta ×`momentumMax`. Cada pico suma `momentumPerTap` (0..1) y baja `momentumDecay` por segundo. */
+  momentumMax: number;
+  momentumPerTap: number;
+  momentumDecay: number;
 }
 
 export interface ToolDef {
@@ -46,7 +50,9 @@ export type PerkEffect =
   | { kind: 'tapMult'; perLevel: number }
   | { kind: 'plumaMult'; perLevel: number }
   | { kind: 'perPlumaBonus'; perLevel: number }
-  | { kind: 'offlineHours'; perLevel: number };
+  | { kind: 'offlineHours'; perLevel: number }
+  /** Sube el tope de la inercia (+perLevel al multiplicador máximo). */
+  | { kind: 'momentumMax'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;
@@ -56,6 +62,48 @@ export interface PerkDef {
   baseCost: number;
   costGrowth: number;
   requires: PerkId[];
+  effect: PerkEffect;
+}
+
+/** Mejora global: ×`mult` a toda la producción. Se desbloquea al ganar `unlockAt` monedas en total; se compra con `cost`. Se pierde al ascender. */
+export interface GlobalUpgradeDef {
+  id: string;
+  name: string;
+  flavor: string;
+  unlockAt: number;
+  cost: number;
+  mult: number;
+}
+
+/** Cosmético del cerdito: color de piel. Se compra con bellotas o se consigue con un logro. */
+export interface SkinDef {
+  id: string;
+  name: string;
+  flavor: string;
+  color: string;
+  /** Bellotas que cuesta (null si solo se consigue con un logro). */
+  cost: number | null;
+  /** Logro que lo regala (null si solo se compra). */
+  achievement: string | null;
+}
+
+/** Compañero que acompaña al cerdito en la escena. Hoy solo es de adorno (la idea es que cada uno traiga su propio minijuego). */
+export interface CompanionDef {
+  id: string;
+  name: string;
+  emoji: string;
+  flavor: string;
+  cost: number | null;
+  achievement: string | null;
+}
+
+/** Reliquia: bono permanente que se consigue al lograr un logro concreto (no se compra). */
+export interface RelicDef {
+  id: string;
+  name: string;
+  emoji: string;
+  flavor: string;
+  achievement: string;
   effect: PerkEffect;
 }
 
@@ -77,5 +125,9 @@ export interface Content {
   game: GameDef;
   tools: ToolDef[];
   perks: PerkDef[];
+  globalUpgrades: GlobalUpgradeDef[];
+  skins: SkinDef[];
+  companions: CompanionDef[];
+  relics: RelicDef[];
   achievements: AchievementDef[];
 }

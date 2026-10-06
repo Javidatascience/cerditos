@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 6;
+export const CURRENT_VERSION = 7;
 
 export interface SerializedGameState {
   version: number;
@@ -14,6 +14,8 @@ export interface SerializedGameState {
   coins: string;
   tools: Record<string, number>;
   upgrades: Record<string, number>;
+  globalUpgrades: Record<string, true>;
+  momentum: number;
   revealed: number;
   lifetime: string;
   plumas: string;
@@ -22,6 +24,12 @@ export interface SerializedGameState {
   ascensions: number;
   maxOwned: Record<string, number>;
   taps: number;
+  acorns: number;
+  skins: Record<string, true>;
+  activeSkin: string;
+  companions: Record<string, true>;
+  activeCompanions: string[];
+  stats: { visitors: number; bestIncome: string };
   basketSince: number;
   achievements: Record<string, { at: number }>;
   buff: Buff | null;
@@ -50,6 +58,8 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       coins: state.coins.toString(),
       tools: { ...state.tools },
       upgrades: { ...state.upgrades },
+      globalUpgrades: { ...state.globalUpgrades },
+      momentum: state.momentum,
       revealed: state.revealed,
       lifetime: state.lifetime.toString(),
       plumas: state.plumas.toString(),
@@ -58,6 +68,12 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       ascensions: state.ascensions,
       maxOwned: { ...state.maxOwned },
       taps: state.taps,
+      acorns: state.acorns,
+      skins: { ...state.skins },
+      activeSkin: state.activeSkin,
+      companions: { ...state.companions },
+      activeCompanions: [...state.activeCompanions],
+      stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       basketSince: state.basketSince,
       achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
       buff: state.buff ? { ...state.buff } : null,
@@ -77,6 +93,8 @@ export function deserialize(data: SaveData): GameState {
     coins: new Decimal(s.coins),
     tools: { ...s.tools },
     upgrades: { ...s.upgrades },
+    globalUpgrades: { ...s.globalUpgrades },
+    momentum: s.momentum,
     revealed: s.revealed,
     lifetime: new Decimal(s.lifetime),
     plumas: new Decimal(s.plumas),
@@ -85,6 +103,12 @@ export function deserialize(data: SaveData): GameState {
     ascensions: s.ascensions,
     maxOwned: { ...s.maxOwned },
     taps: s.taps,
+    acorns: s.acorns,
+    skins: { ...s.skins },
+    activeSkin: s.activeSkin,
+    companions: { ...s.companions },
+    activeCompanions: [...s.activeCompanions],
+    stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     basketSince: s.basketSince,
     achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),
     buff: s.buff ? { ...s.buff } : null,

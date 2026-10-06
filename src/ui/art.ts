@@ -120,9 +120,9 @@ export function pigIcon(skin: string, accessory: Accessory = 'none', locked = fa
 export const PIG_SKIN = '#f4c7c3';
 
 /** El cerdito picador, con más complementos cuanto más lejos ha llegado en herramientas (índice de la mejor que tiene, o -1). */
-export function minerPig(bestToolIndex: number): SVGSVGElement {
+export function minerPig(bestToolIndex: number, skin: string = PIG_SKIN): SVGSVGElement {
   const accessory: Accessory = bestToolIndex >= 8 ? 'crown' : bestToolIndex >= 5 ? 'glasses' : bestToolIndex >= 0 ? 'cap' : 'none';
-  return pigIcon(PIG_SKIN, accessory);
+  return pigIcon(skin, accessory);
 }
 
 /** Insignia con un emoji (piezas, materiales, zonas…). */

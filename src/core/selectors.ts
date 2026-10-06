@@ -7,7 +7,15 @@ import { VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
 import {
   ascendUnlocked,
+  baseIncomePerSecond,
+  companionOwned,
+  globalUpgradeCost,
+  globalUpgradeUnlocked,
   incomePerSecond,
+  momentumMaxMult,
+  momentumMult,
+  relicOwned,
+  skinOwned,
   nextUpgradeCost,
   nextUpgradeThreshold,
   nextUpgradeUnlocked,
@@ -35,13 +43,23 @@ import type { GameState } from './state.ts';
 
 export interface HeaderView {
   coins: Decimal;
+  /** Monedas por segundo ahora mismo (con la inercia). */
   income: Decimal;
   /** Lo que da un pico ahora mismo. */
   tapGain: Decimal;
+  /** Inercia: barra 0..1, multiplicador actual y máximo. */
+  momentum: { fraction: number; mult: number; max: number };
+  bellotas: number;
 }
 
 export function headerView(state: GameState, content: Content): HeaderView {
-  return { coins: state.coins, income: incomePerSecond(state, content), tapGain: tapGain(state, content) };
+  return {
+    coins: state.coins,
+    income: incomePerSecond(state, content),
+    tapGain: tapGain(state, content),
+    momentum: { fraction: state.momentum, mult: momentumMult(state, content), max: momentumMaxMult(state, content) },
+    bellotas: state.acorns,
+  };
 }
 
 export interface ToolView {
@@ -118,25 +136,6 @@ export function toolViews(state: GameState, content: Content): ToolView[] {
   });
 }
 
-export interface GoalView {
-  name: string;
-  emoji: string;
-  cost: Decimal;
-  missing: Decimal;
-  etaSeconds: number | null;
-  /** 0..1 */
-  progress: number;
-}
-
-/** La siguiente herramienta que todavía no tienes (la primera de la lista con 0 unidades) y lo que te falta para comprarla; null si ya tienes todas. */
-export function goalView(state: GameState, content: Content): GoalView | null {
-  const tool = content.tools.find((t) => toolOwned(state, t.id) === 0);
-  if (!tool) return null;
-  const cost = toolBulkCost(state, content, tool, 0, 1);
-  const { missing, etaSeconds } = missingOf(state, content, cost);
-  return { name: tool.name, emoji: tool.emoji, cost, missing, etaSeconds, progress: Math.min(1, Math.max(0, state.coins.div(cost).toNumber())) };
-}
-
 // ---------------------------------------------------------------------------
 // Ascensión y ventajas
 // ---------------------------------------------------------------------------
@@ -202,6 +201,8 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
       return `+${Math.round(effect.perLevel * level * 100)} % extra en el bono de plumas`;
     case 'offlineHours':
       return `+${effect.perLevel * level} h de producción mientras no estás`;
+    case 'momentumMax':
+      return `+${effect.perLevel * level} al tope de la inercia`;
   }
 }
 
@@ -294,10 +295,152 @@ export function basketView(state: GameState, content: Content): BasketView {
 
 /** Lo que daría una inyección de visitante ahora mismo (monedas). */
 export function visitorInjectionValue(state: GameState, content: Content): Decimal {
-  return incomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS);
+  return baseIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS);
 }
 
 /** Entradas del diario, de la más reciente a la más antigua. */
 export function journalEntries(state: GameState): { at: number; text: string }[] {
   return [...state.journal].reverse();
+}
+
+// ---------------------------------------------------------------------------
+// Mejoras globales
+// ---------------------------------------------------------------------------
+
+export interface GlobalUpgradeView {
+  id: string;
+  name: string;
+  flavor: string;
+  mult: number;
+  cost: Decimal;
+  canAfford: boolean;
+}
+
+/** Mejoras globales disponibles (desbloqueadas y sin comprar) y, si hay, cuánto hay que ganar para ver la siguiente. */
+export function globalUpgradeViews(state: GameState, content: Content): { available: GlobalUpgradeView[]; nextUnlockAt: number | null } {
+  const available: GlobalUpgradeView[] = [];
+  let nextUnlockAt: number | null = null;
+  for (const def of content.globalUpgrades) {
+    if (state.globalUpgrades[def.id]) continue;
+    if (!globalUpgradeUnlocked(state, def)) {
+      nextUnlockAt = nextUnlockAt === null ? def.unlockAt : Math.min(nextUnlockAt, def.unlockAt);
+      continue;
+    }
+    const cost = globalUpgradeCost(state, content, def);
+    available.push({ id: def.id, name: def.name, flavor: def.flavor, mult: def.mult, cost, canAfford: state.coins.gte(cost) });
+  }
+  return { available, nextUnlockAt };
+}
+
+// ---------------------------------------------------------------------------
+// Cosméticos: pieles, compañeros y reliquias
+// ---------------------------------------------------------------------------
+
+export interface CosmeticView {
+  id: string;
+  name: string;
+  flavor: string;
+  /** Color de piel (solo pieles) o emoji (solo compañeros). */
+  color: string | null;
+  emoji: string | null;
+  owned: boolean;
+  equipped: boolean;
+  /** Bellotas que cuesta si se compra; null si solo se consigue con un logro. */
+  cost: number | null;
+  canBuy: boolean;
+  /** Nombre del logro que lo regala, si lo hay. */
+  achievementName: string | null;
+}
+
+export interface RelicView {
+  id: string;
+  name: string;
+  emoji: string;
+  flavor: string;
+  owned: boolean;
+  effectText: string;
+  achievementName: string;
+}
+
+function achievementName(content: Content, id: string | null): string | null {
+  return id === null ? null : (content.achievements.find((a) => a.id === id)?.name ?? id);
+}
+
+export function cosmeticViews(state: GameState, content: Content): { acorns: number; skins: CosmeticView[]; companions: CosmeticView[]; relics: RelicView[] } {
+  return {
+    acorns: state.acorns,
+    skins: content.skins.map((s) => {
+      const owned = skinOwned(state, s);
+      return {
+        id: s.id,
+        name: s.name,
+        flavor: s.flavor,
+        color: s.color,
+        emoji: null,
+        owned,
+        equipped: state.activeSkin === s.id,
+        cost: s.cost,
+        canBuy: !owned && s.cost !== null && state.acorns >= s.cost,
+        achievementName: achievementName(content, s.achievement),
+      };
+    }),
+    companions: content.companions.map((c) => {
+      const owned = companionOwned(state, c);
+      return {
+        id: c.id,
+        name: c.name,
+        flavor: c.flavor,
+        color: null,
+        emoji: c.emoji,
+        owned,
+        equipped: state.activeCompanions.includes(c.id),
+        cost: c.cost,
+        canBuy: !owned && c.cost !== null && state.acorns >= c.cost,
+        achievementName: achievementName(content, c.achievement),
+      };
+    }),
+    relics: content.relics.map((r) => ({
+      id: r.id,
+      name: r.name,
+      emoji: r.emoji,
+      flavor: r.flavor,
+      owned: relicOwned(state, r),
+      effectText: perkEffectValueText(r.effect, 1),
+      achievementName: achievementName(content, r.achievement) ?? r.achievement,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Estadísticas
+// ---------------------------------------------------------------------------
+
+export interface StatsView {
+  lifetime: Decimal;
+  taps: number;
+  ascensions: number;
+  plumasTotal: Decimal;
+  playSeconds: number;
+  visitors: number;
+  toolsOwned: number;
+  upgradesBought: number;
+  bestIncome: Decimal;
+  achievements: { done: number; total: number };
+  relics: { done: number; total: number };
+}
+
+export function statsView(state: GameState, content: Content): StatsView {
+  return {
+    lifetime: state.lifetime,
+    taps: state.taps,
+    ascensions: state.ascensions,
+    plumasTotal: state.plumasTotal,
+    playSeconds: state.time,
+    visitors: state.stats.visitors,
+    toolsOwned: Object.values(state.tools).reduce((a, b) => a + b, 0),
+    upgradesBought: Object.values(state.upgrades).reduce((a, b) => a + b, 0) + Object.keys(state.globalUpgrades).length,
+    bestIncome: state.stats.bestIncome,
+    achievements: { done: Object.keys(state.achievements).length, total: content.achievements.length },
+    relics: { done: content.relics.filter((r) => relicOwned(state, r)).length, total: content.relics.length },
+  };
 }

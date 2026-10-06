@@ -8,16 +8,21 @@ describe('formatNumber', () => {
     [12.5, '12,5'],
     [42, '42'],
     [999, '999'],
-    [123456, '123.456'],
+    [9999, '9999'],
+    [10_000, '10,0 K'],
+    [12_345, '12,3 K'],
+    [123_456, '123 K'],
     [1_230_000, '1,23 M'],
-    [1_230_000_000, '1,23 mil M'],
-    [1_230_000_000_000, '1,23 B'],
+    [1_230_000_000, '1,23 B'],
+    [1_230_000_000_000, '1,23 T'],
+    [4.5e15, '4,50 Qa'],
   ])('%s → %s', (value, expected) => {
     expect(formatNumber(value)).toBe(expected);
   });
 
-  it('usa notación científica a partir de 1e30', () => {
-    expect(formatNumber(D('1e30'))).toMatch(/^1(,00)?e30$/);
+  it('usa notación científica a partir de 1e36', () => {
+    expect(formatNumber(D('1e30'))).toBe('1,00 No');
+    expect(formatNumber(D('1e36'))).toMatch(/^1(,00)?e36$/);
   });
 
   it('respeta la notación "cientifica" aunque el número sea pequeño', () => {

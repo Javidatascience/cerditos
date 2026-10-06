@@ -23,6 +23,14 @@ describe('serialize / deserialize', () => {
     state.basketSince = 11;
     state.buff = { mult: 5, until: 99 };
     state.achievements['picar-100'] = { at: 1 };
+    state.globalUpgrades['comedero-grande'] = true;
+    state.momentum = 0.4;
+    state.acorns = 7;
+    state.skins['azulado'] = true;
+    state.activeSkin = 'azulado';
+    state.companions['topo'] = true;
+    state.activeCompanions = ['topo'];
+    state.stats = { visitors: 3, bestIncome: D('1.5e400') };
     state.journal.push({ at: 2, text: 'hola' });
 
     const back = deserialize(serialize(state, 456));
@@ -40,7 +48,16 @@ describe('serialize / deserialize', () => {
       basketSince: 11,
       buff: { mult: 5, until: 99 },
       achievements: { 'picar-100': { at: 1 } },
+      globalUpgrades: { 'comedero-grande': true },
+      momentum: 0.4,
+      acorns: 7,
+      skins: { azulado: true },
+      activeSkin: 'azulado',
+      companions: { topo: true },
+      activeCompanions: ['topo'],
     });
+    expect(back.stats.visitors).toBe(3);
+    expect(back.stats.bestIncome.toString()).toBe(D('1.5e400').toString());
     expect(back.plumasTotal.toNumber()).toBe(40);
     expect(back.journal).toEqual([{ at: 2, text: 'hola' }]);
   });
@@ -84,6 +101,18 @@ describe('migración v5 → v6', () => {
   });
 });
 
+describe('migración v6 → v7', () => {
+  it('añade los campos nuevos con valores neutros', () => {
+    const state = createInitialState(CONTENT, 0);
+    const v7 = JSON.parse(JSON.stringify(serialize(state, 0)));
+    const v6 = { ...v7, version: 6, state: { ...v7.state, version: 6 } };
+    for (const key of ['globalUpgrades', 'momentum', 'acorns', 'skins', 'activeSkin', 'companions', 'activeCompanions', 'stats']) delete v6.state[key];
+    const data = migrate(v6);
+    expect(data.version).toBe(CURRENT_VERSION);
+    expect(data.state).toMatchObject({ globalUpgrades: {}, momentum: 0, acorns: 0, skins: {}, activeSkin: 'rosa', companions: {}, activeCompanions: [], stats: { visitors: 0, bestIncome: '0' } });
+  });
+});
+
 describe('normalize', () => {
   it('descarta herramientas, ventajas y logros que ya no existen', () => {
     const state = createInitialState(CONTENT, 0);
@@ -103,9 +132,15 @@ describe('normalize', () => {
     state.perks['comienzo'] = 99;
     state.upgrades['pico-de-madera'] = 99;
     state.revealed = 0;
+    state.activeSkin = 'fantasma';
+    state.activeCompanions = ['fantasma', 'topo', 'topo', 'perro', 'pajaro'];
+    state.momentum = 7;
     state.tools['cubo-y-pala'] = 4;
     normalize(state, CONTENT);
     expect(state.perks['comienzo']).toBe(5);
+    expect(state.activeSkin).toBe('rosa');
+    expect(state.activeCompanions).toEqual(['perro', 'pajaro']);
+    expect(state.momentum).toBe(1);
     expect(state.upgrades['pico-de-madera']).toBe(CONTENT.game.milestones.length);
     expect(state.maxOwned['cubo-y-pala']).toBe(4);
     expect(state.revealed).toBeGreaterThanOrEqual(2); // si se tiene la 2.ª, ya está descubierta

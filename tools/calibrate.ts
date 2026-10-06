@@ -4,7 +4,7 @@
 // Solo imprime una tabla; no forma parte de los tests.
 
 import { CONTENT } from '../src/content/index.ts';
-import { ascend, buyPerk, buyTool, buyUpgrade, tap } from '../src/core/actions.ts';
+import { ascend, buyGlobalUpgrade, buyPerk, buyTool, buyUpgrade, tap } from '../src/core/actions.ts';
 import { ascendUnlocked, incomePerSecond, plumasPending, toolBulkCost, toolOwned, unitProduction } from '../src/core/formulas.ts';
 import { createInitialState } from '../src/core/state.ts';
 import { advance } from '../src/core/tick.ts';
@@ -20,6 +20,7 @@ let nextReport = 0;
 function shop(): void {
   for (let guard = 0; guard < 500; guard++) {
     for (const tool of CONTENT.tools) while (buyUpgrade(state, CONTENT, tool.id)) { /* compra las mejoras desbloqueadas que pueda pagar */ }
+    for (const upgrade of CONTENT.globalUpgrades) buyGlobalUpgrade(state, CONTENT, upgrade.id);
     let best: { id: string; score: number } | null = null;
     for (const tool of CONTENT.tools) {
       const owned = toolOwned(state, tool.id);

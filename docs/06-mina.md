@@ -21,10 +21,16 @@ Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas func
 | **Picar** | Da 1 s de tu producción (mínimo 1 moneda). Con *Manos de acero* da más. |
 | **Herramientas** | Coste de la unidad *n*: `baseCost · 1,15^n`. Compra ×1, ×10 (todo o nada) o Máx. |
 | **Mejoras** | A 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500 unidades se desbloquea la siguiente mejora de esa herramienta (×2 de producción); se compra con monedas desde la propia fila ("Mejora ×2 (101)"). Mientras está bloqueada, la fila dice cuántas unidades faltan. |
-| **Lo que falta** | Una línea "Siguiente herramienta: … te faltan X monedas (≈ 3 min)" y, en cada herramienta que no puedes pagar, lo que te falta y el tiempo estimado. |
+| **Lo que falta** | Cada herramienta que no puedes pagar dice lo que te falta y el tiempo estimado; también la siguiente por desbloquear: se ve su precio y lo que falta (solo el nombre y el dibujo salen difuminados). |
 | **Descubrir** | Solo ves las herramientas que ya has podido comprar; la siguiente sale difuminada (menos cuanto más cerca) y un aviso dice que hay más. |
 | **Ascender** | Se desbloquea al tener la herramienta 8 (para siempre). Plumas: `floor((ganado en la vida / 100.000)^0,25 · (1 + Plumas al viento))` menos las ya cobradas, así que nunca se pierde nada por ascender pronto. Cada pluma da +2 % de producción. |
 | **Ventajas** | Abono (×1,1 producción, sin tope), Buen comienzo (monedas al empezar), Manos de acero (pico ×), Siesta larga (+1 h offline), Regateo (herramientas más baratas), Plumas al viento, Raíces profundas. |
+| **Inercia** | Cada pico sube una barra (+3 %, tope 100 %) que baja sola (−4 % por segundo). Multiplica la producción de ×1 a ×5 según lo llena que esté. Picar seguido (≈1,3 picos por segundo) la mantiene. La reliquia *Muelle mágico* sube el tope. |
+| **Mejoras globales** | 8 mejoras de ×1,5 a **toda** la producción, que aparecen al ganar ciertas cantidades en total (500, 50 K, 5 M… ) y se compran con monedas desde la pantalla de Picar. Se pierden al ascender. |
+| **Bellotas** | Segunda moneda: el cerdito viajero da siempre 1 al aceptarlo (además de su recompensa). Sirven para cosméticos. |
+| **Pieles y compañeros** | En la pestaña *Cerdito*: pieles (color del cerdito) y compañeros (animales que van en la escena, hasta 2). Se compran con bellotas o los regalan logros (piel dorada a 1.000 M, plateada a 5 ascensiones, lila a 10.000 picos, dragoncito a 10 ascensiones). De momento son de adorno. |
+| **Reliquias** | 7 bonos permanentes que da un logro concreto (callo de oro = pico ×2, pico ancestral = producción ×1,1, pluma eterna, reloj de bolsillo…). No se compran. |
+| **Estadísticas** | En la pestaña *Logros*: monedas ganadas, mejor ingreso por segundo, picos, tiempo de juego, ascensiones, plumas, herramientas, mejoras, cerditos viajeros, logros y reliquias. |
 | **Cesta** | Se llena con el 25 % de tus ingresos (tope 30 min); "Recoger" la suma a tus monedas. |
 | **Cerdito viajero** | Aparece al azar cada 1-2 min con el juego abierto: 10 min de ingresos de golpe, o ×5 de producción y de picos durante 60 s. Se va a los 10 s. |
 | **Offline** | Al volver cuentan solo las primeras 2 horas de ausencia (más con *Siesta larga*). |
@@ -56,6 +62,7 @@ Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, si
 ## Estado de la implementación
 
 - El cerdito se ve con la herramienta mejor en la mano, los complementos según lo que tiene y un chip por cada herramienta comprada (con su cantidad).
-- Núcleo, guardado (versión 6; la migración v5→v6 da por compradas las mejoras que ya correspondían), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
+- Los números grandes salen con sufijos desde 10.000: 12,3 K, 1,23 M, 4,5 B, T, Qa, Qi… (científica a partir de 1e36).
+- Núcleo, guardado (versión 7; la v6→v7 añade los campos nuevos; la migración v5→v6 da por compradas las mejoras que ya correspondían), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
 - **Calibración** (`npm run calibrate`, un jugador simulado que ve el juego cada minuto): primera ascensión a las ~4,5 horas (hay que comprar también las mejoras), las 12 herramientas hacia las 12 horas y estancamiento tras ~1 día. Es una primera pasada: a afinar jugando (coste, hitos, plumas).
 - **Pendiente**: arte (hoy un cerdito SVG con complementos y emojis), sonido opcional y más contenido si hace falta.

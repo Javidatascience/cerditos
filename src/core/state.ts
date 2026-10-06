@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -48,6 +48,10 @@ export interface GameState {
   tools: Record<ToolId, number>;
   /** Mejoras compradas de cada herramienta (en orden: la 1.ª se desbloquea al tener 5, etc.). */
   upgrades: Record<ToolId, number>;
+  /** Mejoras globales compradas (se pierden al ascender). */
+  globalUpgrades: Record<string, true>;
+  /** Inercia 0..1: sube al picar y baja sola; multiplica la producción hasta ×momentumMax. */
+  momentum: number;
   /** Cuántas herramientas (por orden) ya se han descubierto: las demás se ven difuminadas u ocultas. Solo crece. */
   revealed: number;
 
@@ -63,6 +67,15 @@ export interface GameState {
   maxOwned: Record<ToolId, number>;
   /** Veces que se ha picado (para logros). */
   taps: number;
+  /** Bellotas: segunda moneda (la da el cerdito viajero) para cosméticos. */
+  acorns: number;
+  /** Pieles y compañeros comprados (los de logro se derivan de los logros) y los que se llevan puestos. */
+  skins: Record<string, true>;
+  activeSkin: string;
+  companions: Record<string, true>;
+  activeCompanions: string[];
+  /** Estadísticas sueltas. */
+  stats: { visitors: number; /** Mejor ingreso por segundo alcanzado. */ bestIncome: Decimal };
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
   basketSince: number;
   achievements: Record<string, { at: number }>;
@@ -82,6 +95,8 @@ export function createInitialState(content: Content, now: number): GameState {
     coins: D(content.game.startCoins),
     tools: {},
     upgrades: {},
+    globalUpgrades: {},
+    momentum: 0,
     revealed: 1,
     lifetime: D(0),
     plumas: D(0),
@@ -90,6 +105,12 @@ export function createInitialState(content: Content, now: number): GameState {
     ascensions: 0,
     maxOwned: {},
     taps: 0,
+    acorns: 0,
+    skins: {},
+    activeSkin: content.skins[0]?.id ?? '',
+    companions: {},
+    activeCompanions: [],
+    stats: { visitors: 0, bestIncome: D(0) },
     basketSince: 0,
     achievements: {},
     buff: null,

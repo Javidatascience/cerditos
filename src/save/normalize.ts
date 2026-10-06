@@ -24,6 +24,19 @@ export function normalize(state: GameState, content: Content): GameState {
     else state.upgrades[id] = clampInt(state.upgrades[id] ?? 0, 0, content.game.milestones.length);
   }
 
+  const globalIds = new Set(content.globalUpgrades.map((u) => u.id));
+  for (const id of Object.keys(state.globalUpgrades)) if (!globalIds.has(id)) delete state.globalUpgrades[id];
+  state.momentum = Math.min(1, Math.max(0, Number.isFinite(state.momentum) ? state.momentum : 0));
+  state.acorns = clampInt(state.acorns, 0, Number.MAX_SAFE_INTEGER);
+
+  const skinIds = new Set(content.skins.map((s) => s.id));
+  for (const id of Object.keys(state.skins)) if (!skinIds.has(id)) delete state.skins[id];
+  if (!skinIds.has(state.activeSkin)) state.activeSkin = content.skins[0]?.id ?? '';
+  const companionIds = new Set(content.companions.map((c) => c.id));
+  for (const id of Object.keys(state.companions)) if (!companionIds.has(id)) delete state.companions[id];
+  state.activeCompanions = state.activeCompanions.filter((id, i, all) => companionIds.has(id) && all.indexOf(id) === i).slice(-2);
+  state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
+
   const perkById = new Map(content.perks.map((p) => [p.id, p]));
   for (const id of Object.keys(state.perks)) {
     const perk = perkById.get(id);

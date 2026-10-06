@@ -1276,3 +1276,119 @@ body {
 .generator-row .row-art {
   align-items: flex-start;
 }
+
+/* Inercia, mejoras globales y estadísticas */
+.momentum-block {
+  margin: 0 0 12px;
+}
+
+.momentum-block .progress-bar-inner {
+  background: linear-gradient(90deg, #f2c94c, var(--btn-orange));
+}
+
+.global-block {
+  margin-bottom: 12px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  font-size: 0.85rem;
+}
+
+.stats-grid dt {
+  color: var(--color-text-muted);
+}
+
+.stats-grid dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+}
+
+/* Cerdito: pieles, compañeros y reliquias */
+.acorn-line {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.cosmetic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cosmetic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: 0 3px 0 var(--color-shadow);
+}
+
+.cosmetic-row-locked {
+  opacity: 0.75;
+}
+
+.cosmetic-row .buy-button,
+.cosmetic-row .amount-button {
+  flex-shrink: 0;
+  min-width: 96px;
+  font-size: 0.8rem;
+}
+
+/* Compañeros en la escena (de adorno) */
+.mine-companions {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 38px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.companion {
+  font-size: 1.8rem;
+  animation: companion-bob 2.4s ease-in-out infinite;
+}
+
+.companion-1 {
+  animation-delay: 0.8s;
+}
+
+@keyframes companion-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* La herramienta por desbloquear: se ve difuminado qué es, pero el precio y lo que falta se leen bien */
+.generator-row-teaser {
+  filter: none;
+  opacity: 1;
+}
+
+.generator-row-teaser .row-art {
+  filter: blur(var(--blur, 5px));
+  opacity: 0.75;
+}
+

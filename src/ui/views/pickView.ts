@@ -3,8 +3,8 @@
 // más. Las listas se sincronizan por clave (dom.ts > createListSync) para que los botones no se
 // recreen cada 250 ms y un clic nunca se pierda. Ver docs/06-mina.md.
 
-import { buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
-import { basketView, goalView, headerView, toolViews, type ToolView } from '../../core/selectors.ts';
+import { buyGlobalUpgrade, buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
+import { basketView, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { emojiBadge, minerPig } from '../art.ts';
@@ -18,14 +18,16 @@ type ToolRow = ToolView & { costText: string; prodText: string; milestoneText: s
 export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // --- Escena: cerdito + pico ---
   const pigSlot = h('div', { className: 'mine-pig' });
-  let pigSignature: number | null = null;
+  let pigSignature: string | null = null;
+  let companionsSignature = '';
   let ownedToolsSignature = '';
   const floats = h('div', { className: 'float-layer' });
   const incomeText = document.createTextNode('');
   const handTool = h('div', { className: 'mine-block', 'aria-hidden': 'true' }, ['⛏️']);
+  const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, handTool]),
+    h('div', { className: 'mine-stage' }, [pigSlot, handTool, companionsRow]),
     ownedTools,
     h('p', { className: 'mine-stats' }, [incomeText]),
     floats,
@@ -50,6 +52,33 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     }),
   );
 
+  // --- Inercia: cuanto más picas, más sube la producción ---
+  const momentumText = document.createTextNode('');
+  const momentumFill = h('div', { className: 'progress-bar-inner' });
+  const momentumBlock = h('div', { className: 'momentum-block' }, [h('span', { className: 'basket-text' }, [momentumText]), h('div', { className: 'progress-bar', role: 'presentation' }, [momentumFill])]);
+
+  // --- Mejoras globales (×1,5 a todo) ---
+  const globalNote = h('p', { className: 'settings-hint hidden' });
+  const globalList = h('ul', { className: 'upgrade-list' });
+  const globalBlock = h('div', { className: 'global-block hidden' }, [globalList, globalNote]);
+  const syncGlobals = createListSync<GlobalUpgradeView & { costText: string }>(
+    globalList,
+    (u) => u.id,
+    (def) => {
+      const costText = document.createTextNode('');
+      const buy = h('button', { className: 'buy-button upgrade-button' }, [costText]) as HTMLButtonElement;
+      buy.addEventListener('click', () => ctx.dispatch((state) => void buyGlobalUpgrade(state, ctx.content, def.id)));
+      const el = h('li', { className: 'upgrade-row' }, [
+        h('div', { className: 'row-art' }, [
+          emojiBadge('✨'),
+          h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [def.name]), h('span', { className: 'upgrade-effect' }, [`×${def.mult} a toda la producción · ${def.flavor}`])]),
+        ]),
+        buy,
+      ]);
+      return { el, update: (u) => { setText(costText, u.costText); setDisabled(buy, !u.canAfford); } };
+    },
+  );
+
   // --- Cesta ---
   const basketText = document.createTextNode('');
   const basketFill = h('div', { className: 'progress-bar-inner' });
@@ -71,8 +100,6 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       return btn;
     }),
   );
-  const goalText = document.createTextNode('');
-  const goalLine = h('p', { className: 'goal-line hidden' }, [goalText]);
   const toolList = h('ul', { className: 'generator-list' });
   const moreHint = h('p', { className: 'more-hint hidden' }, ['Hay más herramientas por descubrir.']);
 
@@ -128,7 +155,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     },
   );
 
-  const container = h('div', { className: 'mine-view' }, [scene, tapButton, basketBlock, goalLine, amountRow, toolList, moreHint]);
+  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, globalBlock, basketBlock, amountRow, toolList, moreHint]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -136,9 +163,18 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     const head = headerView(state, ctx.content);
 
     const best = Math.max(-1, ...ctx.content.tools.map((t, i) => ((state.tools[t.id] ?? 0) > 0 ? i : -1)));
-    if (best !== pigSignature) {
-      pigSignature = best;
-      pigSlot.replaceChildren(minerPig(best));
+    const skinColor = ctx.content.skins.find((sk) => sk.id === state.activeSkin)?.color ?? '#f4c7c3';
+    const signature = `${best}:${skinColor}`;
+    if (signature !== pigSignature) {
+      pigSignature = signature;
+      pigSlot.replaceChildren(minerPig(best, skinColor));
+    }
+    const companionIds = state.activeCompanions.join(',');
+    if (companionIds !== companionsSignature) {
+      companionsSignature = companionIds;
+      companionsRow.replaceChildren(
+        ...state.activeCompanions.map((id, i) => h('span', { className: `companion companion-${i}` }, [ctx.content.companions.find((c) => c.id === id)?.emoji ?? ''])),
+      );
     }
     handTool.textContent = best >= 0 ? ctx.content.tools[best]!.emoji : '⛏️';
     const ownedList = ctx.content.tools.filter((t) => (state.tools[t.id] ?? 0) > 0);
@@ -149,19 +185,20 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     }
     setText(incomeText, head.income.gt(0) ? `El cerdito gana ${formatNumber(head.income, notation)} monedas por segundo` : 'Pica para ganar tus primeras monedas y compra un pico.');
     setText(tapText, `Picar (+${formatNumber(head.tapGain, notation)})`);
+    setText(momentumText, `Inercia ×${head.momentum.mult.toFixed(2)} (máx. ×${head.momentum.max.toFixed(0)}): pica seguido para subirla`);
+    setStyleProp(momentumFill, 'width', `${(head.momentum.fraction * 100).toFixed(1)}%`);
+
+    const globals = globalUpgradeViews(state, ctx.content);
+    syncGlobals(globals.available.map((u) => ({ ...u, costText: `Comprar (${formatNumber(u.cost, notation)})` })));
+    setClass(globalBlock, 'hidden', globals.available.length === 0 && globals.nextUnlockAt === null);
+    setClass(globalNote, 'hidden', globals.nextUnlockAt === null);
+    if (globals.nextUnlockAt !== null) setText(globalNote, `Siguiente mejora global al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.`);
 
     const basket = basketView(state, ctx.content);
     setText(basketText, `Cesta: ${formatNumber(basket.value, notation)}${basket.fill >= 1 ? ' (llena)' : ''}`);
     setStyleProp(basketFill, 'width', `${(basket.fill * 100).toFixed(1)}%`);
     setDisabled(basketButton, basket.value.lte(0));
     setClass(basketBlock, 'hidden', head.income.lte(0));
-
-    const goal = goalView(state, ctx.content);
-    setClass(goalLine, 'hidden', goal === null);
-    if (goal) {
-      const wait = goal.missing.lte(0) ? ' ¡Ya puedes comprarla!' : goal.etaSeconds === null ? ' Pica para conseguirlas.' : ` (≈ ${formatDuration(goal.etaSeconds)})`;
-      setText(goalText, goal.missing.lte(0) ? `Siguiente herramienta: ${goal.emoji} ${goal.name}.${wait}` : `Siguiente herramienta: ${goal.emoji} ${goal.name} — te faltan ${formatNumber(goal.missing, notation)} monedas${wait}`);
-    }
 
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
     const views = toolViews(state, ctx.content);
@@ -179,7 +216,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
               : t.nextUpgrade.unlocked
                 ? `¡Mejora desbloqueada! ×${ctx.content.game.milestoneMult} de producción${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`
                 : `Mejora ×${ctx.content.game.milestoneMult} al tener ${t.nextUpgrade.threshold}${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`,
-            needText: t.canAfford || t.reveal === 'teaser' ? '' : t.etaSeconds === null ? `Te faltan ${formatNumber(t.missing, notation)} monedas` : `Te faltan ${formatNumber(t.missing, notation)} monedas (≈ ${formatDuration(t.etaSeconds)})`,
+            needText: t.canAfford ? '' : t.etaSeconds === null ? `Te faltan ${formatNumber(t.missing, notation)} monedas` : `Te faltan ${formatNumber(t.missing, notation)} monedas (≈ ${formatDuration(t.etaSeconds)})`,
             upgradeText: t.nextUpgrade ? `Mejora ×${ctx.content.game.milestoneMult} (${formatNumber(t.nextUpgrade.cost, notation)})` : '',
           };
         }),

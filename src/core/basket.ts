@@ -1,9 +1,9 @@
-// Cesta: se va llenando con una fracción de lo que ganas por segundo; "Recoger" la vacía y la
+// Cesta: se va llenando con una fracción de lo que ganas por segundo (sin la inercia); "Recoger" la vacía y la
 // suma a las monedas. Determinista, no caduca y tiene tope. Es un empujoncito para quien visita a
 // menudo, no una obligación.
 
 import type { Content } from '../content/types.ts';
-import { incomePerSecond } from './formulas.ts';
+import { baseIncomePerSecond } from './formulas.ts';
 import type { Decimal } from './num.ts';
 import type { GameState } from './state.ts';
 
@@ -18,5 +18,5 @@ export function basketSeconds(state: GameState): number {
 
 /** Lo que daría recoger la cesta ahora mismo. */
 export function basketValue(state: GameState, content: Content): Decimal {
-  return incomePerSecond(state, content).mul(basketSeconds(state) * BASKET_RATE);
+  return baseIncomePerSecond(state, content).mul(basketSeconds(state) * BASKET_RATE);
 }

@@ -3,17 +3,18 @@
 // aún no has tenido se ven borrosas y sin nombre. Ver docs/06-mina.md.
 
 import type { Decimal } from '../../core/num.ts';
-import { achievementViews, type AchievementView, type RequirementView } from '../../core/selectors.ts';
+import { achievementViews, statsView, type AchievementView, type RequirementView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { emojiBadge } from '../art.ts';
 import { h, setText } from '../dom.ts';
-import { formatNumber } from '../format.ts';
+import { formatDuration, formatNumber } from '../format.ts';
 
 export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
   const summaryText = document.createTextNode('');
+  const statsBox = h('dl', { className: 'stats-grid' });
   const list = h('div', { className: 'achievements-list' });
-  const container = h('div', { className: 'album-view' }, [h('p', { className: 'settings-hint' }, [summaryText]), list]);
+  const container = h('div', { className: 'album-view' }, [h('h3', { className: 'fly-heading' }, ['Estadísticas']), statsBox, h('h3', { className: 'fly-heading' }, ['Logros']), h('p', { className: 'settings-hint' }, [summaryText]), list]);
   root.appendChild(container);
 
   function reqLine(r: RequirementView, format: (n: Decimal) => string): HTMLElement {
@@ -25,8 +26,24 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
   function update(state: GameState): void {
     const notation = state.settings.notation;
     const format = (n: Decimal) => formatNumber(n, notation);
+    const stats = statsView(state, ctx.content);
+    const rows: [string, string][] = [
+      ['Monedas ganadas', formatNumber(stats.lifetime, notation)],
+      ['Mejor ingreso', `${formatNumber(stats.bestIncome, notation)}/s`],
+      ['Picos', formatNumber(stats.taps, notation)],
+      ['Tiempo de juego', formatDuration(stats.playSeconds)],
+      ['Ascensiones', String(stats.ascensions)],
+      ['Plumas en total', formatNumber(stats.plumasTotal, notation)],
+      ['Herramientas ahora', formatNumber(stats.toolsOwned, notation)],
+      ['Mejoras compradas', String(stats.upgradesBought)],
+      ['Cerditos viajeros', String(stats.visitors)],
+      ['Logros', `${stats.achievements.done}/${stats.achievements.total}`],
+      ['Reliquias', `${stats.relics.done}/${stats.relics.total}`],
+    ];
+    statsBox.replaceChildren(...rows.flatMap(([label, value]) => [h('dt', {}, [label]), h('dd', {}, [value])]));
+
     const views = achievementViews(state, ctx.content);
-    setText(summaryText, `${views.filter((a) => a.owned).length} de ${views.length} logros. Son solo un reconocimiento: no dan bonos.`);
+    setText(summaryText, `${views.filter((a) => a.owned).length} de ${views.length} logros. Son un reconocimiento; algunos regalan una reliquia, una piel o un compañero (pestaña Cerdito).`);
 
     const card = (a: AchievementView) =>
       h('li', { className: a.owned ? 'album-card' : 'album-card album-card-locked' }, [

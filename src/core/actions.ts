@@ -5,11 +5,15 @@ import type { Content } from '../content/types.ts';
 import { basketValue } from './basket.ts';
 import {
   ascendUnlocked,
+  baseIncomePerSecond,
+  companionOwned,
   getPerk,
+  globalUpgradeCost,
+  globalUpgradeUnlocked,
+  skinOwned,
   nextUpgradeCost,
   nextUpgradeUnlocked,
   getTool,
-  incomePerSecond,
   perkAvailable,
   perkCost,
   plumasPending,
@@ -37,6 +41,7 @@ export function tap(state: GameState, content: Content): Decimal {
   const amount = tapGain(state, content);
   gain(state, content, amount);
   state.taps += 1;
+  state.momentum = Math.min(1, state.momentum + content.game.momentumPerTap); // cada pico sube la inercia
   return amount;
 }
 
@@ -70,6 +75,17 @@ export function buyUpgrade(state: GameState, content: Content, toolId: ToolId): 
   state.coins = state.coins.sub(cost);
   state.upgrades[toolId] = (state.upgrades[toolId] ?? 0) + 1;
   updateReveals(state, content);
+  return true;
+}
+
+/** Compra una mejora global (×1,5 a toda la producción) si ya está desbloqueada y hay monedas. Devuelve `true` si se compró. */
+export function buyGlobalUpgrade(state: GameState, content: Content, id: string): boolean {
+  const def = content.globalUpgrades.find((u) => u.id === id);
+  if (!def || state.globalUpgrades[id] || !globalUpgradeUnlocked(state, def)) return false;
+  const cost = globalUpgradeCost(state, content, def);
+  if (state.coins.lt(cost)) return false;
+  state.coins = state.coins.sub(cost);
+  state.globalUpgrades[id] = true;
   return true;
 }
 
@@ -113,6 +129,8 @@ export function ascend(state: GameState, content: Content, now: number): number 
   state.ascensions += 1;
   state.tools = {};
   state.upgrades = {};
+  state.globalUpgrades = {};
+  state.momentum = 0;
   state.coins = startCoins(state, content);
   state.basketSince = state.time;
   updateReveals(state, content);
@@ -140,13 +158,63 @@ export const VISITOR_INJECTION_SECONDS = 600;
 /** Multiplicador y duración del impulso de un visitante. */
 export const VISITOR_BOOST = { mult: 5, seconds: 60 };
 
-/** Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción y picos durante 60 s. */
+/**
+ * Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción
+ * y picos durante 60 s. Además siempre da 1 bellota (la segunda moneda, para cosméticos).
+ */
 export function claimVisitor(state: GameState, content: Content, kind: VisitorKind): void {
+  state.acorns += 1;
+  state.stats.visitors += 1;
   if (kind === 'boost') {
     state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
     return;
   }
-  gain(state, content, incomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS));
+  gain(state, content, baseIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS));
 }
 
 export { D };
+
+// ---------------------------------------------------------------------------
+// Cosméticos: pieles y compañeros (se pagan con bellotas)
+// ---------------------------------------------------------------------------
+
+/** Compra una piel con bellotas (las de logro no se compran: se tienen al conseguir el logro). */
+export function buySkin(state: GameState, content: Content, id: string): boolean {
+  const skin = content.skins.find((s) => s.id === id);
+  if (!skin || skin.cost === null || skinOwned(state, skin) || state.acorns < skin.cost) return false;
+  state.acorns -= skin.cost;
+  state.skins[id] = true;
+  return true;
+}
+
+/** Se pone una piel que ya se tiene. */
+export function equipSkin(state: GameState, content: Content, id: string): boolean {
+  const skin = content.skins.find((s) => s.id === id);
+  if (!skin || !skinOwned(state, skin)) return false;
+  state.activeSkin = id;
+  return true;
+}
+
+/** Compra un compañero con bellotas. */
+export function buyCompanion(state: GameState, content: Content, id: string): boolean {
+  const companion = content.companions.find((c) => c.id === id);
+  if (!companion || companion.cost === null || companionOwned(state, companion) || state.acorns < companion.cost) return false;
+  state.acorns -= companion.cost;
+  state.companions[id] = true;
+  return true;
+}
+
+/** Máximo de compañeros a la vez en la escena. */
+export const MAX_ACTIVE_COMPANIONS = 2;
+
+/** Pone o quita un compañero que ya se tiene de la escena (si hay demasiados, sale el más antiguo). */
+export function toggleCompanion(state: GameState, content: Content, id: string): boolean {
+  const companion = content.companions.find((c) => c.id === id);
+  if (!companion || !companionOwned(state, companion)) return false;
+  if (state.activeCompanions.includes(id)) {
+    state.activeCompanions = state.activeCompanions.filter((c) => c !== id);
+  } else {
+    state.activeCompanions = [...state.activeCompanions, id].slice(-MAX_ACTIVE_COMPANIONS);
+  }
+  return true;
+}

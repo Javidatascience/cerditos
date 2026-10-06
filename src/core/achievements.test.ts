@@ -73,28 +73,18 @@ describe('selectores', () => {
 });
 
 describe('lo que falta para comprar', () => {
-  it('la herramienta siguiente dice cuántas monedas faltan y cuánto tardará', async () => {
-    const { goalView } = await import('./selectors.ts');
+  it('cada herramienta (también la siguiente por desbloquear) dice lo que falta y cuánto tardará', () => {
     const state = createInitialState(CONTENT, 0);
     state.coins = D(4);
-    const goal = goalView(state, CONTENT)!;
-    expect(goal.name).toBe('Pico de madera');
-    expect(goal.missing.toNumber()).toBe(6);
-    expect(goal.etaSeconds).toBeNull(); // sin producción no hay estimación
+    const [first, second] = toolViews(state, CONTENT);
+    expect(first!.canAfford).toBe(false);
+    expect(first!.missing.toNumber()).toBe(6);
+    expect(first!.etaSeconds).toBeNull(); // sin producción no hay estimación
+    expect(second!.reveal).toBe('teaser');
+    expect(second!.missing.toNumber()).toBe(106);
     state.tools['pico-de-madera'] = 1;
     state.coins = D(0);
-    const next = goalView(state, CONTENT)!;
-    expect(next.name).toBe('Cubo y pala');
-    expect(next.missing.toNumber()).toBe(110);
-    expect(next.etaSeconds).toBeCloseTo(110 / 0.1, 6);
-  });
-
-  it('cada herramienta que no se puede pagar informa de lo que falta', () => {
-    const state = createInitialState(CONTENT, 0);
-    state.coins = D(4);
-    const first = toolViews(state, CONTENT)[0]!;
-    expect(first.canAfford).toBe(false);
-    expect(first.missing.toNumber()).toBe(6);
+    expect(toolViews(state, CONTENT)[1]!.etaSeconds).toBeCloseTo(110 / 0.1, 6);
     state.coins = D(100);
     expect(toolViews(state, CONTENT)[0]!.missing.toNumber()).toBe(0);
   });

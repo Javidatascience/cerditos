@@ -1,7 +1,7 @@
 // Fórmulas del juego. Ver docs/06-mina.md. Todo número sale de `content.game` y de los datos de
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
-import type { Content, PerkDef, PerkEffect, ToolDef } from '../content/types.ts';
+import type { CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
 
@@ -37,7 +37,16 @@ function perksOfKind(state: GameState, content: Content, kind: PerkEffect['kind'
     const level = perkLevelOf(state, perk.id);
     if (level > 0) out.push({ perk, level });
   }
+  // Las reliquias conseguidas cuentan como ventajas de nivel 1.
+  for (const relic of content.relics) {
+    if (relic.effect.kind !== kind || !relicOwned(state, relic)) continue;
+    out.push({ perk: { id: relic.id, name: relic.name, flavor: relic.flavor, maxLevel: 1, baseCost: 0, costGrowth: 1, requires: [], effect: relic.effect }, level: 1 });
+  }
   return out;
+}
+
+export function relicOwned(state: GameState, relic: RelicDef): boolean {
+  return state.achievements[relic.achievement] !== undefined;
 }
 
 /** Suma de `perLevel · nivel` de las ventajas de `kind`. */
@@ -109,9 +118,26 @@ export function plumaBonus(state: GameState, content: Content): number {
   return 1 + rate * state.plumasTotal.toNumber();
 }
 
-/** Multiplicador permanente de la producción: ventajas (Abono) × bono de plumas. */
+/** Producto de las mejoras globales compradas (×1,5 cada una). */
+export function globalMultiplier(state: GameState, content: Content): number {
+  let m = 1;
+  for (const u of content.globalUpgrades) if (state.globalUpgrades[u.id]) m *= u.mult;
+  return m;
+}
+
+/** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content);
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content);
+}
+
+/** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
+export function momentumMaxMult(state: GameState, content: Content): number {
+  return content.game.momentumMax + perkSum(state, content, 'momentumMax');
+}
+
+/** Multiplicador de la inercia con la barra en `momentum` (0..1): 1 + (máx − 1) · barra. */
+export function momentumMult(state: GameState, content: Content, momentum: number = state.momentum): number {
+  return 1 + (momentumMaxMult(state, content) - 1) * momentum;
 }
 
 /** Producción por segundo de UNA unidad de la herramienta (con sus mejoras compradas y los bonos). */
@@ -124,11 +150,16 @@ export function toolProduction(state: GameState, content: Content, tool: ToolDef
   return unitProduction(state, content, tool).mul(toolOwned(state, tool.id));
 }
 
-/** Monedas por segundo totales (sin el impulso del visitante). */
-export function incomePerSecond(state: GameState, content: Content): Decimal {
+/** Monedas por segundo de base: herramientas × bonos, SIN la inercia ni el impulso del visitante. */
+export function baseIncomePerSecond(state: GameState, content: Content): Decimal {
   let total = D(0);
   for (const tool of content.tools) total = total.add(toolProduction(state, content, tool));
   return total;
+}
+
+/** Monedas por segundo ahora mismo (con la inercia actual; sin el impulso del visitante). */
+export function incomePerSecond(state: GameState, content: Content): Decimal {
+  return baseIncomePerSecond(state, content).mul(momentumMult(state, content));
 }
 
 /** Lo que da un toque: `tapSeconds` de producción (mínimo 1 moneda) × Manos de acero × impulso del visitante. */
@@ -184,4 +215,27 @@ export function nextUpgradeCost(state: GameState, content: Content, tool: ToolDe
     .mul(content.game.upgradeCostFactor)
     .mul(costMultiplier(state, content))
     .ceil();
+}
+
+// ---------------------------------------------------------------------------
+// Mejoras globales y cosméticos
+// ---------------------------------------------------------------------------
+
+/** ¿Se ha ganado ya lo bastante en total para ver la mejora global? */
+export function globalUpgradeUnlocked(state: GameState, def: GlobalUpgradeDef): boolean {
+  return state.lifetime.gte(def.unlockAt);
+}
+
+/** Coste de la mejora global (con Regateo en la feria). */
+export function globalUpgradeCost(state: GameState, content: Content, def: GlobalUpgradeDef): Decimal {
+  return D(def.cost).mul(costMultiplier(state, content)).ceil();
+}
+
+/** ¿Tienes la piel? (gratis, comprada, o regalada por su logro). */
+export function skinOwned(state: GameState, skin: SkinDef): boolean {
+  return skin.cost === 0 || state.skins[skin.id] === true || (skin.achievement !== null && state.achievements[skin.achievement] !== undefined);
+}
+
+export function companionOwned(state: GameState, companion: CompanionDef): boolean {
+  return companion.cost === 0 || state.companions[companion.id] === true || (companion.achievement !== null && state.achievements[companion.achievement] !== undefined);
 }

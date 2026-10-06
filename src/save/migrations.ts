@@ -35,9 +35,24 @@ function v5ToV6(old: RawSave): RawSave {
   return { ...old, version: 6, state: { ...state, version: 6, upgrades } };
 }
 
+/**
+ * v6 → v7 (mejoras globales, inercia, bellotas, pieles, compañeros y estadísticas): añade los campos
+ * nuevos con valores neutros.
+ */
+function v6ToV7(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 7 };
+  const state = old['state'];
+  return {
+    ...old,
+    version: 7,
+    state: { ...state, version: 7, globalUpgrades: {}, momentum: 0, acorns: 0, skins: {}, activeSkin: 'rosa', companions: {}, activeCompanions: [], stats: { visitors: 0, bestIncome: '0' } },
+  };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
+  6: v6ToV7,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

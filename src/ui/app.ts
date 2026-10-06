@@ -10,6 +10,7 @@ import { h, setClass, setText } from './dom.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
 import { mountAchievementsView } from './views/achievementsView.ts';
+import { mountCosmeticsView } from './views/cosmeticsView.ts';
 import { mountFlyView } from './views/flyView.ts';
 import { mountJournalView } from './views/journalView.ts';
 import { mountPickView } from './views/pickView.ts';
@@ -42,6 +43,7 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: 'pick', label: 'Picar', icon: '⛏️', mount: mountPickView },
   { id: 'fly', label: 'Ascender', icon: '🪶', mount: mountFlyView },
+  { id: 'cosmetics', label: 'Cerdito', icon: '🐷', mount: mountCosmeticsView },
   { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountAchievementsView },
   { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
   { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
@@ -54,6 +56,7 @@ export interface App {
 export function mountApp(root: HTMLElement, content: Content, state: GameState, requestSave: () => void = () => {}, visitor: VisitorScheduler | null = null): App {
   const coinsText = document.createTextNode('');
   const incomeText = document.createTextNode('');
+  const acornsText = document.createTextNode('');
 
   const viewContainer = h('div', { className: 'view-container' });
   const navButtons = new Map<string, HTMLButtonElement>();
@@ -99,7 +102,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
 
   const header = h('header', { className: 'app-header' }, [
     h('div', { className: 'header-text' }, [
-      h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [coinsText]), h('span', { className: 'currency-name' }, ['Monedas'])]),
+      h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [coinsText]), h('span', { className: 'currency-name' }, [acornsText])]),
       h('div', { className: 'per-second-row' }, [incomeText]),
     ]),
   ]);
@@ -147,6 +150,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const head = headerView(state, content);
     const notation = state.settings.notation;
     setText(coinsText, `🪙 ${formatNumber(head.coins, notation)}`);
+    setText(acornsText, `🌰 ${head.bellotas}`);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
     setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
     setClass(header, 'boosted', state.buff !== null);
