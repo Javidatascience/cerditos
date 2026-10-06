@@ -67,6 +67,14 @@ function v9ToV10(old: RawSave): RawSave {
   return { ...old, version: 10, state: { ...old['state'], version: 10, companionLevels: {}, garden: { plots: [], found: {} } } };
 }
 
+/** v10 → v11: los bonos del jardín pasan a ser temporales (se guardan sus finales); los permanentes anteriores desaparecen. */
+function v10ToV11(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 11 };
+  const state = old['state'];
+  const garden = isPlainObject(state['garden']) ? state['garden'] : { plots: [], found: {} };
+  return { ...old, version: 11, state: { ...state, version: 11, garden: { ...garden, buffs: {} } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -74,6 +82,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   7: v7ToV8,
   8: v8ToV9,
   9: v9ToV10,
+  10: v10ToV11,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

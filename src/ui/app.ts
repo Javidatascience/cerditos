@@ -4,7 +4,7 @@
 
 import { VISITOR_INJECTION_SECONDS } from '../core/actions.ts';
 import { claimVisitor, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
-import { caveUnlocked, headerView, visitorInjectionValue } from '../core/selectors.ts';
+import { caveUnlocked, gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
 import { h, setClass, setText } from './dom.ts';
@@ -166,7 +166,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     setText(coinsText, `🪙 ${formatNumber(head.coins, notation)}`);
     setText(acornsText, `🌰 ${head.bellotas}`);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
-    setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
+    const flowers = gardenView(state, content, 0).active.map((a) => ` · ${a.emoji} ${formatDuration(a.secondsLeft)}`).join('');
+    setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}${flowers}`);
     setClass(header, 'boosted', state.buff !== null);
     const cave = caveUnlocked(state, content);
     const caveButton = navButtons.get('cave');

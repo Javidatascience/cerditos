@@ -26,7 +26,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, breathSeconds, furnaceCost } from './cave.ts';
-import { flowerAvailable, gardenUnlocked, growMs, seedCost } from './garden.ts';
+import { flowerAvailable, gardenUnlocked, growMs } from './garden.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
@@ -356,13 +356,10 @@ export function buyCaveNode(state: GameState, content: Content, id: string): boo
 // Jardín (tiempo real: `now` en epoch ms; `roll` es un número al azar en [0,1) que pone la UI)
 // ---------------------------------------------------------------------------
 
-/** Planta una flor en una parcela vacía pagando la semilla. */
+/** Planta una flor en una parcela vacía (es gratis). */
 export function plantFlower(state: GameState, content: Content, plot: number, flowerId: string, now: number): boolean {
   const index = content.garden.flowers.findIndex((f) => f.id === flowerId);
   if (index < 0 || plot < 0 || plot >= content.garden.plots || state.garden.plots[plot] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
-  const cost = seedCost(baseIncomePerSecond(state, content), content);
-  if (state.coins.lt(cost)) return false;
-  state.coins = state.coins.sub(cost);
   state.garden.plots[plot] = { flower: flowerId, plantedAt: now };
   return true;
 }
@@ -376,6 +373,9 @@ export function harvestFlower(state: GameState, content: Content, plot: number, 
   const shiny = roll < content.garden.shinyChance;
   state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny };
   state.garden.plots[plot] = null;
+  const seconds = flower.effect.seconds * (shiny ? 2 : 1); // la brillante dura (o da) el doble
+  if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
+  else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time + seconds);
   addEntry(state, shiny ? `¡Ha salido una ${flower.name} brillante!` : `Has recogido una ${flower.name}.`, gameClockMs(state));
   return { shiny, isNew: before === undefined };
 }

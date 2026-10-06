@@ -62,7 +62,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   let companionStatusKey = '';
   let companionLines: { text: Text; fill: HTMLElement; chips: HTMLElement | null }[] = [];
 
-  // --- Mejoras globales (×1,5 a todo) ---
+  // --- Mejoras globales (×1,5 a todo) y de inercia ---
   const globalNote = h('p', { className: 'settings-hint hidden' });
   const globalList = h('ul', { className: 'upgrade-list' });
   const globalBlock = h('div', { className: 'global-block hidden' }, [globalList, globalNote]);
@@ -76,7 +76,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       const el = h('li', { className: 'upgrade-row' }, [
         h('div', { className: 'row-art' }, [
           emojiBadge('✨'),
-          h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [def.name]), h('span', { className: 'upgrade-effect' }, [`×${def.mult} a toda la producción · ${def.flavor}`])]),
+          h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [def.name]), h('span', { className: 'upgrade-effect' }, [def.momentumAdd > 0 ? `+${def.momentumAdd} al tope de la inercia · ${def.flavor}` : `×${def.mult} a toda la producción · ${def.flavor}`])]),
         ]),
         buy,
       ]);
@@ -239,7 +239,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     syncGlobals(globals.available.map((u) => ({ ...u, costText: `Comprar (${formatNumber(u.cost, notation)})` })));
     setClass(globalBlock, 'hidden', globals.available.length === 0 && globals.nextUnlockAt === null);
     setClass(globalNote, 'hidden', globals.nextUnlockAt === null);
-    if (globals.nextUnlockAt !== null) setText(globalNote, `Siguiente mejora global al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.`);
+    if (globals.nextUnlockAt !== null) setText(globalNote, `Siguiente mejora al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.`);
 
     const basket = basketView(state, ctx.content);
     setText(basketText, `Cesta: ${formatNumber(basket.value, notation)}${basket.fill >= 1 ? ' (llena)' : ''}`);

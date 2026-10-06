@@ -74,6 +74,7 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 ### Mejoras de compañeros, Jardín y visitante dorado
 
 - **Mejoras de compañeros** (todos menos el dragón): 3 niveles con bellotas en la pestaña Cerdito; cada nivel sustituye la habilidad por una mejor (`upgrades` en `content/game.ts`).
-- **Jardín** (`content/garden.ts`): 4 parcelas, 8 flores que tardan de 1 a 24 h de reloj real (también con el juego cerrado). Se abre al ganar 1 millón en total. La semilla cuesta 5 min de ingresos. Cada flor distinta recogida da un bono pasivo permanente; 10 % de que salga brillante (bono ×2). Cada flor se desbloquea al recoger la anterior.
+- **Jardín** (`content/garden.ts`): 4 parcelas, 8 flores que tardan de 1 a 24 h de reloj real (también con el juego cerrado). Se abre al ganar 1 millón en total. Plantar es gratis y al recoger da un bono TEMPORAL (×1,5 un minuto, picos ×2, herramientas más baratas, inercia más alta, ingresos de golpe…); 10 % de que salga brillante (dura el doble). Cada flor se desbloquea al recoger la anterior.
 - **Cerdito viajero dorado**: 10 % de las visitas; da 30 min de ingresos, ×7 durante 90 s y 3 bellotas. La tarjeta del visitante es ahora flotante sobre la navegación, con cuenta atrás y vibración.
+- **Inercia**: empieza en ×1,5 de tope y sube con 6 mejoras de monedas (+0,5 cada una, en la lista de mejoras de la pestaña Picar, se pierden al ascender), reliquias y ventajas. Se empieza con 4 bellotas.
 - **Costes**: `costGrowth` 1,15 → 1,17 y mejoras de herramienta ×7 (antes ×5).

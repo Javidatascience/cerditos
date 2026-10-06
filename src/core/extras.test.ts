@@ -14,6 +14,7 @@ const PICO = CONTENT.tools[0]!;
 function fresh(): GameState {
   const state = createInitialState(CONTENT, 0);
   state.tools[PICO.id] = 20;
+  state.acorns = 0; // las pruebas cuentan bellotas desde cero
   return state;
 }
 
@@ -315,7 +316,6 @@ describe('cerdito viajero dorado', () => {
 });
 
 describe('jardín', () => {
-  const DAY = 24 * 3600_000;
   function garden(): GameState {
     const state = fresh();
     state.lifetime = D(1e7);
@@ -325,34 +325,45 @@ describe('jardín', () => {
 
   it('está cerrado hasta ganar la cantidad indicada', () => {
     const state = fresh();
-    state.coins = D(1e6);
     expect(plantFlower(state, CONTENT, 0, 'margarita', 0)).toBe(false);
   });
 
-  it('planta pagando la semilla, crece con el tiempo real y se recoge', () => {
+  it('plantar es gratis, crece con el tiempo real y se recoge', () => {
     const state = garden();
-    const coins = state.coins.toNumber();
     expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(false); // aún no disponible
     expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(true);
-    expect(state.coins.toNumber()).toBeLessThan(coins);
+    expect(state.coins.toNumber()).toBe(1e6);
     expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(false); // parcela ocupada
     expect(harvestFlower(state, CONTENT, 0, 1000 + 3600_000 - 1, 0.5)).toBeNull();
-    const r = harvestFlower(state, CONTENT, 0, 1000 + 3600_000, 0.5)!;
-    expect(r).toEqual({ shiny: false, isNew: true });
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 3600_000, 0.5)).toEqual({ shiny: false, isNew: true });
     expect(state.garden.plots[0]).toBeNull();
     expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(true); // ya disponible
   });
 
-  it('la flor da su bono y la brillante lo duplica', () => {
+  it('la flor da un bono temporal y la brillante dura el doble', () => {
     const state = garden();
-    state.tools[PICO.id] = 20;
     const before = prodMultiplier(state, CONTENT);
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    harvestFlower(state, CONTENT, 0, DAY, 0.5);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.02, 9);
+    harvestFlower(state, CONTENT, 0, 3600_000, 0.5);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9);
+    advance(state, CONTENT, 59);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9);
+    advance(state, CONTENT, 2);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1, 9);
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    expect(harvestFlower(state, CONTENT, 0, DAY, 0.05)?.shiny).toBe(true);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.04, 9);
+    expect(harvestFlower(state, CONTENT, 0, 3600_000, 0.05)?.shiny).toBe(true);
+    advance(state, CONTENT, 100);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9); // dura 120 s
+  });
+
+  it('el hibisco da ingresos de golpe, no un bono', () => {
+    const state = garden();
+    state.garden.found['loto'] = { count: 1, shiny: false };
+    plantFlower(state, CONTENT, 0, 'hibisco', 0);
+    const base = baseIncomePerSecond(state, CONTENT).toNumber();
+    const coins = state.coins.toNumber();
+    harvestFlower(state, CONTENT, 0, 16 * 3600_000, 0.5);
+    expect(state.coins.toNumber() - coins).toBeCloseTo(base * 1200, 4);
   });
 });
 

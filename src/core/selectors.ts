@@ -5,7 +5,7 @@ import type { AchievementReq, CompanionAbility, Content, GardenEffect, PerkDef, 
 import { achievementProgress } from './achievements.ts';
 import { rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
-import { flowerAvailable, flowerValue, gardenUnlocked, growMs, seedCost } from './garden.ts';
+import { flowerActive, flowerAvailable, gardenUnlocked, growMs } from './garden.ts';
 import { blowGain, blowReady, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   ascendUnlocked,
@@ -317,6 +317,7 @@ export interface GlobalUpgradeView {
   name: string;
   flavor: string;
   mult: number;
+  momentumAdd: number;
   cost: Decimal;
   canAfford: boolean;
 }
@@ -332,7 +333,7 @@ export function globalUpgradeViews(state: GameState, content: Content): { availa
       continue;
     }
     const cost = globalUpgradeCost(state, content, def);
-    available.push({ id: def.id, name: def.name, flavor: def.flavor, mult: def.mult, cost, canAfford: state.coins.gte(cost) });
+    available.push({ id: def.id, name: def.name, flavor: def.flavor, mult: def.mult, momentumAdd: def.momentumAdd ?? 0, cost, canAfford: state.coins.gte(cost) });
   }
   return { available, nextUnlockAt };
 }
@@ -574,28 +575,31 @@ export function caveUnlocked(state: GameState, content: Content): boolean {
 export interface GardenView {
   unlocked: boolean;
   unlockAt: Decimal;
-  seedCost: Decimal;
-  canAffordSeed: boolean;
   shinyPercent: number;
+  /** Bonos temporales activos ahora. */
+  active: { id: string; emoji: string; name: string; secondsLeft: number }[];
   plots: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean }[];
   flowers: { id: string; name: string; emoji: string; flavor: string; growHours: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; requires: string | null }[];
 }
 
-function gardenEffectText(kind: GardenEffect['kind'], value: number): string {
-  switch (kind) {
+function gardenEffectText(effect: GardenEffect, shiny: boolean): string {
+  const seconds = effect.seconds * (shiny ? 2 : 1);
+  switch (effect.kind) {
     case 'prodMult':
-      return `producción ×${value.toFixed(2)}`;
+      return `producción ×${effect.value} durante ${formatDurationShort(seconds)}`;
     case 'costMult':
-      return `costes ×${value.toFixed(2)}`;
+      return `herramientas a ×${effect.value} de precio durante ${formatDurationShort(seconds)}`;
     case 'tapMult':
-      return `+${Math.round(value * 100)} % a los picos`;
+      return `+${Math.round(effect.value * 100)} % a los picos durante ${formatDurationShort(seconds)}`;
     case 'momentumMax':
-      return `+${value} al tope de la inercia`;
-    case 'basketSeconds':
-      return `+${Math.round(value / 60)} min de cesta`;
-    case 'offlineHours':
-      return `+${value} h fuera`;
+      return `+${effect.value} al tope de la inercia durante ${formatDurationShort(seconds)}`;
+    case 'coins':
+      return `${Math.round(seconds / 60)} min de ingresos de golpe`;
   }
+}
+
+function formatDurationShort(seconds: number): string {
+  return seconds >= 120 ? `${Math.round(seconds / 60)} min` : `${seconds} s`;
 }
 
 export function gardenView(state: GameState, content: Content, now: number): GardenView {
@@ -603,9 +607,8 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
   return {
     unlocked: gardenUnlocked(state, content),
     unlockAt: D(content.garden.unlockLifetime),
-    seedCost: seedCost(baseIncomePerSecond(state, content), content),
-    canAffordSeed: state.coins.gte(seedCost(baseIncomePerSecond(state, content), content)),
     shinyPercent: Math.round(content.garden.shinyChance * 100),
+    active: flowers.filter((f) => flowerActive(state, f.id)).map((f) => ({ id: f.id, emoji: f.emoji, name: f.name, secondsLeft: (state.garden.buffs[f.id] ?? 0) - state.time })),
     plots: state.garden.plots.map((p, index) => {
       const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
       if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
@@ -625,7 +628,7 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         found: got !== undefined,
         shiny: got?.shiny === true,
         count: got?.count ?? 0,
-        effectText: gardenEffectText(f.effect.kind, flowerValue(f, got?.shiny === true)) + (got === undefined || got.shiny ? '' : ` (brillante: ${gardenEffectText(f.effect.kind, flowerValue(f, true))})`),
+        effectText: `${gardenEffectText(f.effect, false)} (brillante: ${gardenEffectText(f.effect, true)})`,
         requires: i === 0 ? null : (flowers[i - 1]?.name ?? null),
       };
     }),

@@ -17,6 +17,8 @@ export interface GameDef {
   tapSeconds: number;
   /** Monedas con las que empieza cada ronda. */
   startCoins: number;
+  /** Bellotas con las que empieza una partida nueva. */
+  startAcorns: number;
   /** Índice (0-based) de la herramienta que hay que tener para poder ascender (la 8.ª = 7). */
   ascendTool: number;
   /** Plumas: floor((ganado en la vida / e0)^exponent · bonos) − plumas ya ganadas. */
@@ -73,6 +75,8 @@ export interface GlobalUpgradeDef {
   unlockAt: number;
   cost: number;
   mult: number;
+  /** Si no es 0, en vez de multiplicar la producción sube el tope de la inercia. */
+  momentumAdd?: number;
 }
 
 /** Cosmético del cerdito: color de piel. Se compra con bellotas o se consigue con un logro. */
@@ -175,8 +179,10 @@ export interface CaveDef {
 
 /** Efecto pasivo de una flor del jardín. */
 export interface GardenEffect {
-  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'basketSeconds' | 'offlineHours';
+  /** `coins`: regalo inmediato de `seconds` segundos de ingresos; el resto son bonos temporales de `seconds` segundos. */
+  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'coins';
   value: number;
+  seconds: number;
 }
 
 export interface GardenFlowerDef {
@@ -191,8 +197,6 @@ export interface GardenFlowerDef {
 export interface GardenDef {
   plots: number;
   shinyChance: number;
-  seedSeconds: number;
-  minSeedCost: number;
   unlockLifetime: number;
   flowers: GardenFlowerDef[];
 }

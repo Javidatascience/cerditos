@@ -47,13 +47,13 @@ describe('al empezar', () => {
     expect(buyTool(state, CONTENT, PICO.id, 1)).toBe(1);
     expect(state.coins.toNumber()).toBe(0);
     expect(baseIncomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1, 9);
-    // y picar sube la inercia: 10 picos = 0,3 de barra = ×2,2
-    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1 * (1 + 4 * 0.3), 9);
+    // y picar sube la inercia: 10 picos = 0,3 de barra
+    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1 * (1 + (CONTENT.game.momentumMax - 1) * 0.3), 9);
   });
 });
 
 describe('herramientas', () => {
-  it('el coste crece un 15 % por unidad y la compra en bloque suma los costes', () => {
+  it('el coste crece un 17 % por unidad y la compra en bloque suma los costes', () => {
     const state = fresh();
     const one = toolBulkCost(state, CONTENT, PICO, 0, 1).toNumber();
     const two = toolBulkCost(state, CONTENT, PICO, 1, 1).toNumber();

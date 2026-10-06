@@ -6,7 +6,7 @@ import { harvestFlower, plantFlower } from '../../core/actions.ts';
 import { gardenView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
+import { h, setClass, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
 export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
@@ -57,7 +57,8 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     if (!view.unlocked) {
       setText(introText, `El jardín se abre al ganar ${formatNumber(view.unlockAt, notation)} monedas en total (llevas ${formatNumber(state.lifetime, notation)}).`);
     } else {
-      setText(introText, `Una semilla cuesta ${formatNumber(view.seedCost, notation)} monedas. Las flores crecen despacio, aunque cierres el juego. Cada flor distinta que recoges da un bono para siempre, y hay un ${view.shinyPercent} % de que salga brillante (el bono vale el doble).`);
+      const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.emoji} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
+      setText(introText, `Plantar es gratis. Las flores crecen despacio, aunque cierres el juego, y al recogerlas dan un bono temporal. Hay un ${view.shinyPercent} % de que salga brillante (el bono dura el doble).${activeNow}`);
     }
     setClass(container.querySelector('.garden-plots') as HTMLElement, 'hidden', !view.unlocked);
 
@@ -76,7 +77,6 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
         const btn = row.seeds[k];
         if (!btn) return;
         setClass(btn, 'hidden', !f.available);
-        setDisabled(btn, !view.canAffordSeed);
       });
     });
 
@@ -85,7 +85,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
       if (!row) return;
       setText(row.nameText, f.available || f.found ? `${f.name}${f.shiny ? ' ✨' : ''}${f.count > 0 ? ` ×${f.count}` : ''}` : '???');
       setText(row.flavorText, f.available || f.found ? `${f.flavor} Tarda ${f.growHours} h.` : `Recoge antes: ${f.requires ?? ''}`);
-      setText(row.effectText, f.available || f.found ? (f.found ? `Bono activo: ${f.effectText}` : `Bono al recogerla: ${f.effectText}`) : '');
+      setText(row.effectText, f.available || f.found ? `Al recogerla: ${f.effectText}` : '');
       setClass(row.el, 'cosmetic-row-locked', !f.found);
     });
   }

@@ -1,28 +1,27 @@
 // Fórmulas del Jardín (solo lectura; plantar y recoger mutan en actions.ts).
+// Los bonos de las flores son temporales: `garden.buffs[flor]` guarda el instante (en `state.time`)
+// en que terminan. En `advance` se aplican con el valor del inicio de cada paso (pasos de 250 ms
+// o 15 s offline), así que el borde del bono puede desviarse unos segundos como mucho.
 
-import type { Content, GardenEffect, GardenFlowerDef } from '../content/types.ts';
-import { D, Decimal } from './num.ts';
+import type { Content, GardenEffect } from '../content/types.ts';
 import type { GameState } from './state.ts';
 
-const MULTIPLICATIVE: GardenEffect['kind'][] = ['prodMult', 'costMult'];
-
-/** Valor de una flor ya recogida: la brillante duplica la parte que aporta (×1,02 → ×1,04; +0,25 → +0,5). */
-export function flowerValue(flower: GardenFlowerDef, shiny: boolean): number {
-  const v = flower.effect.value;
-  if (!shiny) return v;
-  return MULTIPLICATIVE.includes(flower.effect.kind) ? 1 + (v - 1) * 2 : v * 2;
+export function flowerActive(state: GameState, id: string): boolean {
+  return (state.garden.buffs[id] ?? 0) > state.time;
 }
 
-function found(state: GameState, content: Content, kind: GardenEffect['kind']): number[] {
-  return content.garden.flowers.filter((f) => f.effect.kind === kind && state.garden.found[f.id]).map((f) => flowerValue(f, state.garden.found[f.id]?.shiny === true));
+function active(state: GameState, content: Content, kind: GardenEffect['kind']): number[] {
+  return content.garden.flowers.filter((f) => f.effect.kind === kind && flowerActive(state, f.id)).map((f) => f.effect.value);
 }
 
+/** Producto de los bonos multiplicativos activos de ese tipo (1 si no hay). */
 export function gardenProduct(state: GameState, content: Content, kind: GardenEffect['kind']): number {
-  return found(state, content, kind).reduce((a, b) => a * b, 1);
+  return active(state, content, kind).reduce((a, b) => a * b, 1);
 }
 
+/** Suma de los bonos aditivos activos de ese tipo. */
 export function gardenSum(state: GameState, content: Content, kind: GardenEffect['kind']): number {
-  return found(state, content, kind).reduce((a, b) => a + b, 0);
+  return active(state, content, kind).reduce((a, b) => a + b, 0);
 }
 
 export function gardenUnlocked(state: GameState, content: Content): boolean {
@@ -34,11 +33,6 @@ export function flowerAvailable(state: GameState, content: Content, index: numbe
   return index === 0 || state.garden.found[content.garden.flowers[index - 1]!.id] !== undefined;
 }
 
-export function growMs(flower: GardenFlowerDef): number {
+export function growMs(flower: { growHours: number }): number {
   return flower.growHours * 3600_000;
-}
-
-/** Coste de una semilla: unos minutos de ingresos base, con un mínimo. */
-export function seedCost(base: Decimal, content: Content): Decimal {
-  return Decimal.max(D(content.garden.minSeedCost), base.mul(content.garden.seedSeconds)).ceil();
 }

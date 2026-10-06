@@ -9,12 +9,13 @@ export const GAME: GameDef = {
   upgradeCostFactor: 7,
   tapSeconds: 1,
   startCoins: 0,
+  startAcorns: 4,
   ascendTool: 7,
   plumaE0: 1e5,
   plumaExponent: 0.25,
   perPluma: 0.02,
   offlineHours: 2,
-  momentumMax: 5,
+  momentumMax: 1.5,
   momentumPerTap: 0.03,
   momentumDecay: 0.04,
 };
@@ -44,6 +45,12 @@ export const GLOBAL_UPGRADES: GlobalUpgradeDef[] = [
   { id: 'cena-de-gala', name: 'Cena de gala', flavor: 'Con servilleta y todo.', unlockAt: 5e10, cost: 5e11, mult: 1.5 },
   { id: 'fiesta-del-pueblo', name: 'Fiesta del pueblo', flavor: 'Hasta el alcalde trae una pala.', unlockAt: 5e12, cost: 5e13, mult: 1.5 },
   { id: 'aplausos', name: 'Aplausos de la granja', flavor: 'Se oyen desde la colina.', unlockAt: 5e14, cost: 5e15, mult: 1.5 },
+  { id: 'cuerda-de-saltar', name: 'Cuerda de saltar', flavor: 'Calienta las patitas: la inercia llega más alto.', unlockAt: 1e3, cost: 2e3, mult: 1, momentumAdd: 0.5 },
+  { id: 'botas-con-muelle', name: 'Botas con muelle', flavor: 'Cada pico rebota un poco más.', unlockAt: 1e5, cost: 2e5, mult: 1, momentumAdd: 0.5 },
+  { id: 'cinta-de-correr', name: 'Cinta de correr', flavor: 'El cerdito no quiere parar.', unlockAt: 1e7, cost: 2e7, mult: 1, momentumAdd: 0.5 },
+  { id: 'bebida-energetica', name: 'Bebida energética de bellota', flavor: 'Con cuidado, que sube rápido.', unlockAt: 1e9, cost: 2e9, mult: 1, momentumAdd: 0.5 },
+  { id: 'tambor-de-ritmo', name: 'Tambor de ritmo', flavor: 'Pica al compás y el compás no se acaba.', unlockAt: 1e11, cost: 2e11, mult: 1, momentumAdd: 0.5 },
+  { id: 'trueno-de-feria', name: 'Trueno de feria', flavor: 'Hasta las gallinas aplauden.', unlockAt: 1e13, cost: 2e13, mult: 1, momentumAdd: 0.5 },
   { id: 'luz-de-las-estrellas', name: 'Luz de las estrellas', flavor: 'Trabajar de noche también tiene su encanto.', unlockAt: 5e16, cost: 5e17, mult: 1.5 },
 ];
 

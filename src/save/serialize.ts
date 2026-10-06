@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 10;
+export const CURRENT_VERSION = 11;
 
 export interface SerializedGameState {
   version: number;
@@ -79,7 +79,7 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       activeCompanions: [...state.activeCompanions],
       companionProgress: { ...state.companionProgress },
       companionLevels: { ...state.companionLevels },
-      garden: { plots: state.garden.plots.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])) },
+      garden: { plots: state.garden.plots.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs } },
       cave: { embers: state.cave.embers.toString(), furnaces: { ...state.cave.furnaces }, nodes: { ...state.cave.nodes }, blowAt: state.cave.blowAt },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       basketSince: state.basketSince,
@@ -118,7 +118,7 @@ export function deserialize(data: SaveData): GameState {
     activeCompanions: [...s.activeCompanions],
     companionProgress: { ...s.companionProgress },
     companionLevels: { ...s.companionLevels },
-    garden: { plots: s.garden.plots.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])) },
+    garden: { plots: s.garden.plots.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...(s.garden.buffs ?? {}) } },
     cave: { embers: new Decimal(s.cave.embers), furnaces: { ...s.cave.furnaces }, nodes: { ...s.cave.nodes }, blowAt: s.cave.blowAt },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     basketSince: s.basketSince,

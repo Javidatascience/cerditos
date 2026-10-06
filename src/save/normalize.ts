@@ -54,6 +54,10 @@ export function normalize(state: GameState, content: Content): GameState {
     if (!flowerIds.has(id) || !f) delete state.garden.found[id];
     else state.garden.found[id] = { count: clampInt(f.count, 1, Number.MAX_SAFE_INTEGER), shiny: f.shiny === true };
   }
+  for (const id of Object.keys(state.garden.buffs)) {
+    const until = state.garden.buffs[id];
+    if (!flowerIds.has(id) || typeof until !== 'number' || !Number.isFinite(until)) delete state.garden.buffs[id];
+  }
   const furnaceIds = new Set(content.cave.furnaces.map((f) => f.id));
   for (const id of Object.keys(state.cave.furnaces)) {
     if (!furnaceIds.has(id)) delete state.cave.furnaces[id];

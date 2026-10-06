@@ -4,7 +4,6 @@
 
 import type { Content } from '../content/types.ts';
 import { caveSum } from './cave.ts';
-import { gardenSum } from './garden.ts';
 import { baseIncomePerSecond } from './formulas.ts';
 import type { Decimal } from './num.ts';
 import type { GameState } from './state.ts';
@@ -16,7 +15,7 @@ export const BASKET_CAP_SECONDS = 1800;
 
 /** Tope de tiempo de la cesta (más con las ventajas de la cueva). */
 export function basketCap(state: GameState, content: Content): number {
-  return BASKET_CAP_SECONDS + caveSum(state, content, 'basketSeconds') + gardenSum(state, content, 'basketSeconds');
+  return BASKET_CAP_SECONDS + caveSum(state, content, 'basketSeconds');
 }
 
 export function basketSeconds(state: GameState, capSeconds: number = BASKET_CAP_SECONDS): number {
