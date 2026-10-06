@@ -1,331 +1,244 @@
-// Fórmulas económicas. Ver docs/03-economia.md.
-// Plumas, ventajas permanentes (03 §4-§6) y bonos de colección (03 §7) aplicados al
-// multiplicador global y al coste de los cerditos. M_mecánica de armonía (hito 8) se
-// aplica en globalMultiplier; la de calma (hito 9) se aplica aparte, en el tick.
+// Fórmulas de la mina. Ver docs/06-mina.md. Todo número sale de `content.mine` y de los datos de
+// piezas, zonas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
-import type { Content, GeneratorDef, PerkDef, PerkEffect, WorldDef } from '../content/types.ts';
-import { collectionMultiplier } from './collection.ts';
-import { chainProductionPerSecond } from './mechanics/chain.ts';
-import { calmMultiplier } from './mechanics/calm.ts';
-import { harmonyLevel, harmonyMultiplier } from './mechanics/harmony.ts';
-import { classicProductionPerSecond } from './mechanics/classic.ts';
-import type { GameState, GeneratorId, PerkId, UpgradeId, WorldId, WorldState } from './state.ts';
-import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
+import type { Content, PerkDef, PerkEffect, PieceDef, ZoneDef } from '../content/types.ts';
+import { D, Decimal } from './num.ts';
+import type { GameState, PerkId, PieceId } from './state.ts';
 
-export function getWorldDef(content: Content, worldId: WorldId): WorldDef {
-  const world = content.worlds.find((w) => w.id === worldId);
-  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
-  return world;
+/** Profundidad máxima (con hpGrowth ~1,12 el vida del bloque sigue cabiendo en un `number`). */
+export const MAX_DEPTH = 3000;
+
+// ---------------------------------------------------------------------------
+// Zonas y bloques
+// ---------------------------------------------------------------------------
+
+export function zoneIndexOf(content: Content, depth: number): number {
+  return Math.min(content.zones.length - 1, Math.floor((depth - 1) / content.mine.zoneLength));
 }
 
-export function getGeneratorDef(world: WorldDef, genId: GeneratorId): GeneratorDef {
-  const gen = world.generators.find((g) => g.id === genId);
-  if (!gen) throw new Error(`Cerdito desconocido: ${genId} (mundo ${world.id})`);
-  return gen;
+export function zoneAt(content: Content, depth: number): ZoneDef {
+  return content.zones[zoneIndexOf(content, depth)]!;
 }
 
-export function getPerkDef(content: Content, perkId: PerkId): PerkDef {
-  const perk = content.perks.find((p) => p.id === perkId);
-  if (!perk) throw new Error(`Ventaja desconocida: ${perkId}`);
+/** Primer nivel de la zona `index`. */
+export function zoneStartDepth(content: Content, index: number): number {
+  return index * content.mine.zoneLength + 1;
+}
+
+/** Último nivel de la zona `index` (la última zona no tiene fin: MAX_DEPTH). */
+export function zoneEndDepth(content: Content, index: number): number {
+  return index >= content.zones.length - 1 ? MAX_DEPTH : (index + 1) * content.mine.zoneLength;
+}
+
+/** Vida del bloque del nivel `depth`. */
+export function blockHpAt(content: Content, depth: number): number {
+  return content.mine.hpBase * content.mine.hpGrowth ** (depth - 1);
+}
+
+// ---------------------------------------------------------------------------
+// Piezas
+// ---------------------------------------------------------------------------
+
+export function getPiece(content: Content, id: PieceId): PieceDef {
+  const piece = content.pieces.find((p) => p.id === id);
+  if (!piece) throw new Error(`Pieza desconocida: ${id}`);
+  return piece;
+}
+
+export function pieceLevel(state: GameState, id: PieceId): number {
+  return state.gear[id] ?? 0;
+}
+
+/** ×mult por cada hito de nivel alcanzado (10, 25, 50, 100). */
+export function milestoneMult(content: Content, level: number): number {
+  const reached = content.mine.milestones.filter((m) => level >= m).length;
+  return content.mine.milestoneMult ** reached;
+}
+
+/** Efecto numérico de una pieza a nivel `level` (perLevel · nivel · hitos). 0 si no tiene valor por nivel. */
+export function pieceValue(content: Content, piece: PieceDef, level: number): number {
+  const e = piece.effect;
+  if (e.kind === 'resist' || e.kind === 'burst') return 0;
+  return e.perLevel * level * milestoneMult(content, level);
+}
+
+function sumOf(state: GameState, content: Content, kinds: PieceDef['effect']['kind'][]): number {
+  let total = 0;
+  for (const piece of content.pieces) {
+    if (!kinds.includes(piece.effect.kind)) continue;
+    const level = pieceLevel(state, piece.id);
+    if (level > 0) total += pieceValue(content, piece, level);
+  }
+  return total;
+}
+
+export function pieceUnlocked(state: GameState, piece: PieceDef): boolean {
+  return state.records.maxDepth >= piece.unlock.depth && state.ascensions >= piece.unlock.ascensions;
+}
+
+/** Coste de subir la pieza del nivel `level` al siguiente: monedas y (si lo pide) material. */
+export function pieceCost(state: GameState, content: Content, piece: PieceDef, level: number): { coins: Decimal; material: Decimal | null } {
+  const coins = D(piece.baseCost).mul(Decimal.pow(piece.costGrowth, level)).mul(perkProduct(state, content, 'costMult')).ceil();
+  const material = piece.material === null ? null : D(piece.materialBase).mul(Decimal.pow(1.12, level)).ceil();
+  return { coins, material };
+}
+
+// ---------------------------------------------------------------------------
+// Ventajas permanentes
+// ---------------------------------------------------------------------------
+
+export function getPerk(content: Content, id: PerkId): PerkDef {
+  const perk = content.perks.find((p) => p.id === id);
+  if (!perk) throw new Error(`Ventaja desconocida: ${id}`);
   return perk;
 }
 
-// ---------------------------------------------------------------------------
-// Ventajas permanentes (03 §6): nivel, coste, disponibilidad y agregados por efecto
-// ---------------------------------------------------------------------------
-
-export function perkLevel(state: GameState, content: Content, perkId: PerkId): number {
-  const perk = getPerkDef(content, perkId);
-  return state.worlds[perk.world]?.perks[perkId] ?? 0;
+export function perkLevelOf(state: GameState, id: PerkId): number {
+  return state.perks[id] ?? 0;
 }
 
-/** coste(nivel L → L+1) = ceil(base · crecimiento^L), en plumas del mundo (03 §6). */
+/** coste(nivel L → L+1) = ceil(base · crecimiento^L), en plumas. */
 export function perkCost(perk: PerkDef, level: number): Decimal {
   return D(perk.baseCost).mul(Decimal.pow(perk.costGrowth, level)).ceil();
 }
 
-export function perkAvailable(state: GameState, content: Content, perk: PerkDef): boolean {
-  const level = perkLevel(state, content, perk.id);
+export function perkAvailable(state: GameState, perk: PerkDef): boolean {
+  const level = perkLevelOf(state, perk.id);
   if (perk.maxLevel !== null && level >= perk.maxLevel) return false;
-  return perk.requires.every((reqId) => perkLevel(state, content, reqId) > 0);
+  return perk.requires.every((id) => perkLevelOf(state, id) > 0);
 }
 
-/** Ventajas de `worldId` cuyo efecto es `kind` y tienen al menos 1 nivel comprado. */
-function perksOfKind(state: GameState, content: Content, worldId: WorldId, kind: PerkEffect['kind']): { perk: PerkDef; level: number }[] {
+function perLevelOf(effect: PerkEffect): number {
+  return effect.perLevel;
+}
+
+function perksOfKind(state: GameState, content: Content, kind: PerkEffect['kind']): { perk: PerkDef; level: number }[] {
   const out: { perk: PerkDef; level: number }[] = [];
   for (const perk of content.perks) {
-    if (perk.world !== worldId || perk.effect.kind !== kind) continue;
-    const level = state.worlds[worldId]?.perks[perk.id] ?? 0;
+    if (perk.effect.kind !== kind) continue;
+    const level = perkLevelOf(state, perk.id);
     if (level > 0) out.push({ perk, level });
   }
   return out;
 }
 
-function perLevelOf(effect: PerkEffect): number {
-  return 'perLevel' in effect ? effect.perLevel : 0;
-}
-
-/** Suma de `perLevel · nivel` de las ventajas de `kind` en `worldId` (p. ej. costGrowthDelta, perPlumaBonus). */
-function perkEffectSum(state: GameState, content: Content, worldId: WorldId, kind: PerkEffect['kind']): number {
+/** Suma de `perLevel · nivel` de las ventajas de `kind`. */
+export function perkSum(state: GameState, content: Content, kind: PerkEffect['kind']): number {
   let total = 0;
-  for (const { perk, level } of perksOfKind(state, content, worldId, kind)) total += perLevelOf(perk.effect) * level;
+  for (const { perk, level } of perksOfKind(state, content, kind)) total += perLevelOf(perk.effect) * level;
   return total;
 }
 
-/** Producto de `perLevel^nivel` de las ventajas de `kind` en `worldId` (p. ej. costMult, Abono). */
-function perkEffectProduct(state: GameState, content: Content, worldId: WorldId, kind: PerkEffect['kind']): number {
+/** Producto de `perLevel^nivel` de las ventajas de `kind`. */
+export function perkProduct(state: GameState, content: Content, kind: PerkEffect['kind']): number {
   let total = 1;
-  for (const { perk, level } of perksOfKind(state, content, worldId, kind)) total *= perLevelOf(perk.effect) ** level;
+  for (const { perk, level } of perksOfKind(state, content, kind)) total *= perLevelOf(perk.effect) ** level;
   return total;
 }
 
-export function hasPerkEffect(state: GameState, content: Content, worldId: WorldId, kind: PerkEffect['kind']): boolean {
-  return perksOfKind(state, content, worldId, kind).length > 0;
+// ---------------------------------------------------------------------------
+// Cavado
+// ---------------------------------------------------------------------------
+
+/** Bono pasivo de las plumas: 1 + (perPluma + Raíces) · plumas ganadas en total. */
+export function plumaBonus(state: GameState, content: Content): number {
+  const rate = content.mine.perPluma + perkSum(state, content, 'perPlumaBonus');
+  return 1 + rate * state.plumasTotal.toNumber();
 }
 
-/** Herramientas heredadas: multiplica el coste de las mejoras (por cerdito y globales). */
-export function perkUpgradeCostMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  return perkEffectProduct(state, content, worldId, 'upgradeCostMult');
+/** Multiplicador permanente del cavado: ventajas (Abono) × bono de plumas. */
+export function prodMultiplier(state: GameState, content: Content): number {
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content);
 }
 
-/** Regateo en la feria: multiplica el coste de los cerditos (m_coste de 03 §2). */
-export function perkCostMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  return perkEffectProduct(state, content, worldId, 'costMult');
+/** Fracción del cavado que se conserva en la zona `zoneIndex` según la resistencia al peligro (0..1). */
+export function hazardFactor(state: GameState, content: Content, zoneIndex: number): number {
+  const zone = content.zones[zoneIndex];
+  if (!zone || zone.hazard === null) return 1;
+  const piece = content.pieces.find((p) => p.effect.kind === 'resist' && p.effect.hazard === zone.hazard);
+  if (!piece || piece.effect.kind !== 'resist') return 1;
+  const need = piece.effect.needBase + piece.effect.needStep * zoneIndex;
+  const progress = Math.min(1, pieceLevel(state, piece.id) / need);
+  const floor = content.mine.hazardFloor;
+  return floor + (1 - floor) * progress;
 }
 
-/** m_coste completo de 03 §2: Regateo en la feria × bonos de coste de la colección. */
-export function totalCostMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  return perkCostMultiplier(state, content, worldId) * collectionMultiplier(state, content, worldId, 'cost');
+/** Cavado por segundo en la zona `zoneIndex` (sin impulso del visitante). */
+export function digPower(state: GameState, content: Content, zoneIndex: number): number {
+  const base = content.mine.baseDps + sumOf(state, content, ['dig', 'helper']);
+  const mult = 1 + sumOf(state, content, ['digMult']);
+  return base * mult * prodMultiplier(state, content) * hazardFactor(state, content, zoneIndex);
 }
 
-/** Establo ampliado: resta al crecimiento de coste de los cerditos (03 §2). */
-export function perkCostGrowthDelta(state: GameState, content: Content, worldId: WorldId): number {
-  return perkEffectSum(state, content, worldId, 'costGrowthDelta');
+/** Segundos de cavado que equivale un toque. */
+export function tapSeconds(state: GameState, content: Content): number {
+  return content.mine.tapSeconds * (1 + sumOf(state, content, ['tap']));
 }
 
-/** Buen comienzo: multiplica la moneda con la que se empieza cada ronda. */
-export function perkStartCurrencyMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  return perkEffectProduct(state, content, worldId, 'startCurrency');
+/** Monedas que suelta un bloque del nivel `depth`. */
+export function blockCoins(state: GameState, content: Content, depth: number): Decimal {
+  const base = D(content.mine.coinBase).mul(Decimal.pow(content.mine.coinGrowth, depth - 1));
+  return base.mul(1 + sumOf(state, content, ['coinMult']));
 }
 
-/** Plumas al viento: +15 % de plumas al ascender, por nivel. */
-export function plumaMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  return 1 + perkEffectSum(state, content, worldId, 'plumaMult');
+/** Unidades del material de la zona que suelta un bloque. */
+export function materialDrop(state: GameState, content: Content): number {
+  return 1 + sumOf(state, content, ['materialMult']);
 }
 
-/** Tasa del bono pasivo por pluma (0,05 + Raíces profundas). Usado en globalMultiplier y en
- * ascendView (selectors.ts) para mostrar "tu producción pasaría de ×A a ×B" al ascender. */
-export function perPlumaBonusRate(state: GameState, content: Content, worldId: WorldId): number {
-  const world = getWorldDef(content, worldId);
-  return world.prestige.perPluma + perkEffectSum(state, content, worldId, 'perPlumaBonus');
-}
-
-/** Moneda con la que empieza la ronda tras ascender (03 §6, Buen comienzo). */
-export function startCurrency(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const world = getWorldDef(content, worldId);
-  return D(world.startCurrency).mul(perkStartCurrencyMultiplier(state, content, worldId));
+/** Monedas por segundo ahora mismo (en el nivel actual, sin impulso). */
+export function incomePerSecond(state: GameState, content: Content): Decimal {
+  const dps = digPower(state, content, zoneIndexOf(content, state.depth));
+  if (!(dps > 0) || !(state.blockHp > 0)) return D(0);
+  const hp = blockHpAt(content, state.depth);
+  return blockCoins(state, content, state.depth).mul(dps / hp);
 }
 
 // ---------------------------------------------------------------------------
-// Coste de generadores (03 §2): coste(n) = c0 · r_ef^n · m_coste
+// Dinamita (habilidad activa)
 // ---------------------------------------------------------------------------
 
-/** Crecimiento de coste efectivo del generador (03 §2: propio si lo tiene, si no el del mundo). */
-export function costGrowth(world: WorldDef, gen: GeneratorDef): number {
-  return gen.costGrowth ?? world.costGrowth;
+export function burstPiece(content: Content): PieceDef | undefined {
+  return content.pieces.find((p) => p.effect.kind === 'burst');
 }
 
-/**
- * Coste de comprar la unidad número `n` (0-indexada) del generador. `costGrowthDelta` y
- * `costMultiplier` son los agregados de ventajas ya calculados (perkCostGrowthDelta /
- * perkCostMultiplier) — se reciben ya resueltos para no atar esta función pura a GameState
- * (mismo patrón que mechanics/classic.ts con el multiplicador global, hito 3).
- */
-export function generatorCost(world: WorldDef, gen: GeneratorDef, n: number, costGrowthDelta = 0, costMultiplier = 1): Decimal {
-  const r = costGrowth(world, gen) - costGrowthDelta;
-  return D(gen.baseCost).mul(costMultiplier).mul(Decimal.pow(r, n));
+/** Segundos de cavado que da la dinamita al nivel actual (0 si no la tienes). */
+export function burstSeconds(state: GameState, content: Content): number {
+  const piece = burstPiece(content);
+  if (!piece || piece.effect.kind !== 'burst') return 0;
+  const level = pieceLevel(state, piece.id);
+  return level > 0 ? piece.effect.baseSeconds + piece.effect.perLevel * level : 0;
 }
 
-/** Coste de comprar `k` unidades a partir de las `n` ya compradas (03 §2 "Compra en bloque"). */
-export function bulkCost(world: WorldDef, gen: GeneratorDef, n: number, k: number, costGrowthDelta = 0, costMultiplier = 1): Decimal {
-  const r = costGrowth(world, gen) - costGrowthDelta;
-  return bulkCostOf(D(gen.baseCost).mul(costMultiplier), r, n, k);
-}
-
-/** Máximo de unidades que se pueden comprar con `money`, a partir de las `n` ya compradas. */
-export function maxAffordable(world: WorldDef, gen: GeneratorDef, n: number, money: Decimal, costGrowthDelta = 0, costMultiplier = 1): number {
-  const r = costGrowth(world, gen) - costGrowthDelta;
-  return maxAffordableOf(money, D(gen.baseCost).mul(costMultiplier), r, n);
+export function burstCooldown(content: Content): number {
+  const piece = burstPiece(content);
+  return piece && piece.effect.kind === 'burst' ? piece.effect.cooldown : 0;
 }
 
 // ---------------------------------------------------------------------------
-// Mejoras por cerdito (03 §2: ×2 al tener N; id `${gen}-u${nivel}`, 02 §7)
+// Subir a la superficie (ascensión)
 // ---------------------------------------------------------------------------
 
-export function generatorUpgradeId(genId: GeneratorId, level: number): UpgradeId {
-  return `${genId}-u${level}`;
+/** Plumas que se ganarían subiendo ahora: floor(coef · profundidad^exp · (1 + Plumas al viento)). */
+export function plumasPending(state: GameState, content: Content): number {
+  const m = content.mine;
+  const mult = 1 + perkSum(state, content, 'plumaMult');
+  return Math.max(0, Math.floor(m.plumaCoef * state.runMaxDepth ** m.plumaExp * mult));
 }
 
-/** Multiplicador de producción del generador por sus mejoras compradas: 2^(mejoras). */
-export function generatorMultiplier(world: WorldDef, worldState: WorldState, gen: GeneratorDef): number {
-  if (!world.genUpgrades) return 1;
-  let mult = 1;
-  for (let level = 0; level < world.genUpgrades.counts.length; level++) {
-    if (worldState.upgrades[generatorUpgradeId(gen.id, level)]) mult *= world.genUpgrades.mult;
-  }
-  return mult;
+/** Moneda con la que empieza la ronda. */
+export function startCoins(state: GameState, content: Content): Decimal {
+  const base = D(content.mine.startCoins);
+  const perks = perksOfKind(state, content, 'startCurrency');
+  return perks.reduce((acc, { perk, level }) => acc.mul(Decimal.pow(perLevelOf(perk.effect), level)), base);
 }
 
-// ---------------------------------------------------------------------------
-// Multiplicador global y producción (03 §3)
-// ---------------------------------------------------------------------------
-
-/**
- * M = Π mejoras globales compradas
- *   × (1 + (0,05 + 0,01·nivel(Raíces)) · P)            ← bono pasivo de plumas
- *   × 1,10^nivel(Abono)
- *   × Π_{otros mundos} (1 + 0,10 · nivel(Hermandad en ese mundo))
- *   × bonos de colección (variedades y sets) × M_armonía (solo Huerta). La calma (Balneario) no entra en M: se aplica en tick.ts/displayProductionPerSecond
- */
-export function globalMultiplier(state: GameState, content: Content, worldId: WorldId): number {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return 1;
-
-  let m = 1;
-  for (const upgrade of world.globalUpgrades) {
-    if (worldState.upgrades[upgrade.id]) m *= upgrade.mult;
-  }
-
-  m *= 1 + perPlumaBonusRate(state, content, worldId) * worldState.plumasTotal.toNumber();
-
-  m *= perkEffectProduct(state, content, worldId, 'prodMult'); // Abono de calidad
-
-  for (const other of content.worlds) {
-    if (other.id === worldId) continue;
-    m *= 1 + perkEffectSum(state, content, other.id, 'crossProd'); // Hermandad de granjas (del otro mundo)
-  }
-
-  m *= collectionMultiplier(state, content, worldId, 'prod');
-
-  if (world.mechanic === 'harmony') m *= harmonyMultiplier(world, harmonyLevel(world, worldState));
-
-  return m;
+/** Nivel de la mina en el que empieza la ronda (1 + Atajo conocido). */
+export function startDepth(state: GameState, content: Content): number {
+  return Math.min(MAX_DEPTH, 1 + Math.round(perkSum(state, content, 'startDepth')));
 }
 
-/** Multiplicador de producción del cerdito (mejoras por cerdito) como función, para mecánicas. */
-export function generatorMultiplierFn(world: WorldDef, worldState: WorldState): (gen: GeneratorDef) => number {
-  return (gen) => generatorMultiplier(world, worldState, gen);
-}
-
-/** Producción por segundo del mundo (moneda/s). Armonía y calma (hitos 8-9) usan aún classic. */
-export function productionPerSecond(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) throw new Error(`Mundo sin estado: ${worldId}`);
-  const m = globalMultiplier(state, content, worldId);
-  const genMult = generatorMultiplierFn(world, worldState);
-  if (world.mechanic === 'chain') return chainProductionPerSecond(world, worldState, m, genMult);
-  return classicProductionPerSecond(world, worldState, m, genMult);
-}
-
-/**
- * Producción/s que se ve ahora mismo: incluye el bono de calma del Balneario. Las decisiones
- * (autobuy, valueRate) usan `productionPerSecond` sin calma, igual que tools/sim (`income`).
- */
-export function displayProductionPerSecond(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  return productionPerSecond(state, content, worldId).mul(worldState ? calmMultiplier(world, worldState) : 1);
-}
-
-const CHAIN_VALUE_HORIZON_SECONDS = 1800; // 03 §4: mismo horizonte que tools/sim (CHAIN_HORIZON)
-
-/**
- * Valor de la granja para decidir compras (03 §4): moneda/s equivalente en un horizonte.
- * Fuera de la cadena (único caso hasta el hito 7) coincide con productionPerSecond; en la
- * cadena, una unidad del nivel k aporta prod_k·…·prod_0 · H^k / k! de moneda en H segundos
- * (ver docs/03-economia.md §3.2). Se define ya aquí, antes de que el Bosque sea jugable,
- * porque autobuy.ts (hito 5) debe usar el mismo horizonte que tools/sim para decidir compras.
- */
-export function valueRate(state: GameState, content: Content, worldId: WorldId, horizonSeconds: number = CHAIN_VALUE_HORIZON_SECONDS): Decimal {
-  const world = getWorldDef(content, worldId);
-  if (world.mechanic !== 'chain') return productionPerSecond(state, content, worldId);
-
-  const worldState = state.worlds[worldId];
-  if (!worldState) return D(0);
-  const m = globalMultiplier(state, content, worldId);
-
-  let total = D(0);
-  let chainRate = D(1);
-  let fact = 1;
-  for (let k = 0; k < world.generators.length; k++) {
-    const gen = world.generators[k]!;
-    chainRate = chainRate.mul(gen.baseProd).mul(generatorMultiplier(world, worldState, gen)).mul(k === 0 ? m : 1);
-    if (k > 0) fact *= k + 1;
-    const owned = worldState.generators[gen.id]?.owned ?? D(0);
-    total = total.add(owned.mul(chainRate).mul(Decimal.pow(horizonSeconds, k + 1)).div(fact));
-  }
-  return total.div(horizonSeconds);
-}
-
-// ---------------------------------------------------------------------------
-// Mejoras disponibles (03 §2: por cerdito al alcanzar N; globales al ganar el 25 % en la ronda)
-// ---------------------------------------------------------------------------
-
-export type UpgradeOffer =
-  | { kind: 'generator'; id: UpgradeId; genId: GeneratorId; level: number; cost: Decimal }
-  | { kind: 'global'; id: UpgradeId; cost: Decimal };
-
-/** Fracción del coste de una mejora global que, ganada en la ronda, la hace visible (03 §2). */
-const GLOBAL_UPGRADE_VISIBILITY = 0.25;
-
-export function availableUpgrades(state: GameState, content: Content, worldId: WorldId): UpgradeOffer[] {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return [];
-  const offers: UpgradeOffer[] = [];
-
-  // Herramientas heredadas abarata mejoras por cerdito y globales (igual que tools/sim: ver
-  // "Desviaciones" del hito 5). El precio de la unidad N del cerdito, en cambio, NO lleva el
-  // descuento de Regateo (03 §2: "sin descuentos de Regateo"); solo Establo ampliado la afecta.
-  const upgradeCostMult = perkUpgradeCostMultiplier(state, content, worldId);
-  const costGrowthDelta = perkCostGrowthDelta(state, content, worldId);
-
-  if (world.genUpgrades) {
-    const { counts, costFactor } = world.genUpgrades;
-    for (const gen of world.generators) {
-      const genState = worldState.generators[gen.id];
-      if (!genState) continue;
-      for (let level = 0; level < counts.length; level++) {
-        const id = generatorUpgradeId(gen.id, level);
-        if (worldState.upgrades[id]) continue;
-        const threshold = counts[level];
-        if (threshold === undefined || genState.bought < threshold) continue;
-        const unitPrice = generatorCost(world, gen, threshold, costGrowthDelta, 1);
-        offers.push({ kind: 'generator', id, genId: gen.id, level, cost: unitPrice.mul(costFactor).mul(upgradeCostMult) });
-      }
-    }
-  }
-
-  for (const upgrade of world.globalUpgrades) {
-    if (worldState.upgrades[upgrade.id]) continue;
-    if (worldState.runEarned.lt(D(upgrade.cost).mul(GLOBAL_UPGRADE_VISIBILITY))) continue;
-    offers.push({ kind: 'global', id: upgrade.id, cost: D(upgrade.cost).mul(upgradeCostMult) });
-  }
-
-  return offers;
-}
-
-// ---------------------------------------------------------------------------
-// Plumas (03 §5): P_derecho = floor((E_vida / e0)^k · plumaMultiplier); ganancia = P_derecho − P
-// ---------------------------------------------------------------------------
-
-/** Plumas que se ganarían ascendiendo ahora mismo (0 si no hay ninguna pendiente). */
-export function plumasPending(state: GameState, content: Content, worldId: WorldId): number {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return 0;
-  const entitled = Math.floor((worldState.lifetimeEarned.toNumber() / world.prestige.e0) ** world.prestige.exponent * plumaMultiplier(state, content, worldId));
-  return Math.max(0, entitled - worldState.plumasTotal.toNumber());
+/** Segundos máximos de producción mientras no estás (2 h + Siesta larga). */
+export function offlineCapSeconds(state: GameState, content: Content): number {
+  return (content.mine.offlineHours + perkSum(state, content, 'offlineHours')) * 3600;
 }

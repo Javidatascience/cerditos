@@ -19,8 +19,8 @@ function fnv1aForTest(text: string): string {
 describe('exportSave / parseImport', () => {
   it('exportar e importar reproduce el mismo estado', () => {
     const state = createInitialState(CONTENT, 0);
-    state.worlds['valle']!.currency = D('1.2345e42');
-    state.worlds['valle']!.generators['lechon']!.bought = 9;
+    state.coins = D('1.2345e42');
+    state.gear['rascador'] = 9;
 
     const code = exportSave(state, 1000);
     const result = parseImport(code);
@@ -28,8 +28,8 @@ describe('exportSave / parseImport', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.data.version).toBe(CURRENT_VERSION);
-    expect(result.data.state.worlds['valle']!.currency).toBe('1.2345e+42');
-    expect(result.data.state.worlds['valle']!.generators['lechon']!.bought).toBe(9);
+    expect(result.data.state.coins).toBe('1.2345e+42');
+    expect(result.data.state.gear['rascador']).toBe(9);
   });
 
   it('empieza por el prefijo esperado', () => {
@@ -70,10 +70,10 @@ describe('exportSave / parseImport', () => {
 
   it('acepta tildes y eñes (UTF-8) sin corromperse', () => {
     const state = createInitialState(CONTENT, 0);
-    state.journal.push({ at: 1, text: 'Ha llegado una Cerdita lectora. Niñez, mañana, corazón.' });
+    state.journal.push({ at: 1, text: 'Ha llegado a Roca. Niñez, mañana, corazón.' });
     const code = exportSave(state, 0);
     const result = parseImport(code);
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.data.state.journal[0]!.text).toBe('Ha llegado una Cerdita lectora. Niñez, mañana, corazón.');
+    if (result.ok) expect(result.data.state.journal[0]!.text).toBe('Ha llegado a Roca. Niñez, mañana, corazón.');
   });
 });

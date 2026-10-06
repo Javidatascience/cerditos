@@ -1,93 +1,14 @@
-// Árbol de ventajas permanentes. Mismo patrón en los 4 mundos (docs/01-diseno-juego.md §6):
-// un pequeño constructor evita repetir 40 veces la misma estructura, pero solo ensambla
-// datos — ninguna lógica de juego vive aquí (esa está en core/formulas.ts, hito 5).
-// Ver docs/03-economia.md §6 y §8 para el razonamiento y los números finales.
+// Ventajas permanentes de la mina, que se compran con plumas (las que deja subir a la superficie).
+// Ver docs/06-mina.md. Coste del nivel L → L+1: ceil(baseCost · costGrowth^L) (core/formulas.ts).
 
-import { balneario } from './worlds/balneario.ts';
-import { bosque } from './worlds/bosque.ts';
-import { huerta } from './worlds/huerta.ts';
-import { pocilga } from './worlds/pocilga.ts';
-import { valle } from './worlds/valle.ts';
-import type { PerkDef, PerkEffect } from './types.ts';
-import type { WorldId } from '../core/state.ts';
+import type { PerkDef } from './types.ts';
 
-// La primera fila (Buen comienzo…Hermandad de granjas) cuesta ×10 en el Valle y el Bosque
-// respecto a la Huerta y el Balneario: con el mismo coste en los 4 mundos, el árbol del
-// Valle se completaba en las primeras 12 h de juego (decisiones sin peso); con ×10 se reparte
-// entre el día 1 y el día 6 (03 §6, §10). La segunda fila (Establo, Raíces) tiene un coste
-// base propio por mundo, ya absoluto y proporcional a las plumas típicas de cada uno.
-const FIRST_ROW_SCALE: Record<WorldId, number> = { [valle.id]: 10, [bosque.id]: 10, [huerta.id]: 1, [balneario.id]: 1, [pocilga.id]: 3 };
-const LATE_ROW_BASE: Record<WorldId, number> = { [valle.id]: 200000, [bosque.id]: 200000, [huerta.id]: 5000, [balneario.id]: 5000, [pocilga.id]: 20000 };
-
-function perksForWorld(world: WorldId): PerkDef[] {
-  const scale = FIRST_ROW_SCALE[world] ?? 1;
-  const lateBase = LATE_ROW_BASE[world] ?? 5000;
-  const id = (local: string) => `${world}.${local}`;
-  const p = (
-    local: string,
-    name: string,
-    flavor: string,
-    maxLevel: number | null,
-    baseCost: number,
-    costGrowth: number,
-    requires: string[],
-    effect: PerkEffect,
-  ): PerkDef => ({ id: id(local), world, name, flavor, maxLevel, baseCost, costGrowth, requires: requires.map(id), effect });
-
-  return [
-    p('abono', 'Abono de calidad', 'Cada saco hace que los cerditos crezcan un poco más felices y más deprisa.', null, 2, 1.4, [], {
-      kind: 'prodMult',
-      perLevel: 1.1,
-    }),
-    p('comienzo', 'Buen comienzo', 'Empieza cada ronda con la despensa ya llena.', 5, 3 * scale, 3, ['abono'], {
-      kind: 'startCurrency',
-      perLevel: 25,
-    }),
-    p('ahorro', 'Regateo en la feria', 'En el mercado, todo cuesta un poco menos si sabes regatear.', 5, 6 * scale, 2.2, ['abono'], {
-      kind: 'costMult',
-      perLevel: 0.93,
-    }),
-    p(
-      'mejoras',
-      'Herramientas heredadas',
-      'De generación en generación, las mejoras salen más baratas.',
-      3,
-      12 * scale,
-      3,
-      ['abono'],
-      { kind: 'upgradeCostMult', perLevel: 0.75 },
-    ),
-    p('vuelo', 'Plumas al viento', 'Cada vuelo deja un poco más de plumas en el suelo.', 5, 25 * scale, 2.5, ['ahorro'], {
-      kind: 'plumaMult',
-      perLevel: 0.15,
-    }),
-    p('puente', 'Hermandad de granjas', 'Las granjas se ayudan entre ellas, aunque estén lejos.', 5, 60 * scale, 2.2, ['vuelo'], {
-      kind: 'crossProd',
-      perLevel: 0.1,
-    }),
-    p(
-      'establo',
-      'Establo ampliado',
-      'Más sitio, y los cerditos no notan tanto que hay más vecinos.',
-      4,
-      lateBase,
-      4,
-      ['puente'],
-      { kind: 'costGrowthDelta', perLevel: 0.0025 },
-    ),
-    p(
-      'raices',
-      'Raíces profundas',
-      'Cuantas más raíces, más aguanta el bono de las plumas.',
-      5,
-      lateBase * 2,
-      3,
-      ['puente'],
-      { kind: 'perPlumaBonus', perLevel: 0.01 },
-    ),
-  ];
-}
-
-const WORLD_IDS: WorldId[] = [valle.id, pocilga.id, bosque.id, huerta.id, balneario.id];
-
-export const PERKS: PerkDef[] = WORLD_IDS.flatMap((w) => perksForWorld(w));
+export const PERKS: PerkDef[] = [
+  { id: 'abono', name: 'Abono de calidad', flavor: 'Los cerditos cavan más contentos cuanto mejor comen.', maxLevel: null, baseCost: 2, costGrowth: 1.4, requires: [], effect: { kind: 'prodMult', perLevel: 1.1 } },
+  { id: 'comienzo', name: 'Buen comienzo', flavor: 'Empiezas cada ronda con la despensa llena.', maxLevel: 5, baseCost: 3, costGrowth: 3, requires: ['abono'], effect: { kind: 'startCurrency', perLevel: 25 } },
+  { id: 'atajo', name: 'Atajo conocido', flavor: 'Ya te sabes los primeros niveles de memoria.', maxLevel: 10, baseCost: 8, costGrowth: 1.8, requires: ['abono'], effect: { kind: 'startDepth', perLevel: 4 } },
+  { id: 'descanso', name: 'Siesta larga', flavor: 'La mina sigue trabajando un rato más mientras no estás.', maxLevel: 6, baseCost: 15, costGrowth: 2.2, requires: ['abono'], effect: { kind: 'offlineHours', perLevel: 1 } },
+  { id: 'ahorro', name: 'Regateo en la feria', flavor: 'Todo cuesta un poco menos si sabes regatear.', maxLevel: 5, baseCost: 6, costGrowth: 2.2, requires: ['abono'], effect: { kind: 'costMult', perLevel: 0.93 } },
+  { id: 'vuelo', name: 'Plumas al viento', flavor: 'Cada subida deja un poco más de plumas en el suelo.', maxLevel: 5, baseCost: 25, costGrowth: 2.5, requires: ['ahorro'], effect: { kind: 'plumaMult', perLevel: 0.15 } },
+  { id: 'raices', name: 'Raíces profundas', flavor: 'Cuantas más plumas, más aguanta su bono.', maxLevel: 5, baseCost: 100, costGrowth: 3, requires: ['vuelo'], effect: { kind: 'perPlumaBonus', perLevel: 0.01 } },
+];

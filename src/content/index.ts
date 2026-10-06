@@ -1,19 +1,16 @@
-// Contenido completo del juego (hito 2). Ver docs/02-arquitectura.md §7.
+// Contenido completo del juego. Ver docs/06-mina.md.
 
 import { ACHIEVEMENTS } from './achievements.ts';
-import { SETS, VARIETIES } from './collection.ts';
+import { HAZARDS, MATERIALS, MINE, PIECES, ZONES } from './mine.ts';
 import { PERKS } from './perks.ts';
 import type { Content } from './types.ts';
-import { balneario } from './worlds/balneario.ts';
-import { bosque } from './worlds/bosque.ts';
-import { huerta } from './worlds/huerta.ts';
-import { pocilga } from './worlds/pocilga.ts';
-import { valle } from './worlds/valle.ts';
 
 export const CONTENT: Content = {
-  worlds: [valle, pocilga, bosque, huerta, balneario],
+  mine: MINE,
+  materials: MATERIALS,
+  hazards: HAZARDS,
+  zones: ZONES,
+  pieces: PIECES,
   perks: PERKS,
-  varieties: VARIETIES,
-  sets: SETS,
   achievements: ACHIEVEMENTS,
 };

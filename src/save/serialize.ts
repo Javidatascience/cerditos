@@ -1,45 +1,33 @@
-// Conversión GameState ⇄ SaveData (Decimal ⇄ string). Ver docs/02-arquitectura.md §6.
+// Conversión GameState ⇄ SaveData (Decimal ⇄ string). Ver docs/06-mina.md.
 // No vive en src/core/: core no sabe nada de guardado, solo del estado en memoria.
 
 import { Decimal } from '../core/num.ts';
-import type { Buff, GameState, GeneratorState, JournalEntry, Settings, WorldState } from '../core/state.ts';
+import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 3;
-
-export interface SerializedGeneratorState {
-  bought: number;
-  owned: string;
-}
-
-export interface SerializedWorldState {
-  unlocked: boolean;
-  currency: string;
-  runEarned: string;
-  lifetimeEarned: string;
-  generators: Record<string, SerializedGeneratorState>;
-  upgrades: Record<string, true>;
-  plumas: string;
-  plumasTotal: string;
-  perks: Record<string, number>;
-  ascensions: number;
-  runSeconds: number;
-  calm: number;
-  calmPenaltyUntil: number;
-  revealed: number;
-  basketSince: number;
-  records: { maxBought: Record<string, number>; maxHarmony: number };
-}
+export const CURRENT_VERSION = 4;
 
 export interface SerializedGameState {
   version: number;
   createdAt: number;
   lastTickAt: number;
   time: number;
-  activeWorld: string;
-  worlds: Record<string, SerializedWorldState>;
-  collection: Record<string, { adoptedAt: number }>;
-  achievements: Record<string, { at: number }>;
+  coins: string;
+  depth: number;
+  blockHp: number;
+  runMaxDepth: number;
+  materials: Record<string, string>;
+  gear: Record<string, number>;
+  farmZone: number | null;
+  runSeconds: number;
+  plumas: string;
+  plumasTotal: string;
+  perks: Record<string, number>;
+  ascensions: number;
+  records: { maxDepth: number; blocks: number };
   taps: number;
+  burstReadyAt: number;
+  basketSince: number;
+  achievements: Record<string, { at: number }>;
   buff: Buff | null;
   journal: JournalEntry[];
   settings: Settings;
@@ -53,63 +41,7 @@ export interface SaveData {
   state: SerializedGameState;
 }
 
-function serializeGenerator(g: GeneratorState): SerializedGeneratorState {
-  return { bought: g.bought, owned: g.owned.toString() };
-}
-
-function deserializeGenerator(g: SerializedGeneratorState): GeneratorState {
-  return { bought: g.bought, owned: new Decimal(g.owned) };
-}
-
-function serializeWorld(w: WorldState): SerializedWorldState {
-  const generators: Record<string, SerializedGeneratorState> = {};
-  for (const [id, gen] of Object.entries(w.generators)) generators[id] = serializeGenerator(gen);
-  return {
-    unlocked: w.unlocked,
-    currency: w.currency.toString(),
-    runEarned: w.runEarned.toString(),
-    lifetimeEarned: w.lifetimeEarned.toString(),
-    generators,
-    upgrades: { ...w.upgrades },
-    plumas: w.plumas.toString(),
-    plumasTotal: w.plumasTotal.toString(),
-    perks: { ...w.perks },
-    ascensions: w.ascensions,
-    runSeconds: w.runSeconds,
-    calm: w.calm,
-    calmPenaltyUntil: w.calmPenaltyUntil,
-    revealed: w.revealed,
-    basketSince: w.basketSince,
-    records: { maxBought: { ...w.records.maxBought }, maxHarmony: w.records.maxHarmony },
-  };
-}
-
-function deserializeWorld(w: SerializedWorldState): WorldState {
-  const generators: Record<string, GeneratorState> = {};
-  for (const [id, gen] of Object.entries(w.generators)) generators[id] = deserializeGenerator(gen);
-  return {
-    unlocked: w.unlocked,
-    currency: new Decimal(w.currency),
-    runEarned: new Decimal(w.runEarned),
-    lifetimeEarned: new Decimal(w.lifetimeEarned),
-    generators,
-    upgrades: { ...w.upgrades },
-    plumas: new Decimal(w.plumas),
-    plumasTotal: new Decimal(w.plumasTotal),
-    perks: { ...w.perks },
-    ascensions: w.ascensions,
-    runSeconds: w.runSeconds,
-    calm: w.calm,
-    calmPenaltyUntil: w.calmPenaltyUntil,
-    revealed: w.revealed,
-    basketSince: w.basketSince,
-    records: { maxBought: { ...w.records.maxBought }, maxHarmony: w.records.maxHarmony },
-  };
-}
-
 export function serialize(state: GameState, savedAt: number): SaveData {
-  const worlds: Record<string, SerializedWorldState> = {};
-  for (const [id, w] of Object.entries(state.worlds)) worlds[id] = serializeWorld(w);
   return {
     format: 'cerditos',
     version: CURRENT_VERSION,
@@ -119,11 +51,23 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       createdAt: state.createdAt,
       lastTickAt: state.lastTickAt,
       time: state.time,
-      activeWorld: state.activeWorld,
-      worlds,
-      collection: Object.fromEntries(Object.entries(state.collection).map(([id, v]) => [id, { ...v }])),
-      achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
+      coins: state.coins.toString(),
+      depth: state.depth,
+      blockHp: state.blockHp,
+      runMaxDepth: state.runMaxDepth,
+      materials: Object.fromEntries(Object.entries(state.materials).map(([id, v]) => [id, v.toString()])),
+      gear: { ...state.gear },
+      farmZone: state.farmZone,
+      runSeconds: state.runSeconds,
+      plumas: state.plumas.toString(),
+      plumasTotal: state.plumasTotal.toString(),
+      perks: { ...state.perks },
+      ascensions: state.ascensions,
+      records: { ...state.records },
       taps: state.taps,
+      burstReadyAt: state.burstReadyAt,
+      basketSince: state.basketSince,
+      achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
       buff: state.buff ? { ...state.buff } : null,
       journal: state.journal.map((e) => ({ ...e })),
       settings: { ...state.settings },
@@ -132,20 +76,31 @@ export function serialize(state: GameState, savedAt: number): SaveData {
 }
 
 export function deserialize(data: SaveData): GameState {
-  const worlds: Record<string, WorldState> = {};
-  for (const [id, w] of Object.entries(data.state.worlds)) worlds[id] = deserializeWorld(w);
+  const s = data.state;
   return {
-    version: data.state.version,
-    createdAt: data.state.createdAt,
-    lastTickAt: data.state.lastTickAt,
-    time: data.state.time,
-    activeWorld: data.state.activeWorld,
-    worlds,
-    collection: Object.fromEntries(Object.entries(data.state.collection).map(([id, v]) => [id, { ...v }])),
-    achievements: Object.fromEntries(Object.entries(data.state.achievements).map(([id, v]) => [id, { ...v }])),
-    taps: data.state.taps,
-    buff: data.state.buff ? { ...data.state.buff } : null,
-    journal: data.state.journal.map((e) => ({ ...e })),
-    settings: { ...data.state.settings },
+    version: s.version,
+    createdAt: s.createdAt,
+    lastTickAt: s.lastTickAt,
+    time: s.time,
+    coins: new Decimal(s.coins),
+    depth: s.depth,
+    blockHp: s.blockHp,
+    runMaxDepth: s.runMaxDepth,
+    materials: Object.fromEntries(Object.entries(s.materials).map(([id, v]) => [id, new Decimal(v)])),
+    gear: { ...s.gear },
+    farmZone: s.farmZone,
+    runSeconds: s.runSeconds,
+    plumas: new Decimal(s.plumas),
+    plumasTotal: new Decimal(s.plumasTotal),
+    perks: { ...s.perks },
+    ascensions: s.ascensions,
+    records: { ...s.records },
+    taps: s.taps,
+    burstReadyAt: s.burstReadyAt,
+    basketSince: s.basketSince,
+    achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),
+    buff: s.buff ? { ...s.buff } : null,
+    journal: s.journal.map((e) => ({ ...e })),
+    settings: { ...s.settings },
   };
 }

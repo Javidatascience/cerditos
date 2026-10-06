@@ -1,189 +1,105 @@
-// Únicas funciones (junto con tick.ts, offline.ts y autobuy.ts) que mutan el GameState.
-// Ver CLAUDE.md "Reglas de código" y docs/02-arquitectura.md §4.
+// Únicas funciones (junto con tick.ts y offline.ts) que mutan el GameState.
+// Ver CLAUDE.md "Reglas de código" y docs/06-mina.md.
 
 import type { Content } from '../content/types.ts';
+import { basketValue } from './basket.ts';
 import {
-  availableUpgrades,
-  bulkCost,
-  generatorCost,
-  getGeneratorDef,
-  getPerkDef,
-  getWorldDef,
-  maxAffordable,
+  burstCooldown,
+  burstPiece,
+  burstSeconds,
+  getPerk,
+  getPiece,
+  incomePerSecond,
+  MAX_DEPTH,
   perkAvailable,
   perkCost,
-  displayProductionPerSecond,
-  perkCostGrowthDelta,
-  totalCostMultiplier,
+  pieceCost,
+  pieceLevel,
+  pieceUnlocked,
   plumasPending,
-  startCurrency,
+  startCoins,
+  startDepth,
+  tapSeconds,
+  zoneEndDepth,
+  zoneIndexOf,
+  blockHpAt,
 } from './formulas.ts';
 import { addEntry } from './journal.ts';
-import { touchCalm } from './mechanics/calm.ts';
-import { canMerge, freeSlots } from './mechanics/merge.ts';
-import { harmonyLevel, lowestGenerators } from './mechanics/harmony.ts';
-import { basketValue } from './basket.ts';
+import { advanceMine } from './mining.ts';
 import { D, Decimal } from './num.ts';
-import type { GameState, GeneratorId, PerkId, Settings, UpgradeId, WorldId } from './state.ts';
+import type { GameState, PerkId, PieceId, Settings } from './state.ts';
 
 export type BuyAmount = 1 | 10 | 'max';
 
-/** Segundos de producción que da cada toque (con un mínimo de 1 de moneda). */
-export const TAP_SECONDS = 1;
-
-/** Lo que daría rascar la barriga ahora: TAP_SECONDS de producción, mínimo 1, con el impulso del visitante si está activo. */
-export function tapValue(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const base = Decimal.max(1, displayProductionPerSecond(state, content, worldId).mul(TAP_SECONDS));
-  return state.buff ? base.mul(state.buff.mult) : base;
-}
-
-/** Rasca la barriga: da `tapValue` de moneda (no cuenta como producción para plumas). Devuelve lo dado. */
-export function tap(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const worldState = state.worlds[worldId];
-  if (!worldState) return D(0);
-  const gain = tapValue(state, content, worldId);
-  worldState.currency = worldState.currency.add(gain);
+/** Pica la mina: equivale a `tapSeconds` segundos de cavado (con el impulso del visitante si está activo). Devuelve las monedas ganadas. */
+export function tap(state: GameState, content: Content): Decimal {
+  const before = state.coins;
+  advanceMine(state, content, tapSeconds(state, content), state.buff?.mult ?? 1);
   state.taps += 1;
-  return gain;
+  return state.coins.sub(before);
 }
 
-/** Recoge la cesta de la granja: suma su valor a la moneda y la vacía. Devuelve lo recogido. */
-export function collectBasket(state: GameState, content: Content, worldId: WorldId): Decimal {
-  const worldState = state.worlds[worldId];
-  if (!worldState || !worldState.unlocked) return D(0);
-  const gain = basketValue(state, content, worldId);
-  worldState.currency = worldState.currency.add(gain);
-  worldState.runEarned = worldState.runEarned.add(gain);
-  worldState.lifetimeEarned = worldState.lifetimeEarned.add(gain);
-  worldState.basketSince = state.time;
-  return gain;
+/** Lo que daría picar ahora mismo (sin mutar el estado). */
+export function tapValue(state: GameState, content: Content): Decimal {
+  const copy: GameState = { ...state, coins: state.coins, materials: { ...state.materials }, records: { ...state.records }, journal: [] };
+  const before = copy.coins;
+  advanceMine(copy, content, tapSeconds(copy, content), copy.buff?.mult ?? 1);
+  return copy.coins.sub(before);
 }
-
-export type VisitorKind = 'injection' | 'boost';
-
-/** Minutos de producción que da la inyección de un visitante. */
-export const VISITOR_INJECTION_SECONDS = 600;
-/** Multiplicador y duración del impulso de un visitante. */
-export const VISITOR_BOOST = { mult: 5, seconds: 60 };
 
 /**
- * Recompensa de un cerdito viajero: `injection` = 10 min de producción del mundo activo de golpe;
- * `boost` = ×5 de producción en todos los mundos durante 60 s de juego.
+ * Sube de nivel una pieza `amount` veces (1, 10 o "máx" = las que se puedan pagar). Devuelve los
+ * niveles comprados. Pide monedas y, si la pieza lo requiere, material. No hace nada si no está
+ * desbloqueada o ya está al máximo.
  */
-export function claimVisitor(state: GameState, content: Content, kind: VisitorKind, worldId: WorldId): void {
-  if (kind === 'boost') {
-    state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
+export function buyPiece(state: GameState, content: Content, pieceId: PieceId, amount: BuyAmount = 1): number {
+  const piece = getPiece(content, pieceId);
+  if (!pieceUnlocked(state, piece)) return 0;
+  const wanted = amount === 'max' ? 1000 : amount;
+  let bought = 0;
+  while (bought < wanted) {
+    const level = pieceLevel(state, pieceId);
+    if (level >= piece.maxLevel) break;
+    const cost = pieceCost(state, content, piece, level);
+    if (state.coins.lt(cost.coins)) break;
+    const stock = piece.material === null ? D(0) : (state.materials[piece.material] ?? D(0));
+    if (cost.material !== null && stock.lt(cost.material)) break;
+    state.coins = state.coins.sub(cost.coins);
+    if (piece.material !== null && cost.material !== null) state.materials[piece.material] = stock.sub(cost.material);
+    state.gear[pieceId] = level + 1;
+    bought += 1;
+  }
+  return bought;
+}
+
+/** Usa la dinamita si la tienes y está lista: cava de golpe. Devuelve las monedas ganadas (0 si no se pudo). */
+export function useBurst(state: GameState, content: Content): Decimal {
+  const piece = burstPiece(content);
+  if (!piece || state.time < state.burstReadyAt) return D(0);
+  const seconds = burstSeconds(state, content);
+  if (seconds <= 0) return D(0);
+  const before = state.coins;
+  advanceMine(state, content, seconds, state.buff?.mult ?? 1);
+  state.burstReadyAt = state.time + burstCooldown(content);
+  return state.coins.sub(before);
+}
+
+/**
+ * Elige en qué zona cavar: `null` = ir avanzando; un número = quedarse en esa zona (solo las que ya
+ * has alcanzado en esta ronda), para conseguir sus materiales. Si el nivel actual cae fuera, se
+ * pasa al último nivel alcanzado de esa zona.
+ */
+export function setFarmZone(state: GameState, content: Content, zone: number | null): void {
+  if (zone === null) {
+    state.farmZone = null;
     return;
   }
-  const worldState = state.worlds[worldId];
-  if (!worldState || !worldState.unlocked) return;
-  const gain = displayProductionPerSecond(state, content, worldId).mul(VISITOR_INJECTION_SECONDS);
-  worldState.currency = worldState.currency.add(gain);
-  worldState.runEarned = worldState.runEarned.add(gain);
-  worldState.lifetimeEarned = worldState.lifetimeEarned.add(gain);
-}
-
-/**
- * Compra `amount` unidades del generador (1, 10 "todo o nada", o "max" = las que se puedan
- * pagar). Devuelve el número de unidades realmente compradas (0 si no se compró ninguna).
- * Nunca deja la moneda negativa.
- */
-export function buyGenerator(state: GameState, content: Content, worldId: WorldId, genId: GeneratorId, amount: BuyAmount = 1): number {
-  const world = getWorldDef(content, worldId);
-  const gen = getGeneratorDef(world, genId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return 0;
-  const genState = worldState.generators[genId];
-  if (!genState) return 0;
-
-  const delta = perkCostGrowthDelta(state, content, worldId);
-  const mult = totalCostMultiplier(state, content, worldId);
-
-  let count = amount === 'max' ? maxAffordable(world, gen, genState.bought, worldState.currency, delta, mult) : amount;
-  if (world.mechanic === 'merge') {
-    // Fusión: solo se compra el nivel 0 y solo caben tantos como huecos libres.
-    if (world.generators[0]?.id !== genId) return 0;
-    count = Math.min(count, freeSlots(world, worldState));
+  if (zone < 0 || zone >= content.zones.length || zone > zoneIndexOf(content, state.runMaxDepth)) return;
+  state.farmZone = zone;
+  if (zoneIndexOf(content, state.depth) !== zone) {
+    state.depth = Math.min(zoneEndDepth(content, zone), state.runMaxDepth);
+    state.blockHp = blockHpAt(content, state.depth);
   }
-  if (count <= 0) return 0;
-
-  const cost = bulkCost(world, gen, genState.bought, count, delta, mult);
-  if (worldState.currency.lt(cost)) return 0;
-
-  worldState.currency = worldState.currency.sub(cost);
-  genState.bought += count;
-  genState.owned = genState.owned.add(count);
-  worldState.records.maxBought[genId] = Math.max(worldState.records.maxBought[genId] ?? 0, genState.bought);
-  touchCalm(world, worldState, state.time); // Balneario: comprar molesta (una vez por ventana)
-  if (world.mechanic === 'harmony') worldState.records.maxHarmony = Math.max(worldState.records.maxHarmony, harmonyLevel(world, worldState));
-  return count;
-}
-
-/**
- * Fusiona dos cerdos del nivel `level` (0-based) en uno del nivel siguiente (La Pocilga).
- * Devuelve `true` si se fusionaron. Libera un hueco.
- */
-export function mergePigs(state: GameState, content: Content, worldId: WorldId, level: number): boolean {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState || !worldState.unlocked || !canMerge(world, worldState, level)) return false;
-  const from = world.generators[level]!;
-  const to = world.generators[level + 1]!;
-  const fromState = worldState.generators[from.id]!;
-  const toState = worldState.generators[to.id]!;
-  fromState.owned = fromState.owned.sub(2);
-  toState.owned = toState.owned.add(1);
-  worldState.records.maxBought[to.id] = Math.max(worldState.records.maxBought[to.id] ?? 0, toState.owned.toNumber());
-  return true;
-}
-
-/** Coste de "Completar fila" (armonía): una unidad de cada cerdito que está en el mínimo. */
-export function rowBundleCost(state: GameState, content: Content, worldId: WorldId): { genIds: GeneratorId[]; cost: Decimal } {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState || world.mechanic !== 'harmony') return { genIds: [], cost: D(0) };
-  const delta = perkCostGrowthDelta(state, content, worldId);
-  const mult = totalCostMultiplier(state, content, worldId);
-  const genIds = lowestGenerators(world, worldState);
-  let cost = D(0);
-  for (const id of genIds) cost = cost.add(generatorCost(world, getGeneratorDef(world, id), worldState.generators[id]?.bought ?? 0, delta, mult));
-  return { genIds, cost };
-}
-
-/**
- * Completar fila (armonía): compra una unidad de cada cerdito que está en el mínimo, todo o
- * nada. Devuelve `true` si se compró.
- */
-export function buyRow(state: GameState, content: Content, worldId: WorldId): boolean {
-  const worldState = state.worlds[worldId];
-  if (!worldState) return false;
-  const { genIds, cost } = rowBundleCost(state, content, worldId);
-  if (genIds.length === 0 || worldState.currency.lt(cost)) return false;
-  for (const id of genIds) buyGenerator(state, content, worldId, id, 1);
-  return true;
-}
-
-/**
- * Compra una mejora (por cerdito o global) si está disponible y hay dinero. Reutiliza
- * `availableUpgrades` como única fuente de verdad de qué hay a la venta y a qué precio, para
- * no duplicar esa lógica. Devuelve `true` si se compró.
- */
-export function buyUpgrade(state: GameState, content: Content, worldId: WorldId, upgradeId: UpgradeId): boolean {
-  const worldState = state.worlds[worldId];
-  if (!worldState || worldState.upgrades[upgradeId]) return false;
-
-  const offer = availableUpgrades(state, content, worldId).find((o) => o.id === upgradeId);
-  if (!offer || worldState.currency.lt(offer.cost)) return false;
-
-  worldState.currency = worldState.currency.sub(offer.cost);
-  worldState.upgrades[upgradeId] = true;
-  touchCalm(getWorldDef(content, worldId), worldState, state.time);
-  return true;
-}
-
-/** Cambia el mundo que se está viendo (solo si está desbloqueado). */
-export function setActiveWorld(state: GameState, worldId: WorldId): void {
-  if (state.worlds[worldId]?.unlocked) state.activeWorld = worldId;
 }
 
 /** Cambia la cantidad por defecto de los botones de compra (×1 / ×10 / máx). */
@@ -191,69 +107,81 @@ export function setBuyAmount(state: GameState, amount: BuyAmount): void {
   state.settings.buyAmount = amount;
 }
 
-/** Cambia la notación de los números (vista Ajustes, hito 4). */
 export function setNotation(state: GameState, notation: Settings['notation']): void {
   state.settings.notation = notation;
 }
 
-/** Activa o apaga los efectos y animaciones (granja animada, números que suben). */
 export function setEffects(state: GameState, enabled: boolean): void {
   state.settings.effects = enabled;
 }
 
-/**
- * Compra un nivel de una ventaja permanente con las plumas del mundo al que pertenece.
- * Devuelve `true` si se compró. No hace nada si no cumple los requisitos, está al máximo o
- * no hay plumas suficientes.
- */
+/** Compra un nivel de una ventaja permanente con plumas. Devuelve `true` si se compró. */
 export function buyPerk(state: GameState, content: Content, perkId: PerkId): boolean {
-  const perk = getPerkDef(content, perkId);
-  if (!perkAvailable(state, content, perk)) return false;
-  const worldState = state.worlds[perk.world];
-  if (!worldState) return false;
-
-  const level = worldState.perks[perkId] ?? 0;
+  const perk = getPerk(content, perkId);
+  if (!perkAvailable(state, perk)) return false;
+  const level = state.perks[perkId] ?? 0;
   const cost = perkCost(perk, level);
-  if (worldState.plumas.lt(cost)) return false;
-
-  worldState.plumas = worldState.plumas.sub(cost);
-  worldState.perks[perkId] = level + 1;
+  if (state.plumas.lt(cost)) return false;
+  state.plumas = state.plumas.sub(cost);
+  state.perks[perkId] = level + 1;
   return true;
 }
 
 /**
- * Echa a volar el mundo: cobra las plumas pendientes (01 §5) y reinicia la ronda (moneda,
- * cerditos, mejoras y estadísticas de la ronda), conservando plumas, ventajas y todo lo
- * demás. `now`: epoch ms, para la entrada del diario (core no lee el reloj del sistema).
- * Devuelve las plumas ganadas (0 si no había ninguna pendiente: no se puede ascender "en
- * vano", ver 01 §5 y el test de ascend que exige que P nunca disminuya).
+ * Sube a la superficie: cobra las plumas (según el nivel más hondo de la ronda) y reinicia la
+ * ronda (monedas, materiales, piezas y profundidad), conservando plumas, ventajas, logros y
+ * récords. Devuelve las plumas ganadas (0 si no había ninguna: no se puede subir en vano).
+ * `now`: epoch ms, para el diario.
  */
-export function ascend(state: GameState, content: Content, worldId: WorldId, now: number): number {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return 0;
-
-  const gain = plumasPending(state, content, worldId);
+export function ascend(state: GameState, content: Content, now: number): number {
+  const gain = plumasPending(state, content);
   if (gain <= 0) return 0;
 
-  worldState.plumas = worldState.plumas.add(gain);
-  worldState.plumasTotal = worldState.plumasTotal.add(gain);
-  worldState.ascensions += 1;
+  state.plumas = state.plumas.add(gain);
+  state.plumasTotal = state.plumasTotal.add(gain);
+  state.ascensions += 1;
 
-  worldState.currency = startCurrency(state, content, worldId);
-  worldState.runEarned = D(0);
-  for (const gen of world.generators) {
-    const genState = worldState.generators[gen.id];
-    if (!genState) continue;
-    genState.bought = 0;
-    genState.owned = D(0);
-  }
-  worldState.upgrades = {};
-  worldState.runSeconds = 0;
-  worldState.calm = 1; // cada ronda empieza con la calma llena (03 §3.4)
-  worldState.calmPenaltyUntil = -1;
+  state.coins = startCoins(state, content);
+  state.materials = {};
+  state.gear = {};
+  state.farmZone = null;
+  state.depth = startDepth(state, content);
+  state.blockHp = blockHpAt(content, state.depth);
+  state.runMaxDepth = state.depth;
+  state.runSeconds = 0;
+  state.burstReadyAt = 0;
+  state.basketSince = state.time;
 
-  addEntry(state, `${world.name}: tus cerdos han decidido que hoy sí, hoy vuelan. Dejan tras de sí ${gain} pluma${gain === 1 ? '' : 's'}.`, now);
-
+  addEntry(state, `Subes a la superficie tras llegar al nivel ${state.records.maxDepth}. Dejas ${gain} pluma${gain === 1 ? '' : 's'} y vuelves a bajar con ganas.`, now);
   return gain;
 }
+
+// ---------------------------------------------------------------------------
+// Cesta y visitante
+// ---------------------------------------------------------------------------
+
+/** Recoge la cesta: suma su valor a las monedas y la vacía. Devuelve lo recogido. */
+export function collectBasket(state: GameState, content: Content): Decimal {
+  const gain = basketValue(state, content);
+  state.coins = state.coins.add(gain);
+  state.basketSince = state.time;
+  return gain;
+}
+
+export type VisitorKind = 'injection' | 'boost';
+
+/** Segundos de ingresos que da la inyección de un visitante. */
+export const VISITOR_INJECTION_SECONDS = 600;
+/** Multiplicador y duración del impulso de un visitante. */
+export const VISITOR_BOOST = { mult: 5, seconds: 60 };
+
+/** Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de cavado durante 60 s. */
+export function claimVisitor(state: GameState, content: Content, kind: VisitorKind): void {
+  if (kind === 'boost') {
+    state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
+    return;
+  }
+  state.coins = state.coins.add(incomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS));
+}
+
+export { MAX_DEPTH };

@@ -1,28 +1,35 @@
-// Logros (sin bonos): progreso, adopción automática con línea en el diario.
-// Reutiliza requirementProgress de collection.ts para los requisitos comunes.
+// Logros (sin bonos): progreso y adopción automática con línea en el diario.
 
 import type { AchievementDef, AchievementReq, Content } from '../content/types.ts';
-import { requirementProgress, type RequirementProgress } from './collection.ts';
 import { addEntry } from './journal.ts';
-import { D } from './num.ts';
+import { D, Decimal } from './num.ts';
 import type { GameState } from './state.ts';
+
+export interface RequirementProgress {
+  current: Decimal;
+  target: Decimal;
+  done: boolean;
+}
+
+function progress(current: Decimal | number, target: number): RequirementProgress {
+  const c = D(current);
+  return { current: c, target: D(target), done: c.gte(target) };
+}
 
 export function achievementProgress(state: GameState, req: AchievementReq): RequirementProgress {
   switch (req.kind) {
-    case 'varietyCount': {
-      const current = D(Object.keys(state.collection).length);
-      return { current, target: D(req.count), done: current.gte(req.count) };
-    }
-    case 'worldUnlocked': {
-      const unlocked = state.worlds[req.world]?.unlocked ?? false;
-      return { current: D(unlocked ? 1 : 0), target: D(1), done: unlocked };
-    }
-    case 'taps': {
-      const current = D(state.taps);
-      return { current, target: D(req.count), done: current.gte(req.count) };
-    }
-    default:
-      return requirementProgress(state, req);
+    case 'depth':
+      return progress(state.records.maxDepth, req.count);
+    case 'blocks':
+      return progress(state.records.blocks, req.count);
+    case 'taps':
+      return progress(state.taps, req.count);
+    case 'ascensions':
+      return progress(state.ascensions, req.count);
+    case 'plumasTotal':
+      return progress(state.plumasTotal, req.count);
+    case 'pieceLevel':
+      return progress(state.gear[req.piece] ?? 0, req.count);
   }
 }
 
@@ -30,14 +37,13 @@ export function isAchieved(state: GameState, def: AchievementDef): boolean {
   return state.achievements[def.id] !== undefined;
 }
 
-/** Adopta los logros cumplidos y anota cada uno en el diario. Devuelve los ids. `now`: epoch ms. */
+/** Adopta los logros cumplidos y anota en el diario los "grandes" (no los de nivel de pieza). Devuelve los ids. `now`: epoch ms. */
 export function updateAchievements(state: GameState, content: Content, now: number): string[] {
   const achieved: string[] = [];
   for (const def of content.achievements) {
     if (isAchieved(state, def) || !achievementProgress(state, def.requires).done) continue;
     state.achievements[def.id] = { at: now };
-    // Los de "tener N cerditos" son tantos (cientos) que inundarían el diario: van solo al logro.
-    if (def.requires.kind !== 'genCount') addEntry(state, `Logro: ${def.name}. ${def.flavor}`, now);
+    if (def.requires.kind !== 'pieceLevel') addEntry(state, `Logro: ${def.name}. ${def.flavor}`, now);
     achieved.push(def.id);
   }
   return achieved;

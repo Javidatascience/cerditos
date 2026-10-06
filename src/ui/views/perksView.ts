@@ -1,21 +1,17 @@
-// Vista "Ventajas": árbol de ventajas permanentes en lista, con su imagen, coste, nivel, efecto
-// actual → siguiente, y el requisito si está bloqueada. Ver docs/01-diseno-juego.md §6.
-// Se sincroniza por clave (dom.ts > createListSync) para que los botones no se recreen y un
-// clic nunca se pierda.
+// Vista "Ventajas": las ventajas permanentes en lista, con su coste, nivel, efecto actual → siguiente
+// y el requisito si está bloqueada. Se sincroniza por clave (dom.ts > createListSync) para que los
+// botones no se recreen y un clic nunca se pierda. Ver docs/06-mina.md.
 
 import { buyPerk } from '../../core/actions.ts';
 import { perkViews, type PerkView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { perkBadge } from '../art.ts';
 import { createListSync, h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
 type PerkRow = PerkView & { costText: string };
 
 export function mountPerksView(root: HTMLElement, ctx: UiContext): View {
-  const worldId = ctx.activeWorld();
-
   const list = h('ul', { className: 'perk-list' });
   const container = h('div', { className: 'perks-view' }, [list]);
   root.appendChild(container);
@@ -33,16 +29,12 @@ export function mountPerksView(root: HTMLElement, ctx: UiContext): View {
       buyButton.addEventListener('click', () => ctx.dispatch((s) => void buyPerk(s, ctx.content, perk.id)));
       const maxedText = h('span', { className: 'settings-hint hidden' }, ['Al máximo']);
       const lockedLine = h('span', { className: 'perk-locked' }, [lockedText]);
-
       const el = h('li', { className: 'perk-row' }, [
-        h('div', { className: 'row-art' }, [
-          perkBadge(perk.id),
-          h('div', { className: 'perk-info' }, [
-            h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-owned' }, [levelText])]),
-            h('span', { className: 'generator-flavor' }, [perk.flavor]),
-            h('span', { className: 'upgrade-effect' }, [effectText]),
-            lockedLine,
-          ]),
+        h('div', { className: 'perk-info' }, [
+          h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-owned' }, [levelText])]),
+          h('span', { className: 'generator-flavor' }, [perk.flavor]),
+          h('span', { className: 'upgrade-effect' }, [effectText]),
+          lockedLine,
         ]),
         buyButton,
         maxedText,
@@ -67,11 +59,8 @@ export function mountPerksView(root: HTMLElement, ctx: UiContext): View {
 
   function update(state: GameState): void {
     const notation = state.settings.notation;
-    sync(perkViews(state, ctx.content, worldId).map((p) => ({ ...p, costText: formatNumber(p.cost, notation) })));
+    sync(perkViews(state, ctx.content).map((p) => ({ ...p, costText: `${formatNumber(p.cost, notation)} plumas` })));
   }
 
-  return {
-    update,
-    destroy: () => container.remove(),
-  };
+  return { update, destroy: () => container.remove() };
 }

@@ -1,76 +1,43 @@
-// Rellena lo que falte en un GameState cargado según el contenido actual (mundos, cerditos,
-// mejoras o ventajas añadidos después de guardar la partida) y descarta ids que ya no existan.
-// Ver docs/02-arquitectura.md §6: "contenido nuevo no necesita migración".
-//
-// A diferencia de migrations.ts, SÍ accede al contenido, y no cambia `state.version` ni la
-// forma del GameState (eso es cosa de una migración).
+// Rellena lo que falte en un GameState cargado según el contenido actual (piezas, ventajas o
+// logros añadidos después de guardar la partida) y descarta ids que ya no existan. Acota valores
+// fuera de rango. No cambia `state.version` ni la forma del GameState (eso es cosa de una migración).
 
-import { generatorUpgradeId } from '../core/formulas.ts';
-import { createGeneratorState, createWorldState } from '../core/state.ts';
-import type { Content, WorldDef } from '../content/types.ts';
-import type { GameState, WorldState } from '../core/state.ts';
+import type { Content } from '../content/types.ts';
+import { blockHpAt, MAX_DEPTH } from '../core/formulas.ts';
+import type { GameState } from '../core/state.ts';
 
-/** Ventajas que ya no existen y lo que costaron (nivel único, sin escalado). */
-const REMOVED_PERK_REFUNDS: Record<string, number> = { capataz: 5, encargada: 20 };
-
-function validUpgradeIdsFor(world: WorldDef): Set<string> {
-  const ids = new Set<string>();
-  for (const upgrade of world.globalUpgrades) ids.add(upgrade.id);
-  if (world.genUpgrades) {
-    for (const gen of world.generators) {
-      for (let level = 0; level < world.genUpgrades.counts.length; level++) ids.add(generatorUpgradeId(gen.id, level));
-    }
-  }
-  return ids;
-}
-
-function normalizeWorldState(w: WorldState, world: WorldDef, content: Content): void {
-  const validGenIds = new Set(world.generators.map((g) => g.id));
-  for (const gen of world.generators) {
-    if (!w.generators[gen.id]) {
-      w.generators[gen.id] = createGeneratorState();
-      w.records.maxBought[gen.id] = 0;
-    }
-  }
-  for (const id of Object.keys(w.generators)) if (!validGenIds.has(id)) delete w.generators[id];
-  for (const id of Object.keys(w.records.maxBought)) if (!validGenIds.has(id)) delete w.records.maxBought[id];
-
-  w.revealed = Math.min(world.generators.length, Math.max(1, Math.floor(w.revealed)));
-
-  const validUpgradeIds = validUpgradeIdsFor(world);
-  for (const id of Object.keys(w.upgrades)) if (!validUpgradeIds.has(id)) delete w.upgrades[id];
-
-  const validPerkIds = new Set(content.perks.filter((p) => p.world === world.id).map((p) => p.id));
-  for (const id of Object.keys(w.perks)) {
-    if (validPerkIds.has(id)) continue;
-    // Capataz y Encargada se eliminaron (autocompra): se devuelven las plumas que costaron.
-    const refund = REMOVED_PERK_REFUNDS[id.split('.')[1] ?? ''];
-    if (refund !== undefined && (w.perks[id] ?? 0) > 0) w.plumas = w.plumas.add(refund);
-    delete w.perks[id];
-  }
+function clampInt(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.floor(Number.isFinite(value) ? value : min)));
 }
 
 /** Muta y devuelve `state`. Seguro de llamar siempre, haya o no contenido nuevo. */
 export function normalize(state: GameState, content: Content): GameState {
-  const validWorldIds = new Set(content.worlds.map((w) => w.id));
-
-  for (const world of content.worlds) {
-    const existing = state.worlds[world.id];
-    if (!existing) state.worlds[world.id] = createWorldState(world);
-    else normalizeWorldState(existing, world, content);
-  }
-  for (const id of Object.keys(state.worlds)) if (!validWorldIds.has(id)) delete state.worlds[id];
-
-  if (!validWorldIds.has(state.activeWorld)) {
-    const first = content.worlds[0];
-    if (first) state.activeWorld = first.id;
+  const pieceById = new Map(content.pieces.map((p) => [p.id, p]));
+  for (const id of Object.keys(state.gear)) {
+    const piece = pieceById.get(id);
+    if (!piece) delete state.gear[id];
+    else state.gear[id] = clampInt(state.gear[id] ?? 0, 0, piece.maxLevel);
   }
 
-  const validVarietyIds = new Set(content.varieties.map((v) => v.id));
-  for (const id of Object.keys(state.collection)) if (!validVarietyIds.has(id)) delete state.collection[id];
+  const materialIds = new Set(content.materials.map((m) => m.id));
+  for (const id of Object.keys(state.materials)) if (!materialIds.has(id)) delete state.materials[id];
 
-  const validAchievementIds = new Set(content.achievements.map((a) => a.id));
-  for (const id of Object.keys(state.achievements)) if (!validAchievementIds.has(id)) delete state.achievements[id];
+  const perkById = new Map(content.perks.map((p) => [p.id, p]));
+  for (const id of Object.keys(state.perks)) {
+    const perk = perkById.get(id);
+    if (!perk) delete state.perks[id];
+    else state.perks[id] = clampInt(state.perks[id] ?? 0, 0, perk.maxLevel ?? Number.MAX_SAFE_INTEGER);
+  }
 
+  const achievementIds = new Set(content.achievements.map((a) => a.id));
+  for (const id of Object.keys(state.achievements)) if (!achievementIds.has(id)) delete state.achievements[id];
+
+  state.depth = clampInt(state.depth, 1, MAX_DEPTH);
+  state.runMaxDepth = clampInt(Math.max(state.runMaxDepth, state.depth), 1, MAX_DEPTH);
+  state.records.maxDepth = clampInt(Math.max(state.records.maxDepth, state.runMaxDepth), 1, MAX_DEPTH);
+  const maxHp = blockHpAt(content, state.depth);
+  if (!Number.isFinite(state.blockHp) || state.blockHp <= 0 || state.blockHp > maxHp) state.blockHp = maxHp;
+
+  if (state.farmZone !== null && (state.farmZone < 0 || state.farmZone >= content.zones.length)) state.farmZone = null;
   return state;
 }

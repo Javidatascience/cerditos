@@ -1,393 +1,370 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
-// llamar a formulas.ts directamente desde ui/. Ver docs/02-arquitectura.md §4 y §8.
+// llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import { generatorUpgradeName } from '../content/upgrades.ts';
-import type { AchievementReq, Bonus, Content, GeneratorDef, PerkDef, Requirement, WorldDef } from '../content/types.ts';
+import type { AchievementReq, Content, PerkDef, PerkEffect, PieceDef } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
 import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
-import { requirementProgress } from './collection.ts';
 import {
-  availableUpgrades,
-  bulkCost,
-  generatorCost,
-  generatorMultiplier,
-  generatorUpgradeId,
-  getGeneratorDef,
-  getWorldDef,
-  globalMultiplier,
-  maxAffordable,
+  blockCoins,
+  blockHpAt,
+  burstCooldown,
+  digPower,
+  hazardFactor,
+  incomePerSecond,
+  milestoneMult,
   perkAvailable,
   perkCost,
-  perkCostGrowthDelta,
-  totalCostMultiplier,
-  perkLevel,
-  perPlumaBonusRate,
+  perkLevelOf,
+  pieceCost,
+  pieceLevel,
+  pieceUnlocked,
+  pieceValue,
+  plumaBonus,
+  tapSeconds,
   plumasPending,
-  displayProductionPerSecond,
-  type UpgradeOffer,
+  zoneAt,
+  zoneEndDepth,
+  zoneIndexOf,
+  zoneStartDepth,
 } from './formulas.ts';
 import { D, Decimal } from './num.ts';
-import { calmMultiplier, purchaseWouldDisturb } from './mechanics/calm.ts';
-import { canMerge, freeSlots, slotsOf, totalPigs } from './mechanics/merge.ts';
-import { harmonyLevel, harmonyMultiplier, lowestGenerators, nextHarmonyThreshold } from './mechanics/harmony.ts';
-import { unlockProgress } from './unlocks.ts';
-import { rowBundleCost, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
-import type { GameState, PerkId, WorldId, WorldState } from './state.ts';
+import { VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
+import type { GameState } from './state.ts';
+
+// ---------------------------------------------------------------------------
+// Cabecera y mina
+// ---------------------------------------------------------------------------
 
 export interface HeaderView {
-  worldName: string;
-  currencyName: string;
-  currency: Decimal;
-  perSecond: Decimal;
+  coins: Decimal;
+  income: Decimal;
+  depth: number;
+  zoneName: string;
+  zoneEmoji: string;
 }
 
-export function headerView(state: GameState, content: Content, worldId: WorldId): HeaderView {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
+export function headerView(state: GameState, content: Content): HeaderView {
+  const zone = zoneAt(content, state.depth);
+  return { coins: state.coins, income: incomePerSecond(state, content), depth: state.depth, zoneName: zone.name, zoneEmoji: zone.emoji };
+}
+
+export interface HazardView {
+  name: string;
+  emoji: string;
+  /** Fracción del cavado que se conserva (0..1). */
+  factor: number;
+  pieceName: string;
+  pieceLevel: number;
+  needLevel: number;
+}
+
+export interface ZoneOptionView {
+  index: number;
+  name: string;
+  emoji: string;
+  /** Se puede elegir (la has alcanzado en esta ronda). */
+  reachable: boolean;
+  /** Es en la que se está cavando ahora. */
+  current: boolean;
+}
+
+export interface MaterialView {
+  id: string;
+  name: string;
+  emoji: string;
+  amount: Decimal;
+}
+
+export interface MineView {
+  depth: number;
+  recordDepth: number;
+  zoneIndex: number;
+  zoneName: string;
+  zoneEmoji: string;
+  zoneFlavor: string;
+  /** Primer y último nivel de la zona actual (el último es `null` en la zona final). */
+  zoneStart: number;
+  zoneEnd: number | null;
+  materialName: string;
+  materialEmoji: string;
+  /** Fracción de vida que le queda al bloque (1 = entero). */
+  blockFraction: number;
+  /** Cavado por segundo ahora mismo, con el impulso del visitante incluido. */
+  dps: number;
+  /** Monedas que suelta este bloque al romperse. */
+  blockCoinsValue: Decimal;
+  hazard: HazardView | null;
+  farmZone: number | null;
+  zones: ZoneOptionView[];
+  materials: MaterialView[];
+  /** Cavado que aporta un pico (daño al bloque), con el impulso del visitante incluido. */
+  tapDamage: number;
+  boostMult: number;
+}
+
+export function mineView(state: GameState, content: Content): MineView {
+  const zoneIndex = zoneIndexOf(content, state.depth);
+  const zone = content.zones[zoneIndex]!;
+  const boostMult = state.buff?.mult ?? 1;
+  const material = content.materials.find((m) => m.id === zone.material);
+  const hazardDef = zone.hazard === null ? null : content.hazards.find((h) => h.id === zone.hazard);
+  const resistPiece = hazardDef ? content.pieces.find((p) => p.effect.kind === 'resist' && p.effect.hazard === hazardDef.id) : undefined;
+
+  let hazard: HazardView | null = null;
+  if (hazardDef && resistPiece && resistPiece.effect.kind === 'resist') {
+    hazard = {
+      name: hazardDef.name,
+      emoji: hazardDef.emoji,
+      factor: hazardFactor(state, content, zoneIndex),
+      pieceName: resistPiece.name,
+      pieceLevel: pieceLevel(state, resistPiece.id),
+      needLevel: resistPiece.effect.needBase + resistPiece.effect.needStep * zoneIndex,
+    };
+  }
+
+  const reachableZone = zoneIndexOf(content, state.runMaxDepth);
+  const end = zoneEndDepth(content, zoneIndex);
+  const hp = blockHpAt(content, state.depth);
   return {
-    worldName: world.name,
-    currencyName: world.currency,
-    currency: worldState?.currency ?? D(0),
-    perSecond: displayProductionPerSecond(state, content, worldId),
+    depth: state.depth,
+    recordDepth: state.records.maxDepth,
+    zoneIndex,
+    zoneName: zone.name,
+    zoneEmoji: zone.emoji,
+    zoneFlavor: zone.flavor,
+    zoneStart: zoneStartDepth(content, zoneIndex),
+    zoneEnd: zoneIndex >= content.zones.length - 1 ? null : end,
+    materialName: material?.name ?? zone.material,
+    materialEmoji: material?.emoji ?? '',
+    blockFraction: Math.max(0, Math.min(1, state.blockHp / hp)),
+    dps: digPower(state, content, zoneIndex) * boostMult,
+    blockCoinsValue: blockCoins(state, content, state.depth),
+    hazard,
+    farmZone: state.farmZone,
+    zones: content.zones.map((z, index) => ({ index, name: z.name, emoji: z.emoji, reachable: index <= reachableZone, current: index === zoneIndex })),
+    materials: content.materials
+      .filter((m) => state.materials[m.id] !== undefined || content.zones.some((z) => z.material === m.id && zoneIndexOf(content, state.records.maxDepth) >= content.zones.indexOf(z)))
+      .map((m) => ({ id: m.id, name: m.name, emoji: m.emoji, amount: (state.materials[m.id] ?? D(0)).floor() })),
+    tapDamage: digPower(state, content, zoneIndex) * tapSeconds(state, content) * boostMult,
+    boostMult,
   };
 }
 
-export interface WorldTabView {
-  id: WorldId;
-  name: string;
-  unlocked: boolean;
-  active: boolean;
-  /** Mientras está bloqueado: de qué mundo y cuántas plumas hacen falta, con tu progreso. */
-  requirement: { fromWorldName: string; genName: string; current: number; target: number } | null;
+// ---------------------------------------------------------------------------
+// Piezas
+// ---------------------------------------------------------------------------
+
+export interface PieceEffectView {
+  kind: PieceDef['effect']['kind'];
+  /** Valor al nivel actual y al siguiente (según el efecto: dps, multiplicador, %, segundos…). */
+  value: number;
+  nextValue: number;
+  /** Solo "resist": peligro, nivel necesario para anularlo y fracción conservada ahora. */
+  hazardName?: string;
+  needLevel?: number;
+  factor?: number;
+  /** Solo "burst": enfriamiento en segundos. */
+  cooldown?: number;
 }
 
-/** Pestañas de mundo: los desbloqueados y, en gris, el siguiente con su requisito visible. */
-export function worldTabs(state: GameState, content: Content): WorldTabView[] {
-  const tabs: WorldTabView[] = [];
-  let nextShown = false;
-  for (const world of content.worlds) {
-    const unlocked = state.worlds[world.id]?.unlocked ?? false;
-    if (!unlocked) {
-      if (nextShown) continue;
-      nextShown = true;
-    }
-    const progress = unlocked ? null : unlockProgress(state, world);
-    tabs.push({
-      id: world.id,
-      name: world.name,
-      unlocked,
-      active: world.id === state.activeWorld,
-      requirement: progress
-        ? {
-            fromWorldName: content.worlds.find((w) => w.id === progress.fromWorld)?.name ?? progress.fromWorld,
-            genName: content.worlds.find((w) => w.id === progress.fromWorld)?.generators.find((g) => g.id === progress.genId)?.name ?? progress.genId,
-            current: progress.current,
-            target: progress.target,
-          }
-        : null,
-    });
-  }
-  return tabs;
-}
-
-export interface GeneratorView {
+export interface PieceView {
   id: string;
   name: string;
+  emoji: string;
   flavor: string;
-  owned: Decimal;
-  prodPerSec: Decimal;
-  /** Qué produce `prodPerSec`: `null` = la moneda del mundo; en la cadena, el cerdito del nivel inferior. */
-  prodUnit: string | null;
-  /** Coste de comprar `amountToBuy` unidades ahora mismo (según settings.buyAmount). */
-  nextCost: Decimal;
-  /** Unidades que compraría el botón ahora mismo (0 si con "máx" no llega ni a 1). */
-  amountToBuy: number;
+  level: number;
+  maxLevel: number;
+  maxed: boolean;
+  unlocked: boolean;
+  /** Mientras está bloqueada: qué falta. */
+  lockedReason: string | null;
+  effect: PieceEffectView;
+  /** A partir de qué nivel el siguiente hito duplica su efecto, o null si ya pasó todos. */
+  nextMilestone: number | null;
+  costCoins: Decimal;
+  material: { name: string; emoji: string; cost: Decimal; have: Decimal } | null;
   canAfford: boolean;
-  /** Armonía: este cerdito está en el mínimo (el que frena la fila). */
-  atMinimum: boolean;
-  /** Posición (0-based) del cerdito en el mundo. */
-  index: number;
-  /** Lo que produce UNA unidad sola (por segundo; en la cadena, del nivel inferior). */
-  unitProd: Decimal;
-  /** 'visible' = descubierto; 'teaser' = el siguiente, difuminado; 'hidden' = aún no se muestra. */
-  reveal: 'visible' | 'teaser' | 'hidden';
-  /** 0..1: lo cerca que está de poder pagar la primera unidad (para difuminar menos). */
-  closeness: number;
+  /** Niveles que compraría el botón ahora mismo (según ajustes: 1, 10 o máx; 0 si ninguno). */
+  amountToBuy: number;
 }
 
-export function generatorViews(state: GameState, content: Content, worldId: WorldId): GeneratorView[] {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return [];
-  const m = globalMultiplier(state, content, worldId);
-  const amount = state.settings.buyAmount;
-  const costDelta = perkCostGrowthDelta(state, content, worldId);
-  const costMult = totalCostMultiplier(state, content, worldId);
-  const calmFactor = calmMultiplier(world, worldState);
-  const lowest = world.mechanic === 'harmony' ? new Set(lowestGenerators(world, worldState)) : new Set<string>();
-
-  return world.generators.map((gen, k) => {
-    const genState = worldState.generators[gen.id];
-    const owned = genState?.owned ?? D(0);
-    const bought = genState?.bought ?? 0;
-    const genMult = generatorMultiplier(world, worldState, gen);
-
-    const amountToBuy = amount === 'max' ? maxAffordable(world, gen, bought, worldState.currency, costDelta, costMult) : amount;
-    const nextCost = amountToBuy > 0 ? bulkCost(world, gen, bought, amountToBuy, costDelta, costMult) : generatorCost(world, gen, bought, costDelta, costMult);
-
+function effectView(state: GameState, content: Content, piece: PieceDef): PieceEffectView {
+  const level = pieceLevel(state, piece.id);
+  const e = piece.effect;
+  if (e.kind === 'burst') {
+    return { kind: 'burst', value: level > 0 ? e.baseSeconds + e.perLevel * level : 0, nextValue: e.baseSeconds + e.perLevel * (level + 1), cooldown: e.cooldown };
+  }
+  if (e.kind === 'resist') {
+    const hazard = content.hazards.find((h) => h.id === e.hazard);
+    const zoneIndex = content.zones.findIndex((z) => z.hazard === e.hazard);
+    const need = e.needBase + e.needStep * Math.max(0, zoneIndex);
     return {
-      id: gen.id,
-      name: gen.name,
-      flavor: gen.flavor,
-      owned,
-      prodPerSec: owned.mul(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m * calmFactor),
-      prodUnit: world.mechanic === 'chain' && k > 0 ? (world.generators[k - 1]?.name ?? null) : null,
-      nextCost,
+      kind: 'resist',
+      value: level,
+      nextValue: level + 1,
+      hazardName: hazard?.name ?? e.hazard,
+      needLevel: need,
+      factor: hazardFactor(state, content, Math.max(0, zoneIndex)),
+    };
+  }
+  return { kind: e.kind, value: pieceValue(content, piece, level), nextValue: pieceValue(content, piece, level + 1) };
+}
+
+function lockedReason(state: GameState, piece: PieceDef): string | null {
+  if (pieceUnlocked(state, piece)) return null;
+  const parts: string[] = [];
+  if (state.records.maxDepth < piece.unlock.depth) parts.push(`llega al nivel ${piece.unlock.depth}`);
+  if (state.ascensions < piece.unlock.ascensions) parts.push(`sube a la superficie ${piece.unlock.ascensions} ${piece.unlock.ascensions === 1 ? 'vez' : 'veces'}`);
+  return `Se desbloquea cuando ${parts.join(' y ')}.`;
+}
+
+export function pieceViews(state: GameState, content: Content): PieceView[] {
+  const amount: BuyAmount = state.settings.buyAmount;
+  return content.pieces.map((piece) => {
+    const level = pieceLevel(state, piece.id);
+    const unlocked = pieceUnlocked(state, piece);
+    const cost = pieceCost(state, content, piece, level);
+    const mat = piece.material === null ? undefined : content.materials.find((m) => m.id === piece.material);
+    const have = piece.material === null ? D(0) : (state.materials[piece.material] ?? D(0)).floor();
+    const canAfford = unlocked && level < piece.maxLevel && state.coins.gte(cost.coins) && (cost.material === null || have.gte(cost.material));
+
+    // Cuántos niveles compraría el botón ahora (simulando el gasto sin tocar el estado).
+    let amountToBuy = 0;
+    if (unlocked) {
+      const wanted = amount === 'max' ? 1000 : amount;
+      let coins = state.coins;
+      let material = state.materials[piece.material ?? ''] ?? D(0);
+      for (let l = level; amountToBuy < wanted && l < piece.maxLevel; l++) {
+        const c = pieceCost(state, content, piece, l);
+        if (coins.lt(c.coins) || (c.material !== null && material.lt(c.material))) break;
+        coins = coins.sub(c.coins);
+        if (c.material !== null) material = material.sub(c.material);
+        amountToBuy++;
+      }
+    }
+
+    // Los hitos (×2) solo valen para efectos con valor por nivel, no para resistencias ni dinamita.
+    const milestones = piece.effect.kind === 'resist' || piece.effect.kind === 'burst' ? [] : content.mine.milestones.filter((m) => m > level);
+    return {
+      id: piece.id,
+      name: piece.name,
+      emoji: piece.emoji,
+      flavor: piece.flavor,
+      level,
+      maxLevel: piece.maxLevel,
+      maxed: level >= piece.maxLevel,
+      unlocked,
+      lockedReason: lockedReason(state, piece),
+      effect: effectView(state, content, piece),
+      nextMilestone: milestones[0] ?? null,
+      costCoins: cost.coins,
+      material: mat && cost.material ? { name: mat.name, emoji: mat.emoji, cost: cost.material, have } : null,
+      canAfford,
       amountToBuy,
-      canAfford: amountToBuy > 0 && worldState.currency.gte(nextCost),
-      atMinimum: lowest.has(gen.id),
-      index: k,
-      unitProd: D(gen.baseProd).mul(genMult).mul(world.mechanic === 'chain' && k > 0 ? 1 : m * calmFactor),
-      reveal: k < worldState.revealed ? 'visible' : k === worldState.revealed ? 'teaser' : 'hidden',
-      closeness: Math.min(1, Math.max(0, worldState.currency.div(generatorCost(world, gen, bought, costDelta, costMult)).toNumber())),
     };
   });
 }
 
-export interface CalmView {
-  /** 0..1 */
-  calm: number;
-  /** Factor de producción por calma (1..1+maxBonus). */
-  multiplier: number;
-  /** Comprar ahora bajaría la calma (fuera de la ventana ya penalizada). */
-  buyWillDisturb: boolean;
-  /** Factor al que bajaría la calma al comprar (0,5 = a la mitad). */
-  penalty: number;
-  /** Segundos que quedan de ventana en la que comprar no molesta más (0 si no hay). */
-  windowSecondsLeft: number;
+/** ×N que aporta el siguiente hito de la pieza (para el texto "a nivel 25: ×2"). */
+export function milestoneFactor(content: Content): number {
+  return content.mine.milestoneMult;
 }
 
-/** Datos de la calma del Balneario; `null` en los mundos que no la usan. */
-export function calmView(state: GameState, content: Content, worldId: WorldId): CalmView | null {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (world.mechanic !== 'calm' || !world.calm || !worldState) return null;
-  return {
-    calm: worldState.calm,
-    multiplier: calmMultiplier(world, worldState),
-    buyWillDisturb: purchaseWouldDisturb(world, worldState, state.time),
-    penalty: world.calm.penalty,
-    windowSecondsLeft: Math.max(0, worldState.calmPenaltyUntil - state.time),
-  };
-}
-
-export interface HarmonyView {
-  rows: number;
-  multiplier: number;
-  /** Siguiente umbral de ×mult (`null` si ya se alcanzaron todos) y el multiplicador que daría. */
-  nextThreshold: number | null;
-  /** Factor que añade cada umbral (×2). */
-  thresholdMult: number;
-  rowCost: Decimal;
-  canBuyRow: boolean;
-}
-
-/** Datos de la armonía de la Huerta; `null` en los mundos que no la usan. */
-export function harmonyView(state: GameState, content: Content, worldId: WorldId): HarmonyView | null {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (world.mechanic !== 'harmony' || !worldState) return null;
-  const rows = harmonyLevel(world, worldState);
-  const nextThreshold = nextHarmonyThreshold(world, rows);
-  const { genIds, cost } = rowBundleCost(state, content, worldId);
-  return {
-    rows,
-    multiplier: harmonyMultiplier(world, rows),
-    nextThreshold,
-    thresholdMult: world.harmony?.mult ?? 1,
-    rowCost: cost,
-    canBuyRow: genIds.length > 0 && worldState.currency.gte(cost),
-  };
-}
-
-/**
- * El cerdito cuya próxima compra es más barata entre los que aún no se pueden pagar, con el
- * tiempo estimado hasta poder pagarla al ritmo de producción actual. `null` si todo es
- * asequible ya, o si no hay forma de estimarlo (producción 0: ver 01 §4, "te faltan 12 s").
- */
-export interface PendingPurchase {
-  name: string;
-  etaSeconds: number | null;
-  progress: number; // 0..1, para la barra fina de progreso
-}
-
-export function cheapestPendingPurchase(state: GameState, content: Content, worldId: WorldId): PendingPurchase | null {
-  const worldState = state.worlds[worldId];
-  if (!worldState) return null;
-  const views = generatorViews(state, content, worldId);
-  const pending = views.filter((v) => v.reveal === 'visible' && !v.canAfford);
-  if (pending.length === 0) return null;
-
-  let cheapest = pending[0];
-  if (!cheapest) return null;
-  for (const v of pending) if (v.nextCost.lt(cheapest.nextCost)) cheapest = v;
-
-  const missing = cheapest.nextCost.sub(worldState.currency);
-  const progress = worldState.currency.div(cheapest.nextCost).toNumber();
-  const rate = displayProductionPerSecond(state, content, worldId);
-  const etaSeconds = rate.gt(0) ? Math.max(0, missing.div(rate).toNumber()) : null;
-
-  return { name: cheapest.name, etaSeconds, progress: Math.min(1, Math.max(0, progress)) };
-}
-
-export interface UpgradeView {
-  id: string;
-  name: string;
-  effectText: string;
-  cost: Decimal;
-  canAfford: boolean;
-  /** Posición del cerdito al que mejora (para su imagen); `null` en las mejoras globales. */
-  genIndex: number | null;
-}
-
-function describeUpgrade(world: WorldDef, worldState: WorldState, offer: UpgradeOffer): UpgradeView {
-  const canAfford = worldState.currency.gte(offer.cost);
-  if (offer.kind === 'generator') {
-    const gen = getGeneratorDef(world, offer.genId);
-    const mult = world.genUpgrades?.mult ?? 1;
-    return { id: offer.id, name: generatorUpgradeName(world.id, gen, offer.level), effectText: `×${mult} producción de ${gen.name}`, cost: offer.cost, canAfford, genIndex: world.generators.indexOf(gen) };
-  }
-  const upgrade = world.globalUpgrades.find((u) => u.id === offer.id);
-  return {
-    id: offer.id,
-    name: upgrade?.name ?? offer.id,
-    effectText: `×${upgrade?.mult ?? 1} a todo el mundo`,
-    cost: offer.cost,
-    canAfford,
-    genIndex: null,
-  };
-}
-
-export function upgradeViews(state: GameState, content: Content, worldId: WorldId): UpgradeView[] {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState) return [];
-  return availableUpgrades(state, content, worldId)
-    .map((offer) => describeUpgrade(world, worldState, offer))
-    .sort((a, b) => a.cost.cmp(b.cost));
+/** Dinamita: segundos que faltan para que vuelva a estar lista (0 si lista). */
+export function burstStatus(state: GameState, content: Content): { owned: boolean; ready: boolean; secondsLeft: number; cooldown: number } {
+  const owned = pieceLevel(state, content.pieces.find((p) => p.effect.kind === 'burst')?.id ?? '') > 0;
+  const secondsLeft = Math.max(0, state.burstReadyAt - state.time);
+  return { owned, ready: owned && secondsLeft <= 0, secondsLeft, cooldown: burstCooldown(content) };
 }
 
 // ---------------------------------------------------------------------------
-// Ascensión (hito 5, 01 §5)
+// Subir a la superficie y ventajas
 // ---------------------------------------------------------------------------
 
 export interface AscendView {
   plumas: Decimal;
   plumasTotal: Decimal;
-  /** Plumas que se ganarían ascendiendo ahora mismo. */
   pendingGain: number;
-  /** Bono pasivo actual: 1 + tasa·plumasTotal. */
+  runMaxDepth: number;
   currentBonusMultiplier: number;
-  /** El mismo bono si se ascendiera ahora ("tu producción pasaría de ×A a ×B"). */
   nextBonusMultiplier: number;
   canAscend: boolean;
+  startDepthNext: number;
 }
 
-export function ascendView(state: GameState, content: Content, worldId: WorldId): AscendView {
-  const worldState = state.worlds[worldId];
-  if (!worldState) {
-    return { plumas: D(0), plumasTotal: D(0), pendingGain: 0, currentBonusMultiplier: 1, nextBonusMultiplier: 1, canAscend: false };
-  }
-  const pendingGain = plumasPending(state, content, worldId);
-  const rate = perPlumaBonusRate(state, content, worldId);
-  const plumasTotal = worldState.plumasTotal.toNumber();
+export function ascendView(state: GameState, content: Content): AscendView {
+  const pendingGain = plumasPending(state, content);
+  const current = plumaBonus(state, content);
+  const rate = current > 0 ? (current - 1) / Math.max(1, state.plumasTotal.toNumber()) : 0;
   return {
-    plumas: worldState.plumas,
-    plumasTotal: worldState.plumasTotal,
+    plumas: state.plumas,
+    plumasTotal: state.plumasTotal,
     pendingGain,
-    currentBonusMultiplier: 1 + rate * plumasTotal,
-    nextBonusMultiplier: 1 + rate * (plumasTotal + pendingGain),
+    runMaxDepth: state.runMaxDepth,
+    currentBonusMultiplier: current,
+    nextBonusMultiplier: state.plumasTotal.gt(0) ? 1 + rate * (state.plumasTotal.toNumber() + pendingGain) : 1 + content.mine.perPluma * pendingGain,
     canAscend: pendingGain > 0,
+    startDepthNext: 1,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Árbol de ventajas permanentes (hito 5, 01 §6)
-// ---------------------------------------------------------------------------
-
 export interface PerkView {
-  id: PerkId;
+  id: string;
   name: string;
   flavor: string;
   level: number;
   maxLevel: number | null;
   maxed: boolean;
   cost: Decimal;
-  /** Nombres de las ventajas que todavía faltan por tener (vacío si no está bloqueada). */
   missingRequirements: string[];
-  /** Puede comprarse ya: no bloqueada, no al máximo y hay plumas suficientes. */
   purchasable: boolean;
   currentEffectText: string;
-  /** Efecto si se compra un nivel más; `null` si ya está al máximo. */
   nextEffectText: string | null;
 }
 
-function perkEffectValueText(perk: PerkDef, level: number): string {
-  const e = perk.effect;
-  switch (e.kind) {
+function perkEffectValueText(effect: PerkEffect, level: number): string {
+  switch (effect.kind) {
     case 'prodMult':
-      return `×${(e.perLevel ** level).toFixed(2)} producción`;
+      return `×${(effect.perLevel ** level).toFixed(2)} cavado`;
     case 'costMult':
-      return `×${(e.perLevel ** level).toFixed(2)} coste de los cerditos`;
-    case 'upgradeCostMult':
-      return `×${(e.perLevel ** level).toFixed(2)} coste de las mejoras`;
+      return `×${(effect.perLevel ** level).toFixed(2)} coste de las piezas`;
     case 'startCurrency':
-      return `×${Math.round(e.perLevel ** level)} moneda inicial`;
+      return `×${Math.round(effect.perLevel ** level)} monedas iniciales`;
+    case 'startDepth':
+      return `empiezas en el nivel ${1 + effect.perLevel * level}`;
     case 'plumaMult':
-      return `+${Math.round(e.perLevel * level * 100)} % plumas al ascender`;
-    case 'crossProd':
-      return `+${Math.round(e.perLevel * level * 100)} % producción en los demás mundos`;
-    case 'costGrowthDelta':
-      return `el coste de los cerditos crece ${(e.perLevel * level).toFixed(4)} menos`;
+      return `+${Math.round(effect.perLevel * level * 100)} % plumas al subir`;
     case 'perPlumaBonus':
-      return `+${Math.round(e.perLevel * level * 100)} % extra en el bono de plumas`;
+      return `+${Math.round(effect.perLevel * level * 100)} % extra en el bono de plumas`;
+    case 'offlineHours':
+      return `+${effect.perLevel * level} h de producción mientras no estás`;
   }
 }
 
-export function perkViews(state: GameState, content: Content, worldId: WorldId): PerkView[] {
-  const worldState = state.worlds[worldId];
-  return content.perks
-    .filter((perk) => perk.world === worldId)
-    .map((perk) => {
-      const level = worldState?.perks[perk.id] ?? 0;
-      const maxed = perk.maxLevel !== null && level >= perk.maxLevel;
-      const cost = perkCost(perk, level);
-      const missingRequirements = perk.requires
-        .filter((reqId) => perkLevel(state, content, reqId) <= 0)
-        .map((reqId) => content.perks.find((p) => p.id === reqId)?.name ?? reqId);
-      const canAfford = (worldState?.plumas ?? D(0)).gte(cost);
-
-      return {
-        id: perk.id,
-        name: perk.name,
-        flavor: perk.flavor,
-        level,
-        maxLevel: perk.maxLevel,
-        maxed,
-        cost,
-        missingRequirements,
-        purchasable: !maxed && missingRequirements.length === 0 && canAfford,
-        currentEffectText: perkEffectValueText(perk, level),
-        nextEffectText: maxed ? null : perkEffectValueText(perk, level + 1),
-      };
-    });
+export function perkViews(state: GameState, content: Content): PerkView[] {
+  return content.perks.map((perk: PerkDef) => {
+    const level = perkLevelOf(state, perk.id);
+    const maxed = perk.maxLevel !== null && level >= perk.maxLevel;
+    const cost = perkCost(perk, level);
+    const missingRequirements = perk.requires.filter((id) => perkLevelOf(state, id) <= 0).map((id) => content.perks.find((p) => p.id === id)?.name ?? id);
+    return {
+      id: perk.id,
+      name: perk.name,
+      flavor: perk.flavor,
+      level,
+      maxLevel: perk.maxLevel,
+      maxed,
+      cost,
+      missingRequirements,
+      purchasable: !maxed && perkAvailable(state, perk) && state.plumas.gte(cost),
+      currentEffectText: perkEffectValueText(perk.effect, level),
+      nextEffectText: maxed ? null : perkEffectValueText(perk.effect, level + 1),
+    };
+  });
 }
 
-// Re-exportado para los tests que quieran forzar un BuyAmount sin importar actions.ts.
-export type { BuyAmount, GeneratorDef };
-
 // ---------------------------------------------------------------------------
-// Álbum de variedades (hito 6, 01 §8)
+// Logros, cesta, visitante y diario
 // ---------------------------------------------------------------------------
 
 export interface RequirementView {
@@ -398,92 +375,46 @@ export interface RequirementView {
   describe(format: (n: Decimal) => string): string;
 }
 
-export interface VarietyView {
+export interface AchievementView {
   id: string;
   name: string;
   flavor: string;
   owned: boolean;
-  bonusText: string;
-  requirements: RequirementView[];
+  requirement: RequirementView;
+  /** Si es de "sube una pieza a nivel N": la pieza (la UI las agrupa por pieza). */
+  piece: { id: string; name: string; emoji: string; count: number } | null;
 }
 
-export interface SetView {
-  id: string;
-  name: string;
-  bonusText: string;
-  ownedCount: number;
-  total: number;
-  complete: boolean;
-  varieties: VarietyView[];
-}
-
-function bonusText(content: Content, bonus: Bonus): string {
-  const percent = Math.round(Math.abs(bonus.mult - 1) * 100);
-  const sign = bonus.mult >= 1 ? '+' : '−';
-  const where = bonus.world === 'all' ? 'en todos los mundos' : `en ${content.worlds.find((w) => w.id === bonus.world)?.name ?? bonus.world}`;
-  return bonus.kind === 'prod' ? `${sign}${percent} % de producción ${where}` : `${sign}${percent} % en el coste de los cerditos ${where}`;
-}
-
-function describeRequirement(content: Content, req: Requirement): (format: (n: Decimal) => string) => string {
-  const world = (id: string) => content.worlds.find((w) => w.id === id);
-  const worldName = (id: string) => world(id)?.name ?? id;
+function describeRequirement(content: Content, req: AchievementReq): (format: (n: Decimal) => string) => string {
   switch (req.kind) {
-    case 'genCount': {
-      const gen = world(req.world)?.generators.find((g) => g.id === req.gen);
-      return (f) => `Ten ${f(D(req.count))} ${gen?.name ?? req.gen} a la vez en ${worldName(req.world)}`;
-    }
+    case 'depth':
+      return (f) => `Llega al nivel ${f(D(req.count))} de la mina`;
+    case 'blocks':
+      return (f) => `Rompe ${f(D(req.count))} bloques`;
+    case 'taps':
+      return (f) => `Pica ${f(D(req.count))} veces`;
     case 'ascensions':
-      return (f) => `Echa a volar ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'} en ${worldName(req.world)}`;
+      return (f) => `Sube a la superficie ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'}`;
     case 'plumasTotal':
-      return (f) => `Consigue ${f(D(req.count))} ${world(req.world)?.prestigeCurrency ?? 'plumas'} en total`;
-    case 'lifetime':
-      return (f) => `Gana ${f(D(req.amount))} ${world(req.world)?.currency ?? ''} en total en ${worldName(req.world)}`;
-    case 'harmony':
-      return (f) => `Llega a ${f(D(req.count))} filas completas en ${worldName(req.world)}`;
-    case 'varieties': {
-      const names = req.ids.map((id) => content.varieties.find((v) => v.id === id)?.name ?? id);
-      return () => `Consigue antes: ${names.join(', ')}`;
-    }
+      return (f) => `Consigue ${f(D(req.count))} plumas en total`;
+    case 'pieceLevel':
+      return (f) => `Sube ${content.pieces.find((p) => p.id === req.piece)?.name ?? req.piece} al nivel ${f(D(req.count))}`;
   }
 }
 
-export function albumViews(state: GameState, content: Content): SetView[] {
-  return content.sets.map((set) => {
-    const varieties: VarietyView[] = content.varieties
-      .filter((v) => v.set === set.id)
-      .map((v) => ({
-        id: v.id,
-        name: v.name,
-        flavor: v.flavor,
-        owned: state.collection[v.id] !== undefined,
-        bonusText: bonusText(content, v.bonus),
-        requirements: v.requires.map((req): RequirementView => ({ ...requirementProgress(state, req), describe: describeRequirement(content, req) })),
-      }));
-    const ownedCount = varieties.filter((v) => v.owned).length;
+export function achievementViews(state: GameState, content: Content): AchievementView[] {
+  return content.achievements.map((a) => {
+    const piece = a.requires.kind === 'pieceLevel' ? content.pieces.find((p) => p.id === (a.requires as { piece: string }).piece) : undefined;
     return {
-      id: set.id,
-      name: set.name,
-      bonusText: bonusText(content, set.bonus),
-      ownedCount,
-      total: varieties.length,
-      complete: varieties.length > 0 && ownedCount === varieties.length,
-      varieties,
+      id: a.id,
+      name: a.name,
+      flavor: a.flavor,
+      owned: state.achievements[a.id] !== undefined,
+      requirement: { ...achievementProgress(state, a.requires), describe: describeRequirement(content, a.requires) },
+      piece: piece && a.requires.kind === 'pieceLevel' ? { id: piece.id, name: piece.name, emoji: piece.emoji, count: a.requires.count } : null,
     };
   });
 }
-
-export function albumSummary(state: GameState, content: Content): { owned: number; total: number } {
-  return { owned: content.varieties.filter((v) => state.collection[v.id] !== undefined).length, total: content.varieties.length };
-}
-
-/** Entradas del diario, de la más reciente a la más antigua. */
-export function journalEntries(state: GameState): { at: number; text: string }[] {
-  return [...state.journal].reverse();
-}
-
-// ---------------------------------------------------------------------------
-// Cesta, logros (hito 12)
-// ---------------------------------------------------------------------------
 
 export interface BasketView {
   value: Decimal;
@@ -493,132 +424,19 @@ export interface BasketView {
   fill: number;
 }
 
-export function basketView(state: GameState, content: Content, worldId: WorldId): BasketView {
-  const seconds = basketSeconds(state, worldId);
-  return { value: basketValue(state, content, worldId), seconds, capSeconds: BASKET_CAP_SECONDS, fill: seconds / BASKET_CAP_SECONDS };
+export function basketView(state: GameState, content: Content): BasketView {
+  const seconds = basketSeconds(state);
+  return { value: basketValue(state, content), seconds, capSeconds: BASKET_CAP_SECONDS, fill: seconds / BASKET_CAP_SECONDS };
 }
 
-export interface AchievementView {
-  id: string;
-  name: string;
-  flavor: string;
-  owned: boolean;
-  requirement: RequirementView;
-  /** Si es de "tener N de un cerdito": mundo, cerdito y cantidad (la UI los agrupa por cerdito). */
-  generator: { worldId: WorldId; genId: string; genName: string; genIndex: number; count: number } | null;
+/** Lo que daría una inyección de visitante ahora mismo (monedas). */
+export function visitorInjectionValue(state: GameState, content: Content): Decimal {
+  return incomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS);
 }
 
-function describeAchievementReq(content: Content, req: AchievementReq): (format: (n: Decimal) => string) => string {
-  switch (req.kind) {
-    case 'varietyCount':
-      return (f) => `Ten ${f(D(req.count))} variedades en el álbum`;
-    case 'worldUnlocked':
-      return () => `Abre ${content.worlds.find((w) => w.id === req.world)?.name ?? req.world}`;
-    case 'taps':
-      return (f) => `Rasca la barriga ${f(D(req.count))} veces`;
-    default:
-      return describeRequirement(content, req);
-  }
+/** Entradas del diario, de la más reciente a la más antigua. */
+export function journalEntries(state: GameState): { at: number; text: string }[] {
+  return [...state.journal].reverse();
 }
 
-function generatorOf(content: Content, req: AchievementReq): AchievementView['generator'] {
-  if (req.kind !== 'genCount') return null;
-  const world = content.worlds.find((w) => w.id === req.world);
-  const index = world?.generators.findIndex((g) => g.id === req.gen) ?? -1;
-  const gen = world?.generators[index];
-  return gen ? { worldId: req.world, genId: gen.id, genName: gen.name, genIndex: index, count: req.count } : null;
-}
-
-export function achievementViews(state: GameState, content: Content): AchievementView[] {
-  return content.achievements.map((a) => ({
-    id: a.id,
-    name: a.name,
-    flavor: a.flavor,
-    owned: state.achievements[a.id] !== undefined,
-    requirement: { ...achievementProgress(state, a.requires), describe: describeAchievementReq(content, a.requires) },
-    generator: generatorOf(content, a.requires),
-  }));
-}
-
-/** Lo que daría una inyección de visitante ahora mismo en `worldId` (moneda). */
-export function visitorInjectionValue(state: GameState, content: Content, worldId: WorldId): Decimal {
-  return displayProductionPerSecond(state, content, worldId).mul(VISITOR_INJECTION_SECONDS);
-}
-
-/**
- * El próximo cerdito por descubrir (aunque no se vea): segundos hasta poder pagar su primera
- * unidad al ritmo actual (`null` si no se produce nada). `null` si ya están todos descubiertos.
- */
-export function nextDiscovery(state: GameState, content: Content, worldId: WorldId): { etaSeconds: number | null; progress: number } | null {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (!worldState || worldState.revealed >= world.generators.length) return null;
-  const gen = world.generators[worldState.revealed];
-  if (!gen) return null;
-  const cost = generatorCost(world, gen, worldState.generators[gen.id]?.bought ?? 0, perkCostGrowthDelta(state, content, worldId), totalCostMultiplier(state, content, worldId));
-  const missing = cost.sub(worldState.currency);
-  if (missing.lte(0)) return { etaSeconds: 0, progress: 1 };
-  const rate = displayProductionPerSecond(state, content, worldId);
-  const progress = Math.min(1, Math.max(0, worldState.currency.div(cost).toNumber()));
-  return { etaSeconds: rate.gt(0) ? missing.div(rate).toNumber() : null, progress };
-}
-
-// ---------------------------------------------------------------------------
-// Fusión (La Pocilga)
-// ---------------------------------------------------------------------------
-
-export interface MergeLevelView {
-  index: number;
-  genId: string;
-  name: string;
-  count: number;
-  /** Producción de un cerdito de este nivel (por segundo). */
-  unitProd: Decimal;
-  /** Hay dos y existe un nivel siguiente: se puede fusionar. */
-  canMerge: boolean;
-}
-
-export interface MergeView {
-  slots: number;
-  used: number;
-  levels: MergeLevelView[];
-  buyName: string;
-  /** Cerdos que compraría el botón ahora (limitado por huecos libres y por el dinero). */
-  buyCount: number;
-  buyCost: Decimal;
-  canBuy: boolean;
-}
-
-/** Datos del tablero de fusión; `null` en los mundos que no usan esa mecánica. */
-export function mergeView(state: GameState, content: Content, worldId: WorldId): MergeView | null {
-  const world = getWorldDef(content, worldId);
-  const worldState = state.worlds[worldId];
-  if (world.mechanic !== 'merge' || !worldState) return null;
-  const first = world.generators[0];
-  if (!first) return null;
-  const m = globalMultiplier(state, content, worldId);
-  const levels = world.generators.map((gen, index) => ({
-    index,
-    genId: gen.id,
-    name: gen.name,
-    count: Math.round(worldState.generators[gen.id]?.owned.toNumber() ?? 0),
-    unitProd: D(gen.baseProd).mul(m),
-    canMerge: canMerge(world, worldState, index),
-  }));
-  const delta = perkCostGrowthDelta(state, content, worldId);
-  const mult = totalCostMultiplier(state, content, worldId);
-  const bought = worldState.generators[first.id]?.bought ?? 0;
-  const amount = state.settings.buyAmount;
-  const wanted = amount === 'max' ? maxAffordable(world, first, bought, worldState.currency, delta, mult) : amount;
-  const buyCount = Math.min(wanted, freeSlots(world, worldState));
-  const buyCost = bulkCost(world, first, bought, Math.max(1, buyCount), delta, mult);
-  return {
-    slots: slotsOf(world),
-    used: Math.round(totalPigs(world, worldState)),
-    levels,
-    buyName: first.name,
-    buyCount,
-    buyCost,
-    canBuy: buyCount > 0 && worldState.currency.gte(buyCost),
-  };
-}
+export { milestoneMult, Decimal };

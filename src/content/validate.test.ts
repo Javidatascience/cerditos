@@ -1,28 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from './index.ts';
-import type { Content, PerkDef, WorldDef } from './types.ts';
+import type { Content } from './types.ts';
 import { validateContent } from './validate.ts';
 
-function baseWorld(): WorldDef {
-  return {
-    id: 'w1',
-    name: 'Mundo 1',
-    currency: 'Monedas',
-    prestigeCurrency: 'Plumas',
-    mechanic: 'classic',
-    costGrowth: 1.15,
-    startCurrency: 10,
-    generators: [{ id: 'g1', name: 'G1', flavor: 'f', baseCost: 10, baseProd: 1 }],
-    genUpgrades: null,
-    globalUpgrades: [],
-    prestige: { e0: 100, exponent: 0.5, perPluma: 0.05 },
-    unlock: null,
-    flavor: 'f',
-  };
-}
-
-function baseContent(): Content {
-  return { worlds: [baseWorld()], perks: [], varieties: [], sets: [], achievements: [] };
+function clone(): Content {
+  return structuredClone(CONTENT);
 }
 
 describe('validateContent', () => {
@@ -30,81 +12,36 @@ describe('validateContent', () => {
     expect(validateContent(CONTENT)).toEqual([]);
   });
 
-  it('detecta un id de mundo duplicado', () => {
-    const content = baseContent();
-    content.worlds.push(baseWorld());
-    const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('Mundo duplicado'))).toBe(true);
+  it('detecta ids duplicados', () => {
+    const c = clone();
+    c.pieces.push({ ...c.pieces[0]! });
+    expect(validateContent(c).some((e) => e.includes('Pieza duplicado'))).toBe(true);
   });
 
-  it('detecta que una ventaja requiera otra que no existe', () => {
-    const content = baseContent();
-    const perk: PerkDef = {
-      id: 'w1.a',
-      world: 'w1',
-      name: 'A',
-      flavor: 'f',
-      maxLevel: 1,
-      baseCost: 1,
-      costGrowth: 1,
-      requires: ['w1.fantasma'],
-      effect: { kind: 'prodMult', perLevel: 1 },
-    };
-    content.perks = [perk];
-    const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('ventaja inexistente'))).toBe(true);
+  it('detecta una zona con material inexistente', () => {
+    const c = clone();
+    c.zones[0]!.material = 'fantasma';
+    expect(validateContent(c).some((e) => e.includes('material desconocido'))).toBe(true);
   });
 
-  it('detecta un ciclo en las ventajas', () => {
-    const content = baseContent();
-    const a: PerkDef = {
-      id: 'w1.a',
-      world: 'w1',
-      name: 'A',
-      flavor: 'f',
-      maxLevel: 1,
-      baseCost: 1,
-      costGrowth: 1,
-      requires: ['w1.b'],
-      effect: { kind: 'prodMult', perLevel: 1 },
-    };
-    const b: PerkDef = {
-      id: 'w1.b',
-      world: 'w1',
-      name: 'B',
-      flavor: 'f',
-      maxLevel: 1,
-      baseCost: 1,
-      costGrowth: 1,
-      requires: ['w1.a'],
-      effect: { kind: 'prodMult', perLevel: 1 },
-    };
-    content.perks = [a, b];
-    const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('Ciclo de ventajas'))).toBe(true);
+  it('detecta un peligro de zona que ninguna pieza resiste', () => {
+    const c = clone();
+    c.pieces = c.pieces.filter((p) => !(p.effect.kind === 'resist' && p.effect.hazard === 'frio'));
+    expect(validateContent(c).some((e) => e.includes('ninguna pieza resiste frio'))).toBe(true);
   });
 
-  it('detecta un genCount que apunta a un cerdito inexistente', () => {
-    const content = baseContent();
-    content.sets = [{ id: 's1', name: 'Set 1', bonus: { kind: 'prod', world: 'w1', mult: 1.1 } }];
-    content.varieties = [
-      {
-        id: 'v1',
-        name: 'V1',
-        flavor: 'f',
-        set: 's1',
-        requires: [{ kind: 'genCount', world: 'w1', gen: 'fantasma', count: 5 }],
-        bonus: { kind: 'prod', world: 'w1', mult: 1.05 },
-      },
-    ];
-    const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('cerdito desconocido'))).toBe(true);
+  it('detecta una ventaja que requiere otra inexistente y un ciclo', () => {
+    const c = clone();
+    c.perks[1]!.requires = ['fantasma'];
+    expect(validateContent(c).some((e) => e.includes('ventaja inexistente'))).toBe(true);
+    const d = clone();
+    d.perks[0]!.requires = ['comienzo'];
+    expect(validateContent(d).some((e) => e.includes('Ciclo de ventajas'))).toBe(true);
   });
 
-  it('el primer mundo debe estar abierto desde el inicio', () => {
-    const content = baseContent();
-    content.worlds[0]!.unlock = { world: 'w1', gen: 'g1', count: 10 }; // además, auto-referencia
-    const errors = validateContent(content);
-    expect(errors.some((e) => e.includes('primer mundo'))).toBe(true);
+  it('detecta un logro de una pieza inexistente', () => {
+    const c = clone();
+    c.achievements.push({ id: 'x', name: 'x', flavor: 'x', requires: { kind: 'pieceLevel', piece: 'fantasma', count: 1 } });
+    expect(validateContent(c).some((e) => e.includes('pieza desconocida'))).toBe(true);
   });
 });

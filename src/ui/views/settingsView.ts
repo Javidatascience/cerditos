@@ -1,5 +1,4 @@
-// Vista "Ajustes": notación de números, exportar/importar la partida como texto y borrarla.
-// Ver docs/01-diseno-juego.md §10, docs/02-arquitectura.md §6 y §9 (aviso de iOS).
+// Vista "Ajustes": notación de números, efectos, exportar/importar la partida como texto y borrarla.
 
 import { setEffects, setNotation } from '../../core/actions.ts';
 import { createInitialState, replaceState } from '../../core/state.ts';
@@ -145,17 +144,15 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
     ]),
 
     h('h3', {}, ['Borrar partida']),
-    h('p', { className: 'settings-hint' }, ['Esto reinicia el Valle por completo. No se puede deshacer.']),
+    h('p', { className: 'settings-hint' }, ['Esto reinicia la mina por completo. No se puede deshacer.']),
     deleteInput,
     deleteButton,
   ]);
   root.appendChild(container);
 
   function summarize(state: GameState): string {
-    const parts = ctx.content.worlds
-      .filter((w) => state.worlds[w.id]?.unlocked)
-      .map((w) => `${w.name}: ${formatNumber(state.worlds[w.id]!.currency, state.settings.notation)} ${w.currency}`);
-    return `${parts.join(' · ')}. ¿Reemplazar la partida actual?`;
+    const notation = state.settings.notation;
+    return `Nivel ${state.records.maxDepth} alcanzado, ${formatNumber(state.plumasTotal, notation)} plumas en total y ${state.ascensions} subidas. ¿Reemplazar la partida actual?`;
   }
 
   function update(state: GameState): void {

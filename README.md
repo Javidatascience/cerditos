@@ -1,6 +1,6 @@
 # Cerditos
 
-Juego incremental tranquilo sobre granjas de cerditos. Ver [CLAUDE.md](CLAUDE.md) para las reglas del proyecto y [docs/05-guia-del-juego.md](docs/05-guia-del-juego.md) para la guía de juego.
+Juego idle de un cerdito minero. Ver [CLAUDE.md](CLAUDE.md) para las reglas del proyecto y [docs/06-mina.md](docs/06-mina.md) para el diseño y la guía de juego.
 
 ```bash
 npm install

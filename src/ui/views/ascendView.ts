@@ -1,7 +1,6 @@
-// Vista "Volar": plumas actuales, ganancia si asciendes ahora, el multiplicador resultante y
-// a qué ritmo crecen las plumas pendientes. Botón "Echar a volar" con confirmación simple.
-// Nada parpadea, nada presiona: ver docs/01-diseno-juego.md §5.
-//
+// Vista "Subir": subir a la superficie a cambio de plumas. Dice cuántas ganarías ahora, por qué
+// nivel, y cuánto multiplicaría tu cavado el bono de plumas. Botón con confirmación simple; nada
+// parpadea ni presiona. Ver docs/06-mina.md.
 
 import { ascend } from '../../core/actions.ts';
 import { ascendView as getAscendView } from '../../core/selectors.ts';
@@ -10,28 +9,14 @@ import type { UiContext, View } from '../app.ts';
 import { h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
-/** Historial reciente de "plumas pendientes" (en segundos de juego, no reloj real) para
- * mostrar un ritmo de crecimiento aproximado. Vive en el cierre de la vista: al cambiar de
- * pestaña y volver se reinicia, lo cual es correcto (es solo una pista, no un dato guardado). */
-const HISTORY_WINDOW_SECONDS = 3600;
-
 export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
-  const worldId = ctx.activeWorld();
-  const world = ctx.content.worlds.find((w) => w.id === worldId);
-  if (!world) throw new Error(`Mundo desconocido: ${worldId}`);
-  const worldName = world.name;
-  const prestigeCurrency = world.prestigeCurrency;
-
-  const history: { t: number; gain: number }[] = [];
-
   const plumasText = document.createTextNode('');
   const pendingText = document.createTextNode('');
   const multiplierText = document.createTextNode('');
-  const growthText = document.createTextNode('');
 
-  const ascendButton = h('button', { className: 'tap-button' }, ['Echar a volar']) as HTMLButtonElement;
+  const ascendButton = h('button', { className: 'tap-button' }, ['Subir a la superficie']) as HTMLButtonElement;
   const confirmText = document.createTextNode('');
-  const confirmYes = h('button', { className: 'buy-button' }, ['Sí, echar a volar']) as HTMLButtonElement;
+  const confirmYes = h('button', { className: 'buy-button' }, ['Sí, subir']) as HTMLButtonElement;
   const confirmNo = h('button', { className: 'amount-button' }, ['Seguir un poco más']) as HTMLButtonElement;
   const confirmBlock = h('div', { className: 'settings-confirm hidden' }, [h('p', {}, [confirmText]), h('div', { className: 'amount-row' }, [confirmYes, confirmNo])]);
 
@@ -39,7 +24,7 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
   confirmNo.addEventListener('click', () => setClass(confirmBlock, 'hidden', true));
   confirmYes.addEventListener('click', () => {
     setClass(confirmBlock, 'hidden', true);
-    ctx.dispatch((state) => ascend(state, ctx.content, worldId, Date.now()));
+    ctx.dispatch((state) => ascend(state, ctx.content, Date.now()));
     ctx.requestSave();
   });
 
@@ -47,41 +32,28 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
     h('p', { className: 'ascend-plumas' }, [plumasText]),
     h('p', { className: 'settings-hint' }, [pendingText]),
     h('p', { className: 'settings-hint' }, [multiplierText]),
-    h('p', { className: 'settings-hint' }, [growthText]),
     ascendButton,
     confirmBlock,
   ]);
   root.appendChild(container);
 
   function update(state: GameState): void {
-    const view = getAscendView(state, ctx.content, worldId);
-
-    setText(plumasText, `${prestigeCurrency}: ${formatNumber(view.plumas, state.settings.notation)} (${formatNumber(view.plumasTotal, state.settings.notation)} en total)`);
-    setText(pendingText, view.pendingGain > 0 ? `Si echas a volar ahora, ganarás ${view.pendingGain} pluma${view.pendingGain === 1 ? '' : 's'}.` : 'Todavía no hay ninguna pluma pendiente.');
+    const notation = state.settings.notation;
+    const view = getAscendView(state, ctx.content);
+    setText(plumasText, `Plumas: ${formatNumber(view.plumas, notation)} (${formatNumber(view.plumasTotal, notation)} en total)`);
+    setText(
+      pendingText,
+      view.pendingGain > 0
+        ? `Si subes ahora, ganarás ${view.pendingGain} pluma${view.pendingGain === 1 ? '' : 's'} por haber llegado al nivel ${view.runMaxDepth}. Cuanto más hondo llegues en la ronda, más plumas.`
+        : 'Todavía no hay ninguna pluma pendiente: baja un poco más.',
+    );
     setText(
       multiplierText,
-      view.pendingGain > 0
-        ? `Tu producción pasaría de ×${view.currentBonusMultiplier.toFixed(2)} a ×${view.nextBonusMultiplier.toFixed(2)} (solo por el bono de plumas).`
-        : '',
+      view.pendingGain > 0 ? `Tu cavado pasaría de ×${view.currentBonusMultiplier.toFixed(2)} a ×${view.nextBonusMultiplier.toFixed(2)} solo por el bono de plumas.` : '',
     );
-
-    history.push({ t: state.time, gain: view.pendingGain });
-    while (history.length > 1 && state.time - history[0]!.t > HISTORY_WINDOW_SECONDS) history.shift();
-    const oldest = history[0];
-    if (oldest && state.time - oldest.t >= 300 && oldest.gain > 0) {
-      const percent = ((view.pendingGain - oldest.gain) / oldest.gain) * 100;
-      const minutes = Math.round((state.time - oldest.t) / 60);
-      setText(growthText, `${percent >= 0 ? '+' : ''}${percent.toFixed(1)} % en los últimos ${minutes} min.`);
-    } else {
-      setText(growthText, '');
-    }
-
     setDisabled(ascendButton, !view.canAscend);
-    setText(confirmText, `Vas a reiniciar ${worldName.toLowerCase()}: la moneda, los cerditos y las mejoras de esta ronda. Conservas las plumas y las ventajas.`);
+    setText(confirmText, 'Vas a volver a la superficie: pierdes las monedas, los materiales y las piezas de esta ronda. Conservas las plumas, las ventajas y los logros.');
   }
 
-  return {
-    update,
-    destroy: () => container.remove(),
-  };
+  return { update, destroy: () => container.remove() };
 }

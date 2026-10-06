@@ -1,14 +1,9 @@
-// Ilustraciones estáticas (docs/01 §3: nada que rebote, gire o brille). Un cerdito de SVG plano
-// con accesorio propio por cerdito/variedad, una escena de cabecera por mundo y emojis para
-// mejoras y ventajas. Es solo presentación: el contenido (src/content) no sabe de colores.
+// Ilustraciones sencillas: el cerdito minero en SVG plano, con los complementos que lleva puestos
+// según las piezas que tienes, y emojis para piezas, zonas y materiales. Es solo presentación:
+// el contenido (src/content) no sabe de colores. (El arte definitivo llega al final del proyecto.)
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const INK = '#3a2e26';
-
-export const WORLD_EMOJI: Record<string, string> = { valle: '🌾', pocilga: '🐽', bosque: '🌲', huerta: '🥕', balneario: '♨️' };
-
-/** Icono de la moneda de cada mundo (para la cabecera). */
-export const CURRENCY_EMOJI: Record<string, string> = { valle: '🌰', pocilga: '🪙', bosque: '🍄', huerta: '🎃', balneario: '🫧' };
 
 function node<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] {
   const el = document.createElementNS(SVG_NS, tag);
@@ -27,26 +22,6 @@ function stroke(extra: Record<string, string>): Record<string, string> {
 type Accessory = 'none' | 'hat' | 'bow' | 'glasses' | 'leaf' | 'flower' | 'crown' | 'cap' | 'mushroom' | 'towel' | 'scarf' | 'star' | 'cucumbers';
 
 /** Accesorio de cada cerdito (por id). */
-const GENERATOR_ACCESSORY: Record<string, Accessory> = {
-  lechon: 'none', 'cerdita-rosa': 'flower', duroc: 'cap', pietrain: 'scarf', berkshire: 'glasses', mangalica: 'leaf', iberico: 'hat', 'gran-blanco': 'crown',
-  buscadora: 'leaf', 'madre-trufera': 'hat', 'abuela-sabia': 'glasses', 'clan-del-roble': 'mushroom', 'espiritu-del-bosque': 'star',
-  hortelana: 'hat', regador: 'cap', escardadora: 'scarf', 'cuidador-de-tomates': 'bow', 'pastora-de-gallinas': 'flower', apicultor: 'glasses', 'jardinera-jefa': 'crown', 'abuelo-del-huerto': 'mushroom',
-  cochinillo: 'none', cerdito: 'bow', 'cerdo-joven': 'cap', 'cerdo-robusto': 'scarf', verraco: 'glasses', 'cerdo-de-feria': 'flower', 'cerdo-campeon': 'crown', 'cerdo-alado': 'star', 'cerdo-estelar': 'star', 'cerdo-cosmico': 'crown',
-  banista: 'towel', 'cerdita-del-barro': 'none', masajista: 'scarf', socorrista: 'cap', termalista: 'cucumbers', 'maestra-de-sales': 'flower', 'director-del-spa': 'glasses', 'cerdo-zen': 'star',
-};
-
-const ACCESSORIES: Accessory[] = ['none', 'hat', 'bow', 'glasses', 'leaf', 'flower', 'crown', 'cap', 'mushroom', 'towel', 'scarf', 'star', 'cucumbers'];
-
-/** Tonos de piel por mundo (uno por cerdito, por orden). */
-const WORLD_PIGS: Record<string, string[]> = {
-  valle: ['#f4c7c3', '#efb0b0', '#d98a63', '#8a8484', '#5d5656', '#b98c78', '#7a4f3f', '#f6e8df'],
-  bosque: ['#d9b99b', '#c49a74', '#a67c52', '#8b6b4a', '#6f5a45'],
-  huerta: ['#f4c7c3', '#f0d29a', '#e7a779', '#d9c27c', '#c9d49b', '#e8b86d', '#bfa05a', '#a68c4f'],
-  pocilga: ['#f6d4d0', '#f4c7c3', '#efb0b0', '#e89a9a', '#d98a63', '#c9a24a', '#d8b84a', '#9fc3e6', '#b79de6', '#f2c94c'],
-  balneario: ['#f4d3d3', '#c9a28a', '#b7c9d6', '#9fc3c9', '#e6c8e0', '#d6c2a2', '#a9bfd0', '#c5d8c2'],
-};
-const FALLBACK_PIGS = ['#f4c7c3', '#d98a63', '#9fc3c9', '#c9d49b', '#b98c78', '#e6c8e0'];
-
 function accessoryNodes(kind: Accessory): SVGElement[] {
   switch (kind) {
     case 'none':
@@ -141,134 +116,31 @@ export function pigIcon(skin: string, accessory: Accessory = 'none', locked = fa
   return svg;
 }
 
-const spriteCache = new Map<string, HTMLImageElement>();
+/** Piel del cerdito minero. */
+export const PIG_SKIN = '#f4c7c3';
 
-/** Imagen (para el canvas de la granja animada) del cerdito `genId` del mundo, en caché. */
-export function generatorSprite(worldId: string, index: number, genId: string): HTMLImageElement {
-  const key = `${worldId}:${genId}`;
-  const cached = spriteCache.get(key);
-  if (cached) return cached;
-  const svg = generatorIcon(worldId, index, genId);
-  svg.setAttribute('xmlns', SVG_NS);
-  svg.setAttribute('width', '96');
-  svg.setAttribute('height', '96');
-  const image = new Image();
-  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
-  spriteCache.set(key, image);
-  return image;
-}
-
-function pigColor(worldId: string, index: number): string {
-  const palette = WORLD_PIGS[worldId] ?? FALLBACK_PIGS;
-  return palette[index % palette.length] ?? '#f4c7c3';
-}
-
-/** Icono del cerdito `genId`, número `index` (0-based) del mundo. */
-export function generatorIcon(worldId: string, index: number, genId?: string): SVGSVGElement {
-  return pigIcon(pigColor(worldId, index), (genId && GENERATOR_ACCESSORY[genId]) || 'none');
-}
-
-/** Icono de una variedad del álbum: color y accesorio salen de un hash estable del id. */
-export function varietyIcon(id: string, owned: boolean): SVGSVGElement {
-  let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  const accessory = ACCESSORIES[(hash >>> 3) % ACCESSORIES.length] ?? 'none';
-  return pigIcon(pigColor('', hash), accessory, !owned);
-}
-
-// ---------------------------------------------------------------------------
-// Emojis de mejoras, ventajas y logros
-// ---------------------------------------------------------------------------
-
-const UPGRADE_EMOJI: Record<string, string> = {
-  'paja-fresca': '🌾', 'charca-de-barro': '💧', 'rascador-de-roble': '🪵', 'acordeon-del-abuelo': '🪗', 'huerto-de-manzanos': '🍎', 'siesta-a-la-sombra': '😴', 'fiesta-de-san-anton': '🎉', 'pocilga-con-vistas': '🏡',
-  'hocico-entrenado': '👃', 'mapa-de-robles': '🗺️', 'cesta-de-mimbre': '🧺', 'linterna-de-luciernagas': '🏮', 'cancion-del-bosque': '🎶', 'musgo-mullido': '🌿',
-  'semillas-antiguas': '🌱', 'compost-casero': '🪱', 'espantapajaros-amable': '🧑‍🌾', 'riego-por-goteo': '🚿', invernadero: '🏕️', 'calendario-lunar': '🌙', 'abejas-amigas': '🐝', 'fiesta-de-la-cosecha': '🎃',
-  'toallas-calentitas': '🧖', 'barro-volcanico': '🌋', 'pepinos-en-los-ojos': '🥒', 'hilo-musical': '🎵', 'albornoces-bordados': '👘', 'aromas-de-lavanda': '💜',
+/** Complemento que se le ve puesto al cerdito según una pieza que tiene (id de pieza → complemento). */
+export const PIECE_ACCESSORY: Record<string, Accessory> = {
+  corona: 'crown',
+  casco: 'cap',
+  linterna: 'star',
+  capa: 'scarf',
+  gafas: 'glasses',
+  botas: 'none',
 };
 
-const PERK_EMOJI: Record<string, string> = {
-  abono: '🌱', comienzo: '🎒', ahorro: '🏷️', mejoras: '🔧', vuelo: '🪶', puente: '🤝', establo: '🏠', raices: '🌳',
-};
+/** El cerdito minero con los complementos de las piezas que tiene (el primero que aplique). */
+export function minerPig(ownedPieceIds: string[]): SVGSVGElement {
+  const order = ['corona', 'gafas', 'casco', 'capa', 'linterna'];
+  const accessory = order.find((id) => ownedPieceIds.includes(id));
+  return pigIcon(PIG_SKIN, accessory ? PIECE_ACCESSORY[accessory] ?? 'none' : 'none');
+}
 
-const ACHIEVEMENT_EMOJI = '🏅';
-
-function badge(emoji: string, locked = false): HTMLSpanElement {
+/** Insignia con un emoji (piezas, materiales, zonas…). */
+export function emojiBadge(emoji: string, locked = false): HTMLSpanElement {
   const el = document.createElement('span');
   el.className = locked ? 'emoji-badge emoji-badge-locked' : 'emoji-badge';
   el.setAttribute('aria-hidden', 'true');
   el.textContent = emoji;
   return el;
-}
-
-/** Imagen de una mejora global (por id). */
-export function upgradeBadge(upgradeId: string, worldId: string): HTMLSpanElement {
-  return badge(UPGRADE_EMOJI[upgradeId] ?? WORLD_EMOJI[worldId] ?? '⭐');
-}
-
-/** Imagen de una ventaja permanente (id con forma `mundo.local`). */
-export function perkBadge(perkId: string): HTMLSpanElement {
-  return badge(PERK_EMOJI[perkId.split('.')[1] ?? ''] ?? '⭐');
-}
-
-export function achievementBadge(owned: boolean): HTMLSpanElement {
-  return badge(ACHIEVEMENT_EMOJI, !owned);
-}
-
-// ---------------------------------------------------------------------------
-// Escena de cabecera por mundo
-// ---------------------------------------------------------------------------
-
-function gradient(id: string, top: string, bottom: string): SVGLinearGradientElement {
-  const g = node('linearGradient', { id, x1: '0', y1: '0', x2: '0', y2: '1' });
-  g.append(node('stop', { offset: '0', 'stop-color': top }), node('stop', { offset: '1', 'stop-color': bottom }));
-  return g;
-}
-
-/** Escena estática y apagada que va detrás de la cabecera. */
-export function worldBanner(worldId: string): SVGSVGElement {
-  const svg = node('svg', { viewBox: '0 0 400 100', preserveAspectRatio: 'xMidYMid slice', class: 'world-banner', 'aria-hidden': 'true', focusable: 'false' });
-  const defs = node('defs', {});
-  svg.append(defs);
-  const sky = `sky-${worldId}`;
-
-  if (worldId === 'bosque') {
-    defs.append(gradient(sky, '#cfe3d4', '#eaf2e6'));
-    svg.append(node('rect', { width: '400', height: '100', fill: `url(#${sky})` }), node('circle', { cx: '330', cy: '26', r: '12', fill: '#f6f1d0' }));
-    for (let i = 0; i < 12; i++) {
-      const x = 15 + i * 34;
-      const h = 38 + ((i * 7) % 18);
-      svg.append(node('path', { d: `M${x} 100 L${x + 16} ${100 - h} L${x + 32} 100 Z`, fill: i % 2 ? '#5f8a5a' : '#4f7a4c' }), node('rect', { x: String(x + 14), y: '96', width: '4', height: '4', fill: '#6b4f3a' }));
-    }
-  } else if (worldId === 'huerta') {
-    defs.append(gradient(sky, '#f9e7c6', '#fbf3df'));
-    svg.append(node('rect', { width: '400', height: '100', fill: `url(#${sky})` }), node('circle', { cx: '60', cy: '26', r: '13', fill: '#f6c667' }), node('rect', { y: '58', width: '400', height: '42', fill: '#a97c50' }));
-    for (let row = 0; row < 3; row++) {
-      for (let i = 0; i < 20; i++) {
-        svg.append(node('circle', { cx: String(10 + i * 20 + (row % 2) * 8), cy: String(66 + row * 11), r: '4.5', fill: row === 1 ? '#e7893f' : '#6aa84f' }));
-      }
-    }
-  } else if (worldId === 'balneario') {
-    defs.append(gradient(sky, '#dcecf3', '#f3f8fa'));
-    svg.append(
-      node('rect', { width: '400', height: '100', fill: `url(#${sky})` }),
-      node('rect', { x: '0', y: '62', width: '400', height: '38', fill: '#8fc1d1' }),
-      node('rect', { x: '0', y: '62', width: '400', height: '5', fill: '#a9d3df' }),
-    );
-    for (let i = 0; i < 6; i++) {
-      const x = 40 + i * 62;
-      svg.append(node('path', { d: `M${x} 58 q8 -12 0 -22 q-8 -10 0 -22`, stroke: '#ffffff', 'stroke-width': '4', 'stroke-linecap': 'round', fill: 'none', opacity: '0.8' }));
-    }
-  } else {
-    defs.append(gradient(sky, '#cfe8f5', '#f8f1dc'));
-    svg.append(
-      node('rect', { width: '400', height: '100', fill: `url(#${sky})` }),
-      node('circle', { cx: '340', cy: '26', r: '14', fill: '#f6d56a' }),
-      node('path', { d: 'M0 100 V70 Q60 44 130 66 T270 62 T400 70 V100 Z', fill: '#a8cc84' }),
-      node('path', { d: 'M0 100 V82 Q80 62 160 80 T320 78 T400 84 V100 Z', fill: '#86b866' }),
-    );
-    for (let i = 0; i < 9; i++) svg.append(node('rect', { x: String(20 + i * 44), y: '76', width: '4', height: '14', fill: '#8b6b4a' }));
-    svg.append(node('rect', { x: '16', y: '80', width: '372', height: '3', fill: '#8b6b4a' }));
-  }
-  return svg;
 }

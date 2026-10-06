@@ -1,68 +1,32 @@
 // Logros: reconocimiento sin bonos (no tocan la economía). Cada uno tiene su requisito visible
-// con progreso, igual que las variedades. Se anotan en el Diario al conseguirlos.
+// con progreso. Los de profundidad, ascensiones y plumas se anotan en el Diario.
 
+import { PIECES } from './mine.ts';
 import type { AchievementDef } from './types.ts';
-import { balneario } from './worlds/balneario.ts';
-import { bosque } from './worlds/bosque.ts';
-import { huerta } from './worlds/huerta.ts';
-import { pocilga } from './worlds/pocilga.ts';
-import { valle } from './worlds/valle.ts';
 
-/** Cantidades de cada cerdito que dan logro (y su frase). Una serie igual para todos los cerditos. */
-export const GENERATOR_MILESTONES: { count: number; flavor: string }[] = [
-  { count: 1, flavor: 'Hay que empezar por alguno.' },
-  { count: 15, flavor: 'Ya hacen compañía.' },
-  { count: 25, flavor: 'Esto ya es una pandilla.' },
-  { count: 50, flavor: 'Media centena, y todos con apetito.' },
-  { count: 100, flavor: 'Cien, y ninguno se queda atrás.' },
-  { count: 150, flavor: 'Ya hay que contarlos dos veces.' },
-  { count: 200, flavor: 'Un pequeño pueblo de cerditos.' },
-  { count: 250, flavor: 'Se acabaron los nombres propios.' },
-  { count: 300, flavor: 'Nadie sabe ya cuántos son.' },
-  { count: 350, flavor: 'Corral, pueblo, comarca…' },
-  { count: 400, flavor: 'El récord de toda la comarca.' },
+const DEPTHS: { count: number; name: string; flavor: string }[] = [
+  { count: 10, name: 'Primeros metros', flavor: 'Ya huele a tierra mojada.' },
+  { count: 20, name: 'Fin de la tierra blanda', flavor: 'Lo fácil se ha acabado.' },
+  { count: 40, name: 'Arcilla y barro', flavor: 'Las botas ya tienen historia.' },
+  { count: 60, name: 'Bajo la roca', flavor: 'Aquí abajo el silencio pesa.' },
+  { count: 80, name: 'Fuera las luces', flavor: 'Menos mal que hay linterna.' },
+  { count: 100, name: 'Cien niveles', flavor: 'Cuesta recordar cómo era el sol.' },
+  { count: 120, name: 'Cristales por todas partes', flavor: 'Brillan más que las monedas.' },
+  { count: 140, name: 'Tocando el magma', flavor: 'Calentito, pero demasiado.' },
+  { count: 160, name: 'El abismo', flavor: 'Nadie ha vuelto a contar los niveles.' },
+  { count: 200, name: 'Doscientos niveles', flavor: 'Hasta los topos se han quedado atrás.' },
+  { count: 300, name: 'Más hondo que nunca', flavor: 'Ya casi se oyen las estrellas.' },
 ];
 
-/** Un logro por cada cerdito y cada cantidad de la serie (id `${cerdito}-${cantidad}`). */
-/** En La Pocilga cada nivel solo se tiene a la vez en pequeñas cantidades: hitos propios (1, 3 y 6). */
-const MERGE_MILESTONES = GENERATOR_MILESTONES.filter((m) => [1].includes(m.count)).concat([
-  { count: 3, flavor: 'Tres iguales: hay con quién jugar.' },
-  { count: 6, flavor: 'Medio corral de la misma talla.' },
-]);
-
-const GENERATOR_ACHIEVEMENTS: AchievementDef[] = [valle, bosque, huerta, balneario, pocilga].flatMap((world) =>
-  world.generators.flatMap((gen) =>
-    (world.mechanic === 'merge' ? MERGE_MILESTONES : GENERATOR_MILESTONES).map((m) => ({
-      id: `${gen.id}-${m.count}`,
-      name: `${gen.name} ×${m.count}`,
-      flavor: m.flavor,
-      requires: { kind: 'genCount' as const, world: world.id, gen: gen.id, count: m.count },
-    })),
-  ),
-);
+const fmt = (n: number) => n.toLocaleString('es-ES');
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  ...GENERATOR_ACHIEVEMENTS,
-  // Valle
-  { id: 'primer-vuelo', name: 'Primer vuelo', flavor: 'Las plumas no se las lleva el viento.', requires: { kind: 'ascensions', world: 'valle', count: 1 } },
-  { id: 'vuelo-habitual', name: 'Vuelo habitual', flavor: 'Ya ni miran hacia arriba cuando despegan.', requires: { kind: 'ascensions', world: 'valle', count: 10 } },
-  { id: 'almohada-de-plumas', name: 'Almohada de plumas', flavor: 'Se duerme de maravilla.', requires: { kind: 'plumasTotal', world: 'valle', count: 100 } },
-  { id: 'mil-millones', name: 'Mil millones de bellotas', flavor: 'Más bellotas que granos de arena en el corral.', requires: { kind: 'lifetime', world: 'valle', amount: 1e9 } },
-  // Rascar
-  { id: 'rascabarrigas', name: 'Rascabarrigas', flavor: 'Tus manos ya tienen callo bueno.', requires: { kind: 'taps', count: 100 } },
-  { id: 'rascabarrigas-experto', name: 'Rascabarrigas experto', flavor: 'Los cerditos hacen cola.', requires: { kind: 'taps', count: 1000 } },
-  // Mundos
-  { id: 'bosque-abierto', name: 'El bosque te espera', flavor: 'Huele a tierra mojada y a trufa.', requires: { kind: 'worldUnlocked', world: 'bosque' } },
-  { id: 'huerta-abierta', name: 'Huerta en flor', flavor: 'Ocho parcelas y ninguna prisa.', requires: { kind: 'worldUnlocked', world: 'huerta' } },
-  { id: 'balneario-abierto', name: 'Con la toalla al hombro', flavor: 'Por fin, un sitio para no hacer nada.', requires: { kind: 'worldUnlocked', world: 'balneario' } },
-  // Bosque
-  { id: 'primer-vuelo-bosque', name: 'Vuelo entre las copas', flavor: 'Las ramas se apartan para dejarlos pasar.', requires: { kind: 'ascensions', world: 'bosque', count: 1 } },
-  // Huerta
-  { id: 'filas-10', name: 'Diez filas bien rectas', flavor: 'Ni una calabaza fuera de su sitio.', requires: { kind: 'harmony', world: 'huerta', count: 10 } },
-  { id: 'filas-100', name: 'Cien filas en armonía', flavor: 'Hasta las abejas siguen el compás.', requires: { kind: 'harmony', world: 'huerta', count: 100 } },
-  // Balneario
-  // Colección
-  { id: 'album-con-huecos', name: 'Álbum con huecos', flavor: 'Cinco caras nuevas en la familia.', requires: { kind: 'varietyCount', count: 5 } },
-  { id: 'medio-album', name: 'Medio álbum', flavor: 'Mitad del camino, y todavía hay galletas.', requires: { kind: 'varietyCount', count: 14 } },
-  { id: 'album-completo', name: 'Álbum completo', flavor: 'Pancho ya tiene con quién jugar.', requires: { kind: 'varietyCount', count: 28 } },
+  ...DEPTHS.map((d) => ({ id: `nivel-${d.count}`, name: d.name, flavor: d.flavor, requires: { kind: 'depth' as const, count: d.count } })),
+  ...[100, 1000, 10000, 100000].map((n) => ({ id: `bloques-${n}`, name: `${fmt(n)} bloques`, flavor: 'Una mina entera hecha migas.', requires: { kind: 'blocks' as const, count: n } })),
+  ...[100, 1000, 10000].map((n) => ({ id: `picar-${n}`, name: `Picar ×${fmt(n)}`, flavor: 'Tus manos ya tienen callo bueno.', requires: { kind: 'taps' as const, count: n } })),
+  ...[1, 3, 5, 10, 25].map((n) => ({ id: `subir-${n}`, name: n === 1 ? 'Primera subida' : `Subir ×${n}`, flavor: 'La superficie ya sabe a casa.', requires: { kind: 'ascensions' as const, count: n } })),
+  ...[10, 100, 1000].map((n) => ({ id: `plumas-${n}`, name: `${fmt(n)} plumas`, flavor: 'Un almohadón entero.', requires: { kind: 'plumasTotal' as const, count: n } })),
+  ...PIECES.flatMap((p) =>
+    [10, 25, 50, 100].map((n) => ({ id: `${p.id}-${n}`, name: `${p.name} nivel ${n}`, flavor: p.flavor, requires: { kind: 'pieceLevel' as const, piece: p.id, count: n } })),
+  ),
 ];

@@ -1,6 +1,5 @@
 // Arranque del juego: cargar partida (o crear una nueva) → calcular lo ocurrido mientras no
-// se estaba → montar la UI → avanzar el tiempo cada 250 ms y guardar. Ver docs/02-arquitectura.md
-// §4-§6 y docs/01-diseno-juego.md §10.
+// se estaba → montar la UI → avanzar el tiempo cada 250 ms y guardar. Ver docs/06-mina.md.
 
 import { CONTENT } from './content/index.ts';
 import { simulateOffline } from './core/offline.ts';
@@ -43,7 +42,7 @@ const visitor = createVisitorScheduler();
 const app = mountApp(root, CONTENT, state, persist, visitor);
 
 if (pendingOfflineSummary && pendingOfflineSummary.awaySeconds > OFFLINE_SUMMARY_THRESHOLD_SECONDS) {
-  showOfflineSummary(document.body, pendingOfflineSummary, CONTENT, state.settings.notation, () => app.update(state));
+  showOfflineSummary(document.body, pendingOfflineSummary, state.settings.notation, () => app.update(state));
 }
 
 let lastTickAt = now;

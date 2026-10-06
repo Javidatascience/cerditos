@@ -1,72 +1,112 @@
-// Tipos del contenido del juego (datos declarativos). Ver docs/02-arquitectura.md §7.
-// El motor (src/core/) no importa nada de aquí salvo estos tipos: no conoce nombres concretos
-// de mundos, cerditos ni ventajas.
+// Tipos del contenido del juego (datos declarativos). Ver docs/06-mina.md.
+// El motor (src/core/) no menciona ninguna zona, pieza ni ventaja por nombre: todo sale de aquí.
 
-import type { GeneratorId, PerkId, UpgradeId, VarietyId, WorldId } from '../core/state.ts';
+export type ZoneId = string;
+export type MaterialId = string;
+export type HazardId = string;
+export type PieceId = string;
+export type PerkId = string;
 
-export type Mechanic = 'classic' | 'chain' | 'harmony' | 'calm' | 'merge';
-
-export interface GeneratorDef {
-  id: GeneratorId;
+export interface MaterialDef {
+  id: MaterialId;
   name: string;
+  emoji: string;
+}
+
+export interface HazardDef {
+  id: HazardId;
+  name: string;
+  emoji: string;
+}
+
+/** Una zona de la mina: ocupa `zoneLength` niveles a partir de `index * zoneLength + 1`. */
+export interface ZoneDef {
+  id: ZoneId;
+  name: string;
+  emoji: string;
   flavor: string;
+  /** Material que sueltan sus bloques. */
+  material: MaterialId;
+  /** Peligro de la zona (frena el cavado si no tienes la pieza que lo resiste), o null. */
+  hazard: HazardId | null;
+}
+
+/** Números del cavado. Todo el equilibrio de la mina está aquí. */
+export interface MineDef {
+  /** Niveles por zona. */
+  zoneLength: number;
+  /** Vida del bloque del nivel d: hpBase · hpGrowth^(d-1). */
+  hpBase: number;
+  hpGrowth: number;
+  /** Monedas del bloque del nivel d: coinBase · coinGrowth^(d-1). */
+  coinBase: number;
+  coinGrowth: number;
+  /** Cavado base del cerdito sin piezas (daño por segundo). */
+  baseDps: number;
+  /** Segundos de cavado que equivalen a un toque ("Picar"). */
+  tapSeconds: number;
+  /** Monedas con las que empieza cada ronda. */
+  startCoins: number;
+  /** Con la resistencia a cero, el cavado queda en esta fracción (0..1). */
+  hazardFloor: number;
+  /** Multiplicador por cada hito de nivel de una pieza (×2 a los niveles de `milestones`). */
+  milestones: number[];
+  milestoneMult: number;
+  /** Plumas al subir: floor(plumaCoef · profundidad^plumaExp · bonos). */
+  plumaCoef: number;
+  plumaExp: number;
+  /** Bono de producción por cada pluma ganada (histórico). */
+  perPluma: number;
+  /** Horas de producción offline base (las ventajas las amplían). */
+  offlineHours: number;
+}
+
+export type PieceEffect =
+  /** +dps por nivel (se suma al cavado). */
+  | { kind: 'dig'; perLevel: number }
+  /** +dps por nivel, como "ayudante" (se suma igual que dig, pero es un compañero). */
+  | { kind: 'helper'; perLevel: number }
+  /** Multiplica el cavado por (1 + perLevel · nivel). */
+  | { kind: 'digMult'; perLevel: number }
+  /** Cada toque equivale a más segundos de cavado: ×(1 + perLevel · nivel). */
+  | { kind: 'tap'; perLevel: number }
+  /** Multiplica las monedas por bloque por (1 + perLevel · nivel). */
+  | { kind: 'coinMult'; perLevel: number }
+  /** Multiplica los materiales por bloque por (1 + perLevel · nivel). */
+  | { kind: 'materialMult'; perLevel: number }
+  /** Habilidad activa: avanza `baseSeconds + perLevel · nivel` segundos de cavado de golpe. */
+  | { kind: 'burst'; baseSeconds: number; perLevel: number; cooldown: number }
+  /** Resiste un peligro: con el nivel `needBase + needStep · zona` no hay penalización. */
+  | { kind: 'resist'; hazard: HazardId; needBase: number; needStep: number };
+
+export interface PieceDef {
+  id: PieceId;
+  name: string;
+  emoji: string;
+  flavor: string;
+  effect: PieceEffect;
+  /** Coste en monedas del nivel L → L+1: baseCost · costGrowth^L. */
   baseCost: number;
-  baseProd: number;
-  /** Crecimiento de coste propio; si falta, se usa el `costGrowth` del mundo. */
-  costGrowth?: number;
-}
-
-export interface GlobalUpgradeDef {
-  id: UpgradeId;
-  name: string;
-  flavor: string;
-  cost: number;
-  mult: number;
-}
-
-export interface WorldDef {
-  id: WorldId;
-  name: string;
-  currency: string;
-  prestigeCurrency: string; // p. ej. "Plumas del Valle"
-  mechanic: Mechanic;
-  /** Crecimiento de coste por defecto para sus cerditos. */
   costGrowth: number;
-  startCurrency: number;
-  /** En orden de nivel (nivel 0 primero). */
-  generators: GeneratorDef[];
-  genUpgrades: { counts: number[]; mult: number; costFactor: number } | null;
-  globalUpgrades: GlobalUpgradeDef[];
-  prestige: { e0: number; exponent: number; perPluma: number };
-  /** Se abre al haber tenido `count` unidades del cerdito `gen` (el último) del mundo `world`. */
-  unlock: { world: WorldId; gen: GeneratorId; count: number } | null;
-  harmony?: { perLevel: number; thresholds: number[]; mult: number };
-  calm?: CalmDef;
-  /** Fusión: huecos disponibles para cerdos. */
-  merge?: { slots: number };
-  flavor: string;
-}
-
-export interface CalmDef {
-  maxBonus: number;
-  rampSeconds: number;
-  penalty: number;
-  windowSeconds: number;
+  /** Material del coste (ceil(materialBase · 1,12^L) unidades), o null si solo cuesta monedas. */
+  material: MaterialId | null;
+  materialBase: number;
+  maxLevel: number;
+  /** Se desbloquea al haber llegado a este nivel de la mina y al haber subido a la superficie estas veces. */
+  unlock: { depth: number; ascensions: number };
 }
 
 export type PerkEffect =
   | { kind: 'prodMult'; perLevel: number }
   | { kind: 'costMult'; perLevel: number }
-  | { kind: 'upgradeCostMult'; perLevel: number }
   | { kind: 'startCurrency'; perLevel: number }
+  | { kind: 'startDepth'; perLevel: number }
   | { kind: 'plumaMult'; perLevel: number }
-  | { kind: 'crossProd'; perLevel: number }
-  | { kind: 'costGrowthDelta'; perLevel: number }
-  | { kind: 'perPlumaBonus'; perLevel: number };
+  | { kind: 'perPlumaBonus'; perLevel: number }
+  | { kind: 'offlineHours'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;
-  world: WorldId;
   name: string;
   flavor: string;
   maxLevel: number | null;
@@ -76,49 +116,27 @@ export interface PerkDef {
   effect: PerkEffect;
 }
 
-export type Requirement =
-  | { kind: 'genCount'; world: WorldId; gen: GeneratorId; count: number }
-  | { kind: 'ascensions'; world: WorldId; count: number }
-  | { kind: 'plumasTotal'; world: WorldId; count: number }
-  | { kind: 'lifetime'; world: WorldId; amount: number }
-  | { kind: 'harmony'; world: WorldId; count: number }
-  | { kind: 'varieties'; ids: VarietyId[] };
-
-export type Bonus = { kind: 'prod' | 'cost'; world: WorldId | 'all'; mult: number };
-
-export interface VarietyDef {
-  id: VarietyId;
-  name: string;
-  flavor: string;
-  set: string;
-  requires: Requirement[];
-  bonus: Bonus;
-}
-
-export interface SetDef {
-  id: string;
-  name: string;
-  bonus: Bonus;
-}
-
-export interface Content {
-  worlds: WorldDef[];
-  perks: PerkDef[];
-  varieties: VarietyDef[];
-  sets: SetDef[];
-  achievements: AchievementDef[];
-}
-
-/** Requisitos de logro: los de variedades más contadores globales. */
 export type AchievementReq =
-  | Requirement
-  | { kind: 'varietyCount'; count: number }
-  | { kind: 'worldUnlocked'; world: WorldId }
-  | { kind: 'taps'; count: number };
+  | { kind: 'depth'; count: number }
+  | { kind: 'blocks'; count: number }
+  | { kind: 'taps'; count: number }
+  | { kind: 'ascensions'; count: number }
+  | { kind: 'plumasTotal'; count: number }
+  | { kind: 'pieceLevel'; piece: PieceId; count: number };
 
 export interface AchievementDef {
   id: string;
   name: string;
   flavor: string;
   requires: AchievementReq;
+}
+
+export interface Content {
+  mine: MineDef;
+  materials: MaterialDef[];
+  hazards: HazardDef[];
+  zones: ZoneDef[];
+  pieces: PieceDef[];
+  perks: PerkDef[];
+  achievements: AchievementDef[];
 }
