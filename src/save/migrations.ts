@@ -17,8 +17,28 @@ type RawSave = Record<string, unknown>;
 /** Primera versión del formato actual (el cerdito picador con herramientas). */
 const FIRST_VERSION = 5;
 
-/** v(n) → v(n+1). Vacío de momento: la 5 es la primera versión del juego actual. */
-const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {};
+/**
+ * v5 → v6 (mejoras de herramienta que se compran): añade `upgrades`. Para no quitar nada a quien ya
+ * tenía hitos aplicados automáticamente, se le dan como compradas las mejoras que ya habría
+ * desbloqueado con las unidades que tiene (los hitos 5, 15, 25…).
+ */
+const MILESTONES_V5 = [5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500];
+function v5ToV6(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 6 };
+  const state = old['state'];
+  const owned = (isPlainObject(state['tools']) ? state['tools'] : {}) as Record<string, number>;
+  const upgrades: Record<string, number> = {};
+  for (const [id, count] of Object.entries(owned)) {
+    const reached = MILESTONES_V5.filter((m) => count >= m).length;
+    if (reached > 0) upgrades[id] = reached;
+  }
+  return { ...old, version: 6, state: { ...state, version: 6, upgrades } };
+}
+
+/** v(n) → v(n+1). */
+const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
+  5: v5ToV6,
+};
 
 function isPlainObject(value: unknown): value is RawSave {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

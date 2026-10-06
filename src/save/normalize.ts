@@ -19,6 +19,11 @@ export function normalize(state: GameState, content: Content): GameState {
   for (const id of Object.keys(state.maxOwned)) if (!toolIds.has(id)) delete state.maxOwned[id];
   for (const id of toolIds) state.maxOwned[id] = Math.max(state.maxOwned[id] ?? 0, state.tools[id] ?? 0);
 
+  for (const id of Object.keys(state.upgrades)) {
+    if (!toolIds.has(id)) delete state.upgrades[id];
+    else state.upgrades[id] = clampInt(state.upgrades[id] ?? 0, 0, content.game.milestones.length);
+  }
+
   const perkById = new Map(content.perks.map((p) => [p.id, p]));
   for (const id of Object.keys(state.perks)) {
     const perk = perkById.get(id);

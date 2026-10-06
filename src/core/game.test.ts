@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
-import { ascend, buyPerk, buyTool, claimVisitor, collectBasket, tap, VISITOR_BOOST, VISITOR_INJECTION_SECONDS } from './actions.ts';
+import { ascend, buyPerk, buyTool, buyUpgrade, claimVisitor, collectBasket, tap, VISITOR_BOOST, VISITOR_INJECTION_SECONDS } from './actions.ts';
 import { BASKET_CAP_SECONDS, BASKET_RATE, basketSeconds } from './basket.ts';
 import {
   ascendUnlocked,
   incomePerSecond,
-  milestoneMult,
-  nextMilestone,
+  nextUpgradeCost,
+  nextUpgradeThreshold,
+  nextUpgradeUnlocked,
+  upgradeMult,
   offlineCapSeconds,
   perkCost,
   plumasPending,
@@ -75,18 +77,39 @@ describe('herramientas', () => {
     expect(buyTool(state, CONTENT, PICO.id, 10)).toBe(10);
   });
 
-  it('los hitos (5, 15, 25, 50…) duplican la producción de la herramienta', () => {
-    expect(milestoneMult(CONTENT, 4)).toBe(1);
-    expect(milestoneMult(CONTENT, 5)).toBe(2);
-    expect(milestoneMult(CONTENT, 15)).toBe(4);
-    expect(milestoneMult(CONTENT, 25)).toBe(8);
-    expect(milestoneMult(CONTENT, 50)).toBe(16);
-    expect(nextMilestone(CONTENT, 5)).toBe(15);
-    expect(nextMilestone(CONTENT, 10_000)).toBeNull();
+  it('al llegar a 5, 15, 25, 50… se desbloquea una mejora que hay que comprar (×2 de producción)', () => {
     const state = fresh();
+    state.tools[PICO.id] = 4;
+    expect(nextUpgradeThreshold(state, CONTENT, PICO.id)).toBe(5);
+    expect(nextUpgradeUnlocked(state, CONTENT, PICO.id)).toBe(false);
+    state.coins = D(1e12);
+    expect(buyUpgrade(state, CONTENT, PICO.id)).toBe(false); // aún no se tienen 5
     state.tools[PICO.id] = 5;
+    expect(nextUpgradeUnlocked(state, CONTENT, PICO.id)).toBe(true);
+    // no se aplica sola: sin comprarla, la producción no cambia
+    expect(unitProduction(state, CONTENT, PICO).toNumber()).toBeCloseTo(PICO.baseProd, 9);
+    const cost = nextUpgradeCost(state, CONTENT, PICO)!;
+    expect(cost.toNumber()).toBe(Math.ceil(PICO.baseCost * G.costGrowth ** 5 * G.upgradeCostFactor));
+    const before = state.coins;
+    expect(buyUpgrade(state, CONTENT, PICO.id)).toBe(true);
+    expect(before.sub(state.coins).toNumber()).toBeCloseTo(cost.toNumber(), 3);
+    expect(state.upgrades[PICO.id]).toBe(1);
     expect(unitProduction(state, CONTENT, PICO).toNumber()).toBeCloseTo(PICO.baseProd * 2, 9);
     expect(toolProduction(state, CONTENT, PICO).toNumber()).toBeCloseTo(PICO.baseProd * 2 * 5, 9);
+    expect(nextUpgradeThreshold(state, CONTENT, PICO.id)).toBe(15);
+  });
+
+  it('las mejoras se compran en orden, piden monedas y se acaban', () => {
+    const state = fresh();
+    state.tools[PICO.id] = 1000;
+    state.coins = D(0);
+    expect(buyUpgrade(state, CONTENT, PICO.id)).toBe(false); // sin dinero
+    state.coins = D('1e300');
+    for (let i = 0; i < G.milestones.length; i++) expect(buyUpgrade(state, CONTENT, PICO.id)).toBe(true);
+    expect(buyUpgrade(state, CONTENT, PICO.id)).toBe(false);
+    expect(nextUpgradeThreshold(state, CONTENT, PICO.id)).toBeNull();
+    expect(nextUpgradeCost(state, CONTENT, PICO)).toBeNull();
+    expect(upgradeMult(CONTENT, G.milestones.length)).toBe(2 ** G.milestones.length);
   });
 
   it('cada herramienta se descubre al poder pagarla y no se vuelve a ocultar', () => {
@@ -172,6 +195,7 @@ describe('ascender', () => {
     expect(state.plumasTotal.toNumber()).toBe(expected);
     expect(state.ascensions).toBe(1);
     expect(state.tools).toEqual({});
+    expect(state.upgrades).toEqual({});
     expect(state.coins.toNumber()).toBe(G.startCoins);
     expect(state.lifetime.toNumber()).toBe(1e9); // lo ganado en la vida se conserva
     expect(state.maxOwned[ASCEND_TOOL.id]).toBe(1); // y el récord, así que sigue desbloqueado

@@ -18,6 +18,7 @@ export function validateContent(content: Content): string[] {
   const g = content.game;
   if (g.costGrowth <= 1) errors.push('game.costGrowth debe ser > 1');
   if (g.milestoneMult < 1) errors.push('game.milestoneMult debe ser ≥ 1');
+  if (g.upgradeCostFactor <= 0) errors.push('game.upgradeCostFactor debe ser > 0');
   if (g.milestones.some((m, i) => m <= 0 || (i > 0 && m <= g.milestones[i - 1]!))) errors.push('game.milestones debe ser creciente y positivo');
   if (g.ascendTool < 0 || g.ascendTool >= content.tools.length) errors.push('game.ascendTool no es una herramienta válida');
   if (g.plumaE0 <= 0 || g.plumaExponent <= 0) errors.push('game: plumaE0 y plumaExponent deben ser > 0');

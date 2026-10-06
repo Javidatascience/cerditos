@@ -6,6 +6,8 @@ import { basketValue } from './basket.ts';
 import {
   ascendUnlocked,
   getPerk,
+  nextUpgradeCost,
+  nextUpgradeUnlocked,
   getTool,
   incomePerSecond,
   perkAvailable,
@@ -56,6 +58,21 @@ export function buyTool(state: GameState, content: Content, toolId: ToolId, amou
   return count;
 }
 
+/**
+ * Compra la siguiente mejora de la herramienta (×2 de su producción) si ya se tienen las unidades
+ * que la desbloquean y hay monedas. Se compran en orden. Devuelve `true` si se compró.
+ */
+export function buyUpgrade(state: GameState, content: Content, toolId: ToolId): boolean {
+  const tool = getTool(content, toolId);
+  if (!nextUpgradeUnlocked(state, content, toolId)) return false;
+  const cost = nextUpgradeCost(state, content, tool);
+  if (cost === null || state.coins.lt(cost)) return false;
+  state.coins = state.coins.sub(cost);
+  state.upgrades[toolId] = (state.upgrades[toolId] ?? 0) + 1;
+  updateReveals(state, content);
+  return true;
+}
+
 /** Cambia la cantidad por defecto de los botones de compra (×1 / ×10 / máx). */
 export function setBuyAmount(state: GameState, amount: BuyAmount): void {
   state.settings.buyAmount = amount;
@@ -95,6 +112,7 @@ export function ascend(state: GameState, content: Content, now: number): number 
   state.plumasTotal = state.plumasTotal.add(pending);
   state.ascensions += 1;
   state.tools = {};
+  state.upgrades = {};
   state.coins = startCoins(state, content);
   state.basketSince = state.time;
   updateReveals(state, content);

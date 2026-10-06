@@ -9,7 +9,7 @@ Un idle clásico y claro, con un único personaje:
 - Al empezar **no ganas nada por segundo**: picas tú. Cada pico da 1 moneda.
 - Con 10 monedas compras el **Pico de madera**: ahora el cerdito gana **0,1 monedas por segundo**.
 - Hay **12 herramientas**, cada una más cara y que da muchísimo más que la anterior. Cada compra encarece la siguiente unidad un 15 %.
-- Al **tener 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500** unidades de una herramienta, esa herramienta **produce ×2** (acumulable).
+- Al **tener 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500** unidades de una herramienta se **desbloquea una mejora**: hay que **comprarla** (cuesta 5× el precio de la unidad que la desbloquea) y entonces esa herramienta **produce ×2** (acumulable, en orden).
 - Al **conseguir la herramienta 8** (la Grúa perforadora) puedes **ascender**: reinicias monedas y herramientas a cambio de **plumas**, que dan un bono de producción y se gastan en **ventajas permanentes**.
 
 Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas funcionan igual y solo cambian los números.
@@ -20,7 +20,7 @@ Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas func
 |---|---|
 | **Picar** | Da 1 s de tu producción (mínimo 1 moneda). Con *Manos de acero* da más. |
 | **Herramientas** | Coste de la unidad *n*: `baseCost · 1,15^n`. Compra ×1, ×10 (todo o nada) o Máx. |
-| **Hitos** | ×2 de producción de esa herramienta en 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500 unidades. Se ven en cada fila ("×2 al tener 15"). |
+| **Mejoras** | A 5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400 y 500 unidades se desbloquea la siguiente mejora de esa herramienta (×2 de producción); se compra con monedas desde la propia fila ("Mejora ×2 (101)"). Mientras está bloqueada, la fila dice cuántas unidades faltan. |
 | **Descubrir** | Solo ves las herramientas que ya has podido comprar; la siguiente sale difuminada (menos cuanto más cerca) y un aviso dice que hay más. |
 | **Ascender** | Se desbloquea al tener la herramienta 8 (para siempre). Plumas: `floor((ganado en la vida / 100.000)^0,25 · (1 + Plumas al viento))` menos las ya cobradas, así que nunca se pierde nada por ascender pronto. Cada pluma da +2 % de producción. |
 | **Ventajas** | Abono (×1,1 producción, sin tope), Buen comienzo (monedas al empezar), Manos de acero (pico ×), Siesta larga (+1 h offline), Regateo (herramientas más baratas), Plumas al viento, Raíces profundas. |
@@ -54,6 +54,7 @@ Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, si
 
 ## Estado de la implementación
 
-- Núcleo, guardado (versión 5), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
-- **Calibración** (`npm run calibrate`, un jugador simulado que ve el juego cada minuto): primera ascensión a la hora y media, las 12 herramientas en unas 6 horas y estancamiento tras ~1 día. Es una primera pasada: a afinar jugando (coste, hitos, plumas).
+- El cerdito se ve con la herramienta mejor en la mano, los complementos según lo que tiene y un chip por cada herramienta comprada (con su cantidad).
+- Núcleo, guardado (versión 6; la migración v5→v6 da por compradas las mejoras que ya correspondían), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
+- **Calibración** (`npm run calibrate`, un jugador simulado que ve el juego cada minuto): primera ascensión a las ~4,5 horas (hay que comprar también las mejoras), las 12 herramientas hacia las 12 horas y estancamiento tras ~1 día. Es una primera pasada: a afinar jugando (coste, hitos, plumas).
 - **Pendiente**: arte (hoy un cerdito SVG con complementos y emojis), sonido opcional y más contenido si hace falta.

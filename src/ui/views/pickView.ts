@@ -3,7 +3,7 @@
 // más. Las listas se sincronizan por clave (dom.ts > createListSync) para que los botones no se
 // recreen cada 250 ms y un clic nunca se pierda. Ver docs/06-mina.md.
 
-import { buyTool, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
+import { buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
 import { basketView, headerView, toolViews, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -13,16 +13,20 @@ import { formatNumber } from '../format.ts';
 
 const AMOUNTS: BuyAmount[] = [1, 10, 'max'];
 
-type ToolRow = ToolView & { costText: string; prodText: string; milestoneText: string };
+type ToolRow = ToolView & { costText: string; prodText: string; milestoneText: string; upgradeText: string };
 
 export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // --- Escena: cerdito + pico ---
   const pigSlot = h('div', { className: 'mine-pig' });
   let pigSignature: number | null = null;
+  let ownedToolsSignature = '';
   const floats = h('div', { className: 'float-layer' });
   const incomeText = document.createTextNode('');
+  const handTool = h('div', { className: 'mine-block', 'aria-hidden': 'true' }, ['⛏️']);
+  const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, h('div', { className: 'mine-block', 'aria-hidden': 'true' }, ['⛏️'])]),
+    h('div', { className: 'mine-stage' }, [pigSlot, handTool]),
+    ownedTools,
     h('p', { className: 'mine-stats' }, [incomeText]),
     floats,
   ]);
@@ -81,6 +85,9 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       const costText = document.createTextNode('');
       const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
       buyButton.addEventListener('click', () => ctx.dispatch((state) => void buyTool(state, ctx.content, tool.id, state.settings.buyAmount)));
+      const upgradeText = document.createTextNode('');
+      const upgradeButton = h('button', { className: 'buy-button upgrade-button hidden' }, [upgradeText]) as HTMLButtonElement;
+      upgradeButton.addEventListener('click', () => ctx.dispatch((state) => void buyUpgrade(state, ctx.content, tool.id)));
       const el = h('li', { className: 'generator-row' }, [
         h('div', { className: 'row-art' }, [
           emojiBadge(tool.emoji),
@@ -92,6 +99,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           ]),
         ]),
         buyButton,
+        upgradeButton,
       ]);
       return {
         el,
@@ -106,6 +114,10 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           setText(costText, t.costText);
           setDisabled(buyButton, teaser || !t.canAfford);
           buyButton.tabIndex = teaser ? -1 : 0;
+          const ready = t.nextUpgrade !== null && t.nextUpgrade.unlocked;
+          setClass(upgradeButton, 'hidden', !ready || teaser);
+          setText(upgradeText, t.upgradeText);
+          setDisabled(upgradeButton, !(t.nextUpgrade?.canAfford ?? false));
         },
       };
     },
@@ -122,6 +134,13 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     if (best !== pigSignature) {
       pigSignature = best;
       pigSlot.replaceChildren(minerPig(best));
+    }
+    handTool.textContent = best >= 0 ? ctx.content.tools[best]!.emoji : '⛏️';
+    const ownedList = ctx.content.tools.filter((t) => (state.tools[t.id] ?? 0) > 0);
+    const ownedSignature = ownedList.map((t) => `${t.id}:${state.tools[t.id]}`).join('|');
+    if (ownedSignature !== ownedToolsSignature) {
+      ownedToolsSignature = ownedSignature;
+      ownedTools.replaceChildren(...ownedList.map((t) => h('span', { className: 'tool-chip', title: t.name }, [`${t.emoji} ${state.tools[t.id]}`])));
     }
     setText(incomeText, head.income.gt(0) ? `El cerdito gana ${formatNumber(head.income, notation)} monedas por segundo` : 'Pica para ganar tus primeras monedas y compra un pico.');
     setText(tapText, `Picar (+${formatNumber(head.tapGain, notation)})`);
@@ -143,7 +162,12 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
             ...t,
             costText: `Comprar${amount} (${formatNumber(t.nextCost, notation)})`,
             prodText: t.owned > 0 ? `Cada una da ${formatNumber(t.unitProd, notation)}/s · en total ${formatNumber(t.totalProd, notation)}/s` : `Cada una daría ${formatNumber(t.unitProd, notation)}/s`,
-            milestoneText: t.nextMilestone ? `×${ctx.content.game.milestoneMult} producción al tener ${t.nextMilestone}${t.milestoneMult > 1 ? ` (ahora ×${t.milestoneMult})` : ''}` : `Hitos completados (×${t.milestoneMult})`,
+            milestoneText: !t.nextUpgrade
+              ? `Todas las mejoras compradas (×${t.upgradeMult})`
+              : t.nextUpgrade.unlocked
+                ? `¡Mejora desbloqueada! ×${ctx.content.game.milestoneMult} de producción${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`
+                : `Mejora ×${ctx.content.game.milestoneMult} al tener ${t.nextUpgrade.threshold}${t.upgradeMult > 1 ? ` (ahora ×${t.upgradeMult})` : ''}`,
+            upgradeText: t.nextUpgrade ? `Mejora ×${ctx.content.game.milestoneMult} (${formatNumber(t.nextUpgrade.cost, notation)})` : '',
           };
         }),
     );

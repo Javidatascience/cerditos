@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 5;
+export const CURRENT_VERSION = 6;
 
 export interface SerializedGameState {
   version: number;
@@ -13,6 +13,7 @@ export interface SerializedGameState {
   time: number;
   coins: string;
   tools: Record<string, number>;
+  upgrades: Record<string, number>;
   revealed: number;
   lifetime: string;
   plumas: string;
@@ -48,6 +49,7 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       time: state.time,
       coins: state.coins.toString(),
       tools: { ...state.tools },
+      upgrades: { ...state.upgrades },
       revealed: state.revealed,
       lifetime: state.lifetime.toString(),
       plumas: state.plumas.toString(),
@@ -74,6 +76,7 @@ export function deserialize(data: SaveData): GameState {
     time: s.time,
     coins: new Decimal(s.coins),
     tools: { ...s.tools },
+    upgrades: { ...s.upgrades },
     revealed: s.revealed,
     lifetime: new Decimal(s.lifetime),
     plumas: new Decimal(s.plumas),

@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 5;
+export const STATE_VERSION = 6;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -46,6 +46,8 @@ export interface GameState {
   coins: Decimal;
   /** Unidades que se tienen de cada herramienta. */
   tools: Record<ToolId, number>;
+  /** Mejoras compradas de cada herramienta (en orden: la 1.ª se desbloquea al tener 5, etc.). */
+  upgrades: Record<ToolId, number>;
   /** Cuántas herramientas (por orden) ya se han descubierto: las demás se ven difuminadas u ocultas. Solo crece. */
   revealed: number;
 
@@ -79,6 +81,7 @@ export function createInitialState(content: Content, now: number): GameState {
     time: 0,
     coins: D(content.game.startCoins),
     tools: {},
+    upgrades: {},
     revealed: 1,
     lifetime: D(0),
     plumas: D(0),

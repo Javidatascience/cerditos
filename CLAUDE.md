@@ -1,6 +1,6 @@
 # Cerditos — idle de un cerdito picador
 
-Juego idle/incremental web: un cerdito pica (empiezas ganando 0 por segundo), compras herramientas que producen cada vez más (con hitos ×2 al tener 5, 15, 25, 50, 75, 100, 150, 200, 250… unidades), al llegar a la herramienta 8 puedes ascender a cambio de plumas y compras ventajas permanentes. Pensado para móvil en vertical (PWA en iPhone) y escritorio. Se puede dejar en idle y hacer cosas de vez en cuando (picar, comprar, cesta, visitante).
+Juego idle/incremental web: un cerdito pica (empiezas ganando 0 por segundo), compras herramientas que producen cada vez más (al tener 5, 15, 25, 50, 75, 100, 150, 200, 250… unidades se desbloquea una mejora ×2 que se compra), al llegar a la herramienta 8 puedes ascender a cambio de plumas y compras ventajas permanentes. Pensado para móvil en vertical (PWA en iPhone) y escritorio. Se puede dejar en idle y hacer cosas de vez en cuando (picar, comprar, cesta, visitante).
 
 > Los juegos anteriores (granjas con mundos y una primera mina con zonas) se sustituyeron el 2026-10-06; sus documentos están en `docs/archivo-granjas/` solo como referencia histórica.
 
@@ -55,4 +55,4 @@ Si una tarea parece requerir romper otra regla, parar y preguntar.
 
 ## Estado actual
 
-Jugable de punta a punta: picar, 12 herramientas con hitos, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v5, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.
+Jugable de punta a punta: picar, 12 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v6, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.

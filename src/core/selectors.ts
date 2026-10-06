@@ -8,8 +8,11 @@ import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
 import {
   ascendUnlocked,
   incomePerSecond,
-  milestoneMult,
-  nextMilestone,
+  nextUpgradeCost,
+  nextUpgradeThreshold,
+  nextUpgradeUnlocked,
+  upgradeMult,
+  upgradesBought,
   perkAvailable,
   perkCost,
   perkLevelOf,
@@ -51,9 +54,11 @@ export interface ToolView {
   /** Producción de una unidad / de todas (por segundo). */
   unitProd: Decimal;
   totalProd: Decimal;
-  /** Siguiente hito de cantidad (×mult) y el multiplicador que ya llevas por los hitos. */
-  nextMilestone: number | null;
-  milestoneMult: number;
+  /** Mejoras compradas y el multiplicador que dan (×2 cada una). */
+  upgradesBought: number;
+  upgradeMult: number;
+  /** Siguiente mejora: unidades que la desbloquean, si ya está desbloqueada, su coste y si se puede pagar (null si ya no quedan). */
+  nextUpgrade: { threshold: number; unlocked: boolean; cost: Decimal; canAfford: boolean } | null;
   /** Coste de comprar `amountToBuy` unidades ahora (según los ajustes). */
   nextCost: Decimal;
   amountToBuy: number;
@@ -62,6 +67,14 @@ export interface ToolView {
   reveal: 'visible' | 'teaser' | 'hidden';
   /** 0..1: lo cerca que está de poder pagar la primera unidad (para difuminar menos). */
   closeness: number;
+}
+
+function upgradeView(state: GameState, content: Content, id: string, tool: Content['tools'][number]): ToolView['nextUpgrade'] {
+  const threshold = nextUpgradeThreshold(state, content, id);
+  const cost = nextUpgradeCost(state, content, tool);
+  if (threshold === null || cost === null) return null;
+  const unlocked = nextUpgradeUnlocked(state, content, id);
+  return { threshold, unlocked, cost, canAfford: unlocked && state.coins.gte(cost) };
 }
 
 export function toolViews(state: GameState, content: Content): ToolView[] {
@@ -80,8 +93,9 @@ export function toolViews(state: GameState, content: Content): ToolView[] {
       owned,
       unitProd: unitProduction(state, content, tool),
       totalProd: toolProduction(state, content, tool),
-      nextMilestone: nextMilestone(content, owned),
-      milestoneMult: milestoneMult(content, owned),
+      upgradesBought: upgradesBought(state, tool.id),
+      upgradeMult: upgradeMult(content, upgradesBought(state, tool.id)),
+      nextUpgrade: upgradeView(state, content, tool.id, tool),
       nextCost,
       amountToBuy,
       canAfford: amountToBuy > 0 && state.coins.gte(nextCost),

@@ -12,6 +12,7 @@ describe('serialize / deserialize', () => {
     state.coins = D('1.5e400'); // fuera del rango de number
     state.lifetime = D('2.5e500');
     state.tools['pico-de-madera'] = 7;
+    state.upgrades['pico-de-madera'] = 1;
     state.maxOwned['pico-de-madera'] = 9;
     state.revealed = 3;
     state.perks['abono'] = 3;
@@ -30,6 +31,7 @@ describe('serialize / deserialize', () => {
     expect(back).toMatchObject({
       createdAt: 123,
       tools: { 'pico-de-madera': 7 },
+      upgrades: { 'pico-de-madera': 1 },
       maxOwned: { 'pico-de-madera': 9 },
       revealed: 3,
       perks: { abono: 3 },
@@ -70,6 +72,18 @@ describe('migrate', () => {
   });
 });
 
+describe('migración v5 → v6', () => {
+  it('da como compradas las mejoras que ya correspondían a las unidades que se tenían', () => {
+    const state = createInitialState(CONTENT, 0);
+    const v6 = JSON.parse(JSON.stringify(serialize(state, 0)));
+    const v5 = { ...v6, version: 5, state: { ...v6.state, version: 5, tools: { 'pico-de-madera': 30, 'cubo-y-pala': 3 } } };
+    delete v5.state.upgrades;
+    const data = migrate(v5);
+    expect(data.version).toBe(CURRENT_VERSION);
+    expect(data.state.upgrades).toEqual({ 'pico-de-madera': 3 }); // 5, 15 y 25
+  });
+});
+
 describe('normalize', () => {
   it('descarta herramientas, ventajas y logros que ya no existen', () => {
     const state = createInitialState(CONTENT, 0);
@@ -87,10 +101,12 @@ describe('normalize', () => {
   it('acota niveles de ventaja y repara las herramientas descubiertas', () => {
     const state = createInitialState(CONTENT, 0);
     state.perks['comienzo'] = 99;
+    state.upgrades['pico-de-madera'] = 99;
     state.revealed = 0;
     state.tools['cubo-y-pala'] = 4;
     normalize(state, CONTENT);
     expect(state.perks['comienzo']).toBe(5);
+    expect(state.upgrades['pico-de-madera']).toBe(CONTENT.game.milestones.length);
     expect(state.maxOwned['cubo-y-pala']).toBe(4);
     expect(state.revealed).toBeGreaterThanOrEqual(2); // si se tiene la 2.ª, ya está descubierta
   });

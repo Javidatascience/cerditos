@@ -68,15 +68,24 @@ export function toolOwned(state: GameState, id: ToolId): number {
   return state.tools[id] ?? 0;
 }
 
-/** ×mult por cada hito de cantidad alcanzado (5, 15, 25, 50, 75, 100…). */
-export function milestoneMult(content: Content, owned: number): number {
-  const reached = content.game.milestones.filter((m) => owned >= m).length;
-  return content.game.milestoneMult ** reached;
+export function upgradesBought(state: GameState, id: ToolId): number {
+  return state.upgrades[id] ?? 0;
 }
 
-/** Siguiente hito de cantidad todavía no alcanzado, o null si ya se pasaron todos. */
-export function nextMilestone(content: Content, owned: number): number | null {
-  return content.game.milestones.find((m) => m > owned) ?? null;
+/** ×mult por cada mejora comprada (`level` = cuántas). */
+export function upgradeMult(content: Content, level: number): number {
+  return content.game.milestoneMult ** level;
+}
+
+/** Cantidad de unidades que desbloquea la siguiente mejora de la herramienta, o null si ya están todas compradas. */
+export function nextUpgradeThreshold(state: GameState, content: Content, id: ToolId): number | null {
+  return content.game.milestones[upgradesBought(state, id)] ?? null;
+}
+
+/** ¿Está desbloqueada (se tienen las unidades pedidas) la siguiente mejora de la herramienta? */
+export function nextUpgradeUnlocked(state: GameState, content: Content, id: ToolId): boolean {
+  const threshold = nextUpgradeThreshold(state, content, id);
+  return threshold !== null && toolOwned(state, id) >= threshold;
 }
 
 /** m_coste: Regateo en la feria. */
@@ -105,9 +114,9 @@ export function prodMultiplier(state: GameState, content: Content): number {
   return perkProduct(state, content, 'prodMult') * plumaBonus(state, content);
 }
 
-/** Producción por segundo de UNA unidad de la herramienta (con sus hitos y los bonos). */
+/** Producción por segundo de UNA unidad de la herramienta (con sus mejoras compradas y los bonos). */
 export function unitProduction(state: GameState, content: Content, tool: ToolDef): Decimal {
-  return D(tool.baseProd).mul(milestoneMult(content, toolOwned(state, tool.id))).mul(prodMultiplier(state, content));
+  return D(tool.baseProd).mul(upgradeMult(content, upgradesBought(state, tool.id))).mul(prodMultiplier(state, content));
 }
 
 /** Producción por segundo de todas las unidades de la herramienta. */
@@ -164,4 +173,15 @@ export function startCoins(state: GameState, content: Content): Decimal {
 /** Segundos máximos de producción mientras no estás (2 h + Siesta larga). */
 export function offlineCapSeconds(state: GameState, content: Content): number {
   return (content.game.offlineHours + perkSum(state, content, 'offlineHours')) * 3600;
+}
+
+/** Coste de la siguiente mejora de la herramienta (5× el precio de la unidad que la desbloquea); null si no quedan. */
+export function nextUpgradeCost(state: GameState, content: Content, tool: ToolDef): Decimal | null {
+  const threshold = nextUpgradeThreshold(state, content, tool.id);
+  if (threshold === null) return null;
+  return D(tool.baseCost)
+    .mul(Decimal.pow(content.game.costGrowth, threshold))
+    .mul(content.game.upgradeCostFactor)
+    .mul(costMultiplier(state, content))
+    .ceil();
 }

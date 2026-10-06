@@ -1219,6 +1219,30 @@ body {
 }
 
 
+/* Herramientas que lleva el cerdito */
+.mine-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.tool-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.upgrade-button {
+  background: var(--btn-orange);
+  color: var(--btn-orange-text);
+  border-bottom-color: var(--btn-orange-dark);
+}
+
 /* Filas de herramientas: el botón de compra va debajo, a todo el ancho (más sitio para el texto) */
 .generator-row {
   flex-direction: column;

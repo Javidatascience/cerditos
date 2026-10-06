@@ -8,9 +8,11 @@ export type PerkId = string;
 export interface GameDef {
   /** Crecimiento del coste de cada herramienta por unidad comprada. */
   costGrowth: number;
-  /** Al tener estas cantidades de una herramienta, su producción se multiplica ×`milestoneMult`. */
+  /** Al tener estas cantidades de una herramienta se desbloquea su siguiente mejora (×`milestoneMult` de producción), que hay que comprar. */
   milestones: number[];
   milestoneMult: number;
+  /** Coste de una mejora: `upgradeCostFactor` veces el precio de la unidad que la desbloquea. */
+  upgradeCostFactor: number;
   /** Segundos de producción que equivale un toque (mínimo 1 moneda). */
   tapSeconds: number;
   /** Monedas con las que empieza cada ronda. */

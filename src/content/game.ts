@@ -6,6 +6,7 @@ export const GAME: GameDef = {
   costGrowth: 1.15,
   milestones: [5, 15, 25, 50, 75, 100, 150, 200, 250, 300, 400, 500],
   milestoneMult: 2,
+  upgradeCostFactor: 5,
   tapSeconds: 1,
   startCoins: 0,
   ascendTool: 7,
