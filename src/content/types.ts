@@ -94,7 +94,13 @@ export type CompanionAbility =
   /** Cada `everySeconds` de juego abierto trae un regalo de `incomeSeconds` segundos de ingresos. */
   | { kind: 'coinGift'; everySeconds: number; incomeSeconds: number }
   /** Cada `everySeconds` de juego abierto llena la barra de inercia al máximo. */
-  | { kind: 'fireBreath'; everySeconds: number };
+  | { kind: 'fireBreath'; everySeconds: number }
+  /** Multiplica la producción de la mejor herramienta que tengas. */
+  | { kind: 'bestToolMult'; mult: number }
+  /** El cerdito viajero llega `speed` veces más rápido. */
+  | { kind: 'visitorSpeed'; speed: number }
+  /** Permite comprar gratis 1 unidad de una herramienta disponible, con enfriamiento en horas reales. */
+  | { kind: 'freeTool'; cooldownHours: number };
 
 /** Compañero que acompaña al cerdito en la escena y hace algo útil en el fondo. */
 export interface CompanionDef {
@@ -131,7 +137,42 @@ export interface AchievementDef {
   requires: AchievementReq;
 }
 
+/** Efecto de una ventaja de la cueva sobre el juego. */
+export interface CaveEffect {
+  kind: 'embers' | 'breathSeconds' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours';
+  value: number;
+}
+
+export interface CaveFurnaceDef {
+  id: string;
+  name: string;
+  emoji: string;
+  flavor: string;
+  baseCost: number;
+  baseProd: number;
+}
+
+export interface CaveNodeDef {
+  id: string;
+  branch: string;
+  name: string;
+  flavor: string;
+  cost: number;
+  requires: string | null;
+  effect: CaveEffect;
+}
+
+export interface CaveDef {
+  furnaceGrowth: number;
+  blowCooldown: number;
+  blowSeconds: number;
+  furnaces: CaveFurnaceDef[];
+  branches: { id: string; name: string; emoji: string }[];
+  nodes: CaveNodeDef[];
+}
+
 export interface Content {
+  cave: CaveDef;
   game: GameDef;
   tools: ToolDef[];
   perks: PerkDef[];

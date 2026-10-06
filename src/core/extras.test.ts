@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { ascend, buyCompanion, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
-import { baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
+import { ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
 import { createInitialState, type GameState } from './state.ts';
@@ -188,6 +188,90 @@ describe('habilidades de los compañeros', () => {
     expect(state.momentum).toBe(0);
     companionTick(state, CONTENT, 1);
     expect(state.momentum).toBe(1);
+  });
+});
+
+describe('perro, pájaro y conejo', () => {
+  it('el perro hace rendir ×1,1 solo a la mejor herramienta', () => {
+    const state = fresh();
+    const before = baseIncomePerSecond(state, CONTENT).toNumber();
+    state.activeCompanions = ['perro'];
+    expect(baseIncomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(before * 1.1, 9);
+  });
+
+  it('el pájaro acelera al visitante', () => {
+    const state = fresh();
+    expect(visitorModifiers(state, CONTENT).speed).toBe(1);
+    state.activeCompanions = ['pajaro'];
+    expect(visitorModifiers(state, CONTENT).speed).toBeGreaterThan(1.3);
+  });
+
+  it('el conejo da una herramienta gratis y luego espera 6 horas reales', () => {
+    const state = fresh();
+    const t0 = 1_000_000;
+    expect(useRabbit(state, CONTENT, PICO.id, t0)).toBe(false); // sin llevarlo
+    state.activeCompanions = ['conejo'];
+    expect(useRabbit(state, CONTENT, CONTENT.tools[5]!.id, t0)).toBe(false); // no descubierta
+    expect(useRabbit(state, CONTENT, PICO.id, t0)).toBe(true);
+    expect(state.tools[PICO.id]).toBe(21);
+    expect(state.coins.toNumber()).toBe(0);
+    expect(rabbitWaitSeconds(state, CONTENT, t0 + 3600_000)).toBeCloseTo(5 * 3600, 6);
+    expect(useRabbit(state, CONTENT, PICO.id, t0 + 3600_000)).toBe(false);
+    expect(useRabbit(state, CONTENT, PICO.id, t0 + 6 * 3600_000)).toBe(true);
+  });
+});
+
+describe('cueva del dragón', () => {
+  function withDragon(): GameState {
+    const state = fresh();
+    state.achievements['ascender-10'] = { at: 0 };
+    return state;
+  }
+
+  it('está cerrada sin dragón', () => {
+    const state = fresh();
+    expect(caveBlow(state, CONTENT).toNumber()).toBe(0);
+    state.cave.embers = D(1e6);
+    expect(buyFurnace(state, CONTENT, 'brasero')).toBe(false);
+  });
+
+  it('soplar da brasas con enfriamiento, los hornos producen y el tiempo las acumula', () => {
+    const state = withDragon();
+    expect(caveBlow(state, CONTENT).toNumber()).toBe(1);
+    expect(caveBlow(state, CONTENT).toNumber()).toBe(0);
+    state.cave.embers = D(100);
+    expect(buyFurnace(state, CONTENT, 'brasero')).toBe(true);
+    expect(state.cave.embers.toNumber()).toBe(85);
+    advance(state, CONTENT, 10);
+    expect(state.cave.embers.toNumber()).toBeCloseTo(85 + 2, 6);
+  });
+
+  it('las ventajas piden la anterior y suben la producción del juego principal', () => {
+    const state = withDragon();
+    state.cave.embers = D(1e6);
+    expect(buyCaveNode(state, CONTENT, 'escamas-de-plata')).toBe(false);
+    const before = prodMultiplier(state, CONTENT);
+    expect(buyCaveNode(state, CONTENT, 'escamas-de-bronce')).toBe(true);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
+    expect(buyCaveNode(state, CONTENT, 'escamas-de-bronce')).toBe(false);
+    buyCaveNode(state, CONTENT, 'cesta-honda');
+    buyCaveNode(state, CONTENT, 'ojo-de-dragon');
+    expect(visitorModifiers(state, CONTENT).stayBonus).toBe(5);
+  });
+
+  it('el aliento frecuente acorta el intervalo del dragón y ascender no borra la cueva', () => {
+    const state = withDragon();
+    state.cave.embers = D(1e6);
+    buyCaveNode(state, CONTENT, 'fuego-interior');
+    buyCaveNode(state, CONTENT, 'aliento-frecuente');
+    state.activeCompanions = ['dragon'];
+    companionTick(state, CONTENT, 150);
+    expect(state.momentum).toBe(1);
+    state.lifetime = D(1e9);
+    state.maxOwned[CONTENT.tools[G.ascendTool]!.id] = 1;
+    ascend(state, CONTENT, 0);
+    expect(state.cave.nodes['fuego-interior']).toBe(true);
+    expect(state.cave.embers.toNumber()).toBeGreaterThan(0);
   });
 });
 

@@ -1291,6 +1291,11 @@ body {
   gap: 8px;
 }
 
+.chip-button {
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
 .companion-status:not(:empty) {
   margin-bottom: 12px;
 }

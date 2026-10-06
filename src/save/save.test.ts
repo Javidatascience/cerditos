@@ -139,7 +139,7 @@ describe('normalize', () => {
     normalize(state, CONTENT);
     expect(state.perks['comienzo']).toBe(5);
     expect(state.activeSkin).toBe('rosa');
-    expect(state.activeCompanions).toEqual(['topo', 'gato']);
+    expect(state.activeCompanions).toEqual(['perro', 'gato']);
     expect(state.momentum).toBe(1);
     expect(state.upgrades['pico-de-madera']).toBe(CONTENT.game.milestones.length);
     expect(state.maxOwned['cubo-y-pala']).toBe(4);

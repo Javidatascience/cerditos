@@ -55,11 +55,18 @@ function v7ToV8(old: RawSave): RawSave {
   return { ...old, version: 8, state: { ...old['state'], version: 8, companionProgress: {} } };
 }
 
+/** v8 → v9: la Cueva del Dragón (vacía). */
+function v8ToV9(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 9 };
+  return { ...old, version: 9, state: { ...old['state'], version: 9, cave: { embers: '0', furnaces: {}, nodes: {}, blowAt: -1000 } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
   6: v6ToV7,
   7: v7ToV8,
+  8: v8ToV9,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

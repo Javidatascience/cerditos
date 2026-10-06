@@ -5,6 +5,7 @@
 
 import { CONTENT } from './content/index.ts';
 import { companionTick } from './core/actions.ts';
+import { visitorModifiers } from './core/formulas.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
 import { registerPwa } from './pwa/register.ts';
@@ -73,7 +74,7 @@ function start(): void {
     saveGame(storage, state, Date.now());
   }
 
-  const visitor = createVisitorScheduler();
+  const visitor = createVisitorScheduler(Math.random, () => visitorModifiers(state, CONTENT));
   const app = mountApp(root, CONTENT, state, persist, visitor);
 
   if (pendingOfflineSummary && pendingOfflineSummary.awaySeconds > OFFLINE_SUMMARY_THRESHOLD_SECONDS) {

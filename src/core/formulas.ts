@@ -2,6 +2,7 @@
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
 import type { CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
+import { caveProduct, caveSum } from './cave.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
 
@@ -127,7 +128,7 @@ export function globalMultiplier(state: GameState, content: Content): number {
 
 /** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content);
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult');
 }
 
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
@@ -142,7 +143,35 @@ export function momentumMult(state: GameState, content: Content, momentum: numbe
 
 /** Producción por segundo de UNA unidad de la herramienta (con sus mejoras compradas y los bonos). */
 export function unitProduction(state: GameState, content: Content, tool: ToolDef): Decimal {
-  return D(tool.baseProd).mul(upgradeMult(content, upgradesBought(state, tool.id))).mul(prodMultiplier(state, content));
+  return D(tool.baseProd).mul(upgradeMult(content, upgradesBought(state, tool.id))).mul(prodMultiplier(state, content)).mul(bestToolMult(state, content, tool));
+}
+
+/** Índice de la mejor herramienta que se tiene (la de mayor índice con alguna unidad), o -1. */
+export function bestToolIndex(state: GameState, content: Content): number {
+  let best = -1;
+  content.tools.forEach((t, i) => {
+    if (toolOwned(state, t.id) > 0) best = i;
+  });
+  return best;
+}
+
+/** Bono del compañero que mejora la mejor herramienta (el perro). */
+function bestToolMult(state: GameState, content: Content, tool: ToolDef): number {
+  if (content.tools[bestToolIndex(state, content)]?.id !== tool.id) return 1;
+  let mult = 1;
+  for (const c of content.companions) {
+    if (c.ability.kind === 'bestToolMult' && state.activeCompanions.includes(c.id)) mult *= c.ability.mult;
+  }
+  return mult;
+}
+
+/** Ajustes del cerdito viajero por compañeros y cueva: velocidad de llegada y segundos extra de estancia. */
+export function visitorModifiers(state: GameState, content: Content): { speed: number; stayBonus: number } {
+  let speed = 1;
+  for (const c of content.companions) {
+    if (c.ability.kind === 'visitorSpeed' && state.activeCompanions.includes(c.id)) speed *= c.ability.speed;
+  }
+  return { speed, stayBonus: caveSum(state, content, 'visitorStay') };
 }
 
 /** Producción por segundo de todas las unidades de la herramienta. */
@@ -203,7 +232,7 @@ export function startCoins(state: GameState, content: Content): Decimal {
 
 /** Segundos máximos de producción mientras no estás (2 h + Siesta larga). */
 export function offlineCapSeconds(state: GameState, content: Content): number {
-  return (content.game.offlineHours + perkSum(state, content, 'offlineHours')) * 3600;
+  return (content.game.offlineHours + perkSum(state, content, 'offlineHours') + caveSum(state, content, 'offlineHours')) * 3600;
 }
 
 /** Coste de la siguiente mejora de la herramienta (5× el precio de la unidad que la desbloquea); null si no quedan. */

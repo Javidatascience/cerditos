@@ -4,6 +4,7 @@
 
 import type { Content } from '../content/types.ts';
 import { updateAchievements } from './achievements.ts';
+import { embersPerSecond } from './cave.ts';
 import { baseIncomePerSecond, momentumMult } from './formulas.ts';
 import { gameClockMs } from './journal.ts';
 import { updateReveals } from './reveal.ts';
@@ -41,6 +42,7 @@ export function advance(state: GameState, content: Content, dt: number): void {
   state.coins = state.coins.add(gained);
   state.lifetime = state.lifetime.add(gained);
   state.momentum = Math.max(0, m0 - decay * dt);
+  state.cave.embers = state.cave.embers.add(embersPerSecond(state, content).mul(dt));
 
   state.time += dt;
   if (buff && state.time >= buff.until) state.buff = null;

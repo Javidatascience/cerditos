@@ -3,7 +3,7 @@
 // más. Las listas se sincronizan por clave (dom.ts > createListSync) para que los botones no se
 // recreen cada 250 ms y un clic nunca se pierda. Ver docs/06-mina.md.
 
-import { buyGlobalUpgrade, buyTool, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
+import { buyGlobalUpgrade, buyTool, useRabbit, buyUpgrade, collectBasket, setBuyAmount, tap, type BuyAmount } from '../../core/actions.ts';
 import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -60,7 +60,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // --- Compañeros: lo que está haciendo cada uno ---
   const companionBlock = h('div', { className: 'companion-status' });
   let companionStatusKey = '';
-  let companionLines: { text: Text; fill: HTMLElement }[] = [];
+  let companionLines: { text: Text; fill: HTMLElement; chips: HTMLElement | null }[] = [];
 
   // --- Mejoras globales (×1,5 a todo) ---
   const globalNote = h('p', { className: 'settings-hint hidden' });
@@ -174,13 +174,27 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       pigSignature = signature;
       pigSlot.replaceChildren(minerPig(best, skinColor));
     }
-    const statuses = companionStatusViews(state, ctx.content);
-    const statusKey = statuses.map((c) => c.id).join(',');
+    const statuses = companionStatusViews(state, ctx.content, Date.now());
+    const statusKey = `${statuses.map((c) => c.id).join(',')}:${state.revealed}`;
     if (statusKey !== companionStatusKey) {
       companionStatusKey = statusKey;
-      companionLines = statuses.map(() => ({ text: document.createTextNode(''), fill: h('div', { className: 'progress-bar-inner' }) }));
+      companionLines = statuses.map((c) => {
+        const chips =
+          c.kind === 'freeTool'
+            ? h(
+                'div',
+                { className: 'chip-row hidden' },
+                ctx.content.tools.slice(0, state.revealed).map((tool) =>
+                  h('button', { className: 'chip chip-button', title: `Gratis: ${tool.name}`, onclick: () => ctx.dispatch((s) => void useRabbit(s, ctx.content, tool.id, Date.now())) }, [tool.emoji]),
+                ),
+              )
+            : null;
+        return { text: document.createTextNode(''), fill: h('div', { className: 'progress-bar-inner' }), chips };
+      });
       companionBlock.replaceChildren(
-        ...companionLines.map((line) => h('div', { className: 'companion-line' }, [h('span', { className: 'basket-text' }, [line.text]), h('div', { className: 'progress-bar', role: 'presentation' }, [line.fill])])),
+        ...companionLines.map((line) =>
+          h('div', { className: 'companion-line' }, [h('span', { className: 'basket-text' }, [line.text]), h('div', { className: 'progress-bar', role: 'presentation' }, [line.fill]), ...(line.chips ? [line.chips] : [])]),
+        ),
       );
     }
     statuses.forEach((c, i) => {
@@ -191,9 +205,18 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           ? `desentierra una bellota en ${Math.ceil(c.target - c.progress)} picos`
           : c.kind === 'coinGift'
             ? `te trae monedas en ${formatDuration(c.secondsLeft ?? 0)}`
-            : `sopla fuego en ${formatDuration(c.secondsLeft ?? 0)}`;
+            : c.kind === 'fireBreath'
+              ? `sopla fuego en ${formatDuration(c.secondsLeft ?? 0)}`
+              : c.kind === 'bestToolMult'
+                ? 'hace rendir ×1,1 tu mejor herramienta'
+                : c.kind === 'visitorSpeed'
+                  ? 'avisa al cerdito viajero para que venga antes'
+                  : (c.secondsLeft ?? 0) > 0
+                    ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
+                    : 'te deja elegir una herramienta gratis:';
       setText(line.text, `${c.emoji} ${c.name} ${what}`);
       setStyleProp(line.fill, 'width', `${((c.progress / c.target) * 100).toFixed(1)}%`);
+      if (line.chips) setClass(line.chips, 'hidden', (c.secondsLeft ?? 0) > 0);
     });
     const companionIds = state.activeCompanions.join(',');
     if (companionIds !== companionsSignature) {

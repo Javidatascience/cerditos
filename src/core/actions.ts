@@ -23,6 +23,7 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
+import { blowGain, blowReady, breathSeconds, furnaceCost } from './cave.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
@@ -246,9 +247,10 @@ function companionTap(state: GameState, content: Content): void {
 export function companionTick(state: GameState, content: Content, dt: number): void {
   for (const c of activeCompanionDefs(state, content)) {
     const ability = c.ability;
-    if (ability.kind === 'tapAcorn') continue;
+    if (ability.kind !== 'coinGift' && ability.kind !== 'fireBreath') continue;
+    const every = ability.kind === 'fireBreath' ? breathSeconds(state, content, ability.everySeconds) : ability.everySeconds;
     const progress = (state.companionProgress[c.id] ?? 0) + dt;
-    if (progress < ability.everySeconds) {
+    if (progress < every) {
       state.companionProgress[c.id] = progress;
       continue;
     }
@@ -260,4 +262,68 @@ export function companionTick(state: GameState, content: Content, dt: number): v
       state.momentum = 1;
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Conejo: una herramienta gratis cada 6 horas (tiempo real)
+// ---------------------------------------------------------------------------
+
+/** Segundos de espera que quedan hasta poder usar al conejo (0 = listo). `now` en epoch ms. */
+export function rabbitWaitSeconds(state: GameState, content: Content, now: number): number {
+  const rabbit = content.companions.find((c) => c.ability.kind === 'freeTool');
+  if (!rabbit || rabbit.ability.kind !== 'freeTool') return 0;
+  const last = state.companionProgress[rabbit.id];
+  if (last === undefined) return 0;
+  return Math.max(0, (last + rabbit.ability.cooldownHours * 3600_000 - now) / 1000);
+}
+
+/** Compra gratis 1 unidad de una herramienta ya descubierta, con el conejo puesto y sin espera. */
+export function useRabbit(state: GameState, content: Content, toolId: ToolId, now: number): boolean {
+  const rabbit = content.companions.find((c) => c.ability.kind === 'freeTool');
+  if (!rabbit || !state.activeCompanions.includes(rabbit.id) || rabbitWaitSeconds(state, content, now) > 0) return false;
+  const index = content.tools.findIndex((t) => t.id === toolId);
+  if (index < 0 || index >= state.revealed) return false;
+  state.tools[toolId] = toolOwned(state, toolId) + 1;
+  state.maxOwned[toolId] = Math.max(state.maxOwned[toolId] ?? 0, state.tools[toolId] ?? 0);
+  state.companionProgress[rabbit.id] = now;
+  addEntry(state, `${rabbit.name} te ha conseguido una herramienta gratis.`, gameClockMs(state));
+  updateReveals(state, content);
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Cueva del Dragón
+// ---------------------------------------------------------------------------
+
+function caveOpen(state: GameState, content: Content): boolean {
+  const dragon = content.companions.find((c) => c.ability.kind === 'fireBreath');
+  return dragon !== undefined && companionOwned(state, dragon);
+}
+
+/** Sopla sobre las brasas: da brasas con un breve enfriamiento. Devuelve lo ganado (0 si no se pudo). */
+export function caveBlow(state: GameState, content: Content): Decimal {
+  if (!caveOpen(state, content) || !blowReady(state, content)) return D(0);
+  const amount = blowGain(state, content);
+  state.cave.embers = state.cave.embers.add(amount);
+  state.cave.blowAt = state.time;
+  return amount;
+}
+
+export function buyFurnace(state: GameState, content: Content, id: string): boolean {
+  const furnace = content.cave.furnaces.find((f) => f.id === id);
+  if (!furnace || !caveOpen(state, content)) return false;
+  const cost = furnaceCost(content.cave, furnace, state.cave.furnaces[id] ?? 0);
+  if (state.cave.embers.lt(cost)) return false;
+  state.cave.embers = state.cave.embers.sub(cost);
+  state.cave.furnaces[id] = (state.cave.furnaces[id] ?? 0) + 1;
+  return true;
+}
+
+export function buyCaveNode(state: GameState, content: Content, id: string): boolean {
+  const node = content.cave.nodes.find((x) => x.id === id);
+  if (!node || !caveOpen(state, content) || state.cave.nodes[id] || state.cave.embers.lt(node.cost)) return false;
+  if (node.requires !== null && !state.cave.nodes[node.requires]) return false;
+  state.cave.embers = state.cave.embers.sub(node.cost);
+  state.cave.nodes[id] = true;
+  return true;
 }

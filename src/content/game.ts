@@ -62,8 +62,11 @@ export const SKINS: SkinDef[] = [
 /** Compañeros que van con el cerdito en el fondo; cada uno hace algo mientras lo llevas puesto. */
 export const COMPANIONS: CompanionDef[] = [
   { id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas: cada 40 picos desentierra una bellota.', cost: 4, achievement: null, ability: { kind: 'tapAcorn', every: 40 } },
+  { id: 'perro', name: 'Perro pastor', emoji: '🐶', flavor: 'Olfatea tu mejor herramienta y la hace rendir ×1,1.', cost: 6, achievement: null, ability: { kind: 'bestToolMult', mult: 1.1 } },
+  { id: 'pajaro', name: 'Pájaro cantor', emoji: '🐦', flavor: 'Avisa al cerdito viajero: llega un tercio más rápido.', cost: 6, achievement: null, ability: { kind: 'visitorSpeed', speed: 1.33 } },
   { id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'De vez en cuando se despierta y te trae un regalo de monedas.', cost: 10, achievement: null, ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 90 } },
-  { id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo.', cost: null, achievement: 'ascender-10', ability: { kind: 'fireBreath', everySeconds: 180 } },
+  { id: 'conejo', name: 'Conejo veloz', emoji: '🐰', flavor: 'Cada 6 horas te deja coger una herramienta gratis.', cost: 10, achievement: null, ability: { kind: 'freeTool', cooldownHours: 6 } },
+  { id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo y abre su cueva.', cost: null, achievement: 'ascender-10', ability: { kind: 'fireBreath', everySeconds: 180 } },
 ];
 
 /** Reliquias: bonos permanentes que dan algunos logros. */

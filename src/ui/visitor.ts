@@ -23,7 +23,7 @@ export interface VisitorScheduler {
   clear(): void;
 }
 
-export function createVisitorScheduler(rng: () => number = Math.random): VisitorScheduler {
+export function createVisitorScheduler(rng: () => number = Math.random, modifiers: () => { speed: number; stayBonus: number } = () => ({ speed: 1, stayBonus: 0 })): VisitorScheduler {
   const nextDelay = () => VISITOR_MIN_DELAY + rng() * (VISITOR_MAX_DELAY - VISITOR_MIN_DELAY);
   let untilNext = nextDelay();
   let waiting: VisitorKind | null = null;
@@ -42,10 +42,10 @@ export function createVisitorScheduler(rng: () => number = Math.random): Visitor
         if (stayLeft <= 0) leave();
         return;
       }
-      untilNext -= dt;
+      untilNext -= dt * modifiers().speed;
       if (untilNext <= 0) {
         waiting = rng() < 0.5 ? 'injection' : 'boost';
-        stayLeft = VISITOR_STAY_SECONDS;
+        stayLeft = VISITOR_STAY_SECONDS + modifiers().stayBonus;
       }
     },
     current: () => waiting,

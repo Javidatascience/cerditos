@@ -66,3 +66,7 @@ Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, si
 - Núcleo, guardado (versión 7; la v6→v7 añade los campos nuevos; la migración v5→v6 da por compradas las mejoras que ya correspondían), interfaz básica y tests: hechos. Las partidas de versiones anteriores (1-4) no se pueden convertir y se descartan.
 - **Calibración** (`npm run calibrate`, un jugador simulado que ve el juego cada minuto): primera ascensión a las ~4,5 horas (hay que comprar también las mejoras), las 12 herramientas hacia las 12 horas y estancamiento tras ~1 día. Es una primera pasada: a afinar jugando (coste, hitos, plumas).
 - **Pendiente**: arte (hoy un cerdito SVG con complementos y emojis), sonido opcional y más contenido si hace falta.
+
+## Compañeros y Cueva del Dragón
+
+Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mejor herramienta. Pájaro: el cerdito viajero llega un tercio más rápido. Gato: regalo de monedas cada 2 min. Conejo: 1 herramienta gratis cada 6 h reales. Dragoncito (logro de 10 ascensiones): sopla la inercia al máximo cada 3 min y abre la **Cueva** (pestaña propia, permanente): brasas, 4 hornos y un árbol por ramas (Fuego, Escamas, Tesoro) que da hasta ~×1,33 a la producción, más cesta, estancia del visitante y offline. Contenido en `src/content/cave.ts`.

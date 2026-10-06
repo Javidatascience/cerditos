@@ -56,4 +56,4 @@ Si una tarea parece requerir romper otra regla, parar y preguntar.
 
 ## Estado actual
 
-Jugable de punta a punta: picar, 12 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v8, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.
+Jugable de punta a punta: picar, 12 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v9, compañeros con habilidad y Cueva del Dragón, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.

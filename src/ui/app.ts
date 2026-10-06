@@ -3,13 +3,14 @@
 // mount/update/destroy. Ver docs/06-mina.md.
 
 import { claimVisitor, VISITOR_BOOST } from '../core/actions.ts';
-import { headerView, visitorInjectionValue } from '../core/selectors.ts';
+import { caveUnlocked, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
 import { h, setClass, setText } from './dom.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
 import { mountAchievementsView } from './views/achievementsView.ts';
+import { mountCaveView } from './views/caveView.ts';
 import { mountCosmeticsView } from './views/cosmeticsView.ts';
 import { mountFlyView } from './views/flyView.ts';
 import { mountJournalView } from './views/journalView.ts';
@@ -44,6 +45,7 @@ const TABS: TabDef[] = [
   { id: 'pick', label: 'Picar', icon: '⛏️', mount: mountPickView },
   { id: 'fly', label: 'Ascender', icon: '🪶', mount: mountFlyView },
   { id: 'cosmetics', label: 'Cerdito', icon: '🐷', mount: mountCosmeticsView },
+  { id: 'cave', label: 'Cueva', icon: '🐉', mount: mountCaveView },
   { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountAchievementsView },
   { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
   { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
@@ -154,6 +156,9 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
     setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
     setClass(header, 'boosted', state.buff !== null);
+    const cave = caveUnlocked(state, content);
+    const caveButton = navButtons.get('cave');
+    if (caveButton) setClass(caveButton, 'hidden', !cave);
     activeView?.update(state);
   }
 

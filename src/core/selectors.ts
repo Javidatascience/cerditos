@@ -3,8 +3,9 @@
 
 import type { AchievementReq, Content, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
-import { VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
-import { BASKET_CAP_SECONDS, basketSeconds, basketValue } from './basket.ts';
+import { rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
+import { basketCap, basketSeconds, basketValue } from './basket.ts';
+import { blowGain, blowReady, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
@@ -289,8 +290,9 @@ export interface BasketView {
 }
 
 export function basketView(state: GameState, content: Content): BasketView {
-  const seconds = basketSeconds(state);
-  return { value: basketValue(state, content), seconds, capSeconds: BASKET_CAP_SECONDS, fill: seconds / BASKET_CAP_SECONDS };
+  const cap = basketCap(state, content);
+  const seconds = basketSeconds(state, cap);
+  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap };
 }
 
 /** Lo que daría una inyección de visitante ahora mismo (monedas). */
@@ -445,11 +447,13 @@ export function statsView(state: GameState, content: Content): StatsView {
   };
 }
 
+export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'fireBreath' | 'bestToolMult' | 'visitorSpeed' | 'freeTool';
+
 export interface CompanionStatusView {
   id: string;
   name: string;
   emoji: string;
-  kind: 'tapAcorn' | 'coinGift' | 'fireBreath';
+  kind: CompanionAbilityKind;
   progress: number;
   target: number;
   /** Segundos que faltan (solo en las habilidades por tiempo). */
@@ -457,13 +461,74 @@ export interface CompanionStatusView {
 }
 
 /** Estado de la habilidad de cada compañero que se lleva puesto. */
-export function companionStatusViews(state: GameState, content: Content): CompanionStatusView[] {
-  return state.activeCompanions.flatMap((id) => {
+export function companionStatusViews(state: GameState, content: Content, now: number): CompanionStatusView[] {
+  return state.activeCompanions.flatMap((id): CompanionStatusView[] => {
     const c = content.companions.find((x) => x.id === id);
     if (!c) return [];
+    const ability = c.ability;
+    const base = { id, name: c.name, emoji: c.emoji, kind: ability.kind };
     const progress = state.companionProgress[id] ?? 0;
-    const timed = c.ability.kind !== 'tapAcorn';
-    const target = c.ability.kind === 'tapAcorn' ? c.ability.every : c.ability.everySeconds;
-    return [{ id, name: c.name, emoji: c.emoji, kind: c.ability.kind, progress: Math.min(progress, target), target, secondsLeft: timed ? Math.max(0, target - progress) : null }];
+    switch (ability.kind) {
+      case 'tapAcorn':
+        return [{ ...base, progress: Math.min(progress, ability.every), target: ability.every, secondsLeft: null }];
+      case 'coinGift':
+        return [{ ...base, progress: Math.min(progress, ability.everySeconds), target: ability.everySeconds, secondsLeft: Math.max(0, ability.everySeconds - progress) }];
+      case 'fireBreath': {
+        const every = Math.min(ability.everySeconds, ...content.cave.nodes.filter((n) => state.cave.nodes[n.id] && n.effect.kind === 'breathSeconds').map((n) => n.effect.value));
+        return [{ ...base, progress: Math.min(progress, every), target: every, secondsLeft: Math.max(0, every - progress) }];
+      }
+      case 'freeTool': {
+        const total = ability.cooldownHours * 3600;
+        const wait = rabbitWaitSeconds(state, content, now);
+        return [{ ...base, progress: total - wait, target: total, secondsLeft: wait }];
+      }
+      default:
+        return [{ ...base, progress: 1, target: 1, secondsLeft: null }];
+    }
   });
 }
+
+export interface CaveView {
+  embers: Decimal;
+  perSecond: Decimal;
+  blowGain: Decimal;
+  blowReady: boolean;
+  /** Bono total de producción que la cueva da al juego principal. */
+  prodBonus: number;
+  furnaces: { id: string; name: string; emoji: string; flavor: string; owned: number; cost: Decimal; each: Decimal; canBuy: boolean }[];
+  branches: { id: string; name: string; emoji: string; nodes: { id: string; name: string; flavor: string; cost: number; bought: boolean; lockedBy: string | null; canBuy: boolean }[] }[];
+}
+
+export function caveView(state: GameState, content: Content): CaveView {
+  const mult = caveProduct(state, content, 'embers');
+  return {
+    embers: state.cave.embers,
+    perSecond: embersPerSecond(state, content),
+    blowGain: blowGain(state, content),
+    blowReady: blowReady(state, content),
+    prodBonus: caveProduct(state, content, 'prodMult'),
+    furnaces: content.cave.furnaces.map((f) => {
+      const owned = state.cave.furnaces[f.id] ?? 0;
+      const cost = furnaceCost(content.cave, f, owned);
+      return { id: f.id, name: f.name, emoji: f.emoji, flavor: f.flavor, owned, cost, each: D(f.baseProd).mul(mult), canBuy: state.cave.embers.gte(cost) };
+    }),
+    branches: content.cave.branches.map((b) => ({
+      id: b.id,
+      name: b.name,
+      emoji: b.emoji,
+      nodes: content.cave.nodes
+        .filter((n) => n.branch === b.id)
+        .map((n) => {
+          const bought = state.cave.nodes[n.id] === true;
+          const lockedBy = n.requires !== null && !state.cave.nodes[n.requires] ? (content.cave.nodes.find((x) => x.id === n.requires)?.name ?? n.requires) : null;
+          return { id: n.id, name: n.name, flavor: n.flavor, cost: n.cost, bought, lockedBy, canBuy: !bought && lockedBy === null && state.cave.embers.gte(n.cost) };
+        }),
+    })),
+  };
+}
+
+/** ¿Está abierta la Cueva (se tiene al dragón)? */
+export function caveUnlocked(state: GameState, content: Content): boolean {
+  return content.companions.some((c) => c.ability.kind === 'fireBreath' && companionOwned(state, c));
+}
+

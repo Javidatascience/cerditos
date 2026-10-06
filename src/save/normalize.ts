@@ -39,6 +39,15 @@ export function normalize(state: GameState, content: Content): GameState {
     const v = state.companionProgress[id];
     if (!companionIds.has(id) || typeof v !== 'number' || !Number.isFinite(v) || v < 0) delete state.companionProgress[id];
   }
+  const furnaceIds = new Set(content.cave.furnaces.map((f) => f.id));
+  for (const id of Object.keys(state.cave.furnaces)) {
+    if (!furnaceIds.has(id)) delete state.cave.furnaces[id];
+    else state.cave.furnaces[id] = clampInt(state.cave.furnaces[id] ?? 0, 0, Number.MAX_SAFE_INTEGER);
+  }
+  const nodeIds = new Set(content.cave.nodes.map((x) => x.id));
+  for (const id of Object.keys(state.cave.nodes)) if (!nodeIds.has(id)) delete state.cave.nodes[id];
+  if (!Number.isFinite(state.cave.blowAt)) state.cave.blowAt = -1000;
+  if (!state.cave.embers.gte(0)) state.cave.embers = state.cave.embers.sub(state.cave.embers);
   state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
 
   const perkById = new Map(content.perks.map((p) => [p.id, p]));
