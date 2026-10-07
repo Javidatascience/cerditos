@@ -6,7 +6,7 @@ import { buyCompanion, buySkin, equipSkin, MAX_ACTIVE_COMPANIONS, toggleCompanio
 import { cosmeticViews, type CosmeticView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { emojiBadge, pigIcon } from '../art.ts';
+import { emojiBadge, pigSprite } from '../art.ts';
 import { h, setText } from '../dom.ts';
 
 export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
@@ -60,7 +60,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
               ? actionButton(`Comprar (${skin.cost} 🌰)`, () => ctx.dispatch((s) => void buySkin(s, ctx.content, skin.id)), !skin.canBuy)
               : h('span', { className: 'perk-locked' }, [costLine(skin)]);
         return h('li', { className: skin.owned ? 'cosmetic-row' : 'cosmetic-row cosmetic-row-locked' }, [
-          h('div', { className: 'row-art' }, [pigIcon(skin.color ?? '#f4c7c3', 'none', !skin.owned), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [skin.name]), h('span', { className: 'generator-flavor' }, [skin.flavor])])]),
+          h('div', { className: 'row-art' }, [pigSprite(skin.id, !skin.owned), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [skin.name]), h('span', { className: 'generator-flavor' }, [skin.flavor])])]),
           action,
         ]);
       }),

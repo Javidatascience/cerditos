@@ -7,7 +7,7 @@ import { buyGlobalUpgrade, buyTool, useRabbit, buyUpgrade, collectBasket, setBuy
 import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { emojiBadge, minerPig } from '../art.ts';
+import { emojiBadge, pigSprite } from '../art.ts';
 import { createListSync, h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -28,7 +28,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, handTool, companionsRow]),
+    h('div', { className: 'mine-stage' }, [pigSlot, companionsRow]),
     ownedTools,
     statsLine,
     floats,
@@ -187,11 +187,10 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     const head = headerView(state, ctx.content);
 
     const best = Math.max(-1, ...ctx.content.tools.map((t, i) => ((state.tools[t.id] ?? 0) > 0 ? i : -1)));
-    const skinColor = ctx.content.skins.find((sk) => sk.id === state.activeSkin)?.color ?? '#f4c7c3';
-    const signature = `${best}:${skinColor}`;
+    const signature = state.activeSkin;
     if (signature !== pigSignature) {
       pigSignature = signature;
-      pigSlot.replaceChildren(minerPig(best, skinColor));
+      pigSlot.replaceChildren(pigSprite(state.activeSkin));
     }
     const statuses = companionStatusViews(state, ctx.content, Date.now());
     const statusKey = `${statuses.map((c) => c.id).join(',')}:${state.revealed}`;

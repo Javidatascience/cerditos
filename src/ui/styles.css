@@ -1110,12 +1110,22 @@ body {
   align-items: flex-end;
   justify-content: center;
   gap: 16px;
-  height: 96px;
+  height: 122px;
 }
 
-.mine-pig .pig-icon {
-  width: 84px;
-  height: 84px;
+.mine-pig .pig-sprite {
+  height: 118px;
+}
+
+.pig-sprite {
+  image-rendering: pixelated;
+  height: 56px;
+  width: auto;
+}
+
+.pig-sprite-locked {
+  filter: grayscale(1);
+  opacity: 0.45;
 }
 
 .mine-block {

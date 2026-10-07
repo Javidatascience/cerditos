@@ -125,6 +125,17 @@ export function minerPig(bestToolIndex: number, skin: string = PIG_SKIN): SVGSVG
   return pigIcon(skin, accessory);
 }
 
+/** Sprite en pixel art del cerdito picador con la piel indicada (public/pig/<piel>.png, generado con tools/make-pig-sprites.py). */
+export function pigSprite(skinId: string, locked = false): HTMLImageElement {
+  const img = document.createElement('img');
+  img.className = locked ? 'pig-sprite pig-sprite-locked' : 'pig-sprite';
+  img.src = `${import.meta.env.BASE_URL}pig/${skinId}.png`;
+  img.alt = '';
+  img.draggable = false;
+  img.setAttribute('aria-hidden', 'true');
+  return img;
+}
+
 /** Insignia con un emoji (piezas, materiales, zonas…). */
 export function emojiBadge(emoji: string, locked = false): HTMLSpanElement {
   const el = document.createElement('span');
