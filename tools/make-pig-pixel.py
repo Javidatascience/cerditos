@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-W, H = 31, 23
+W, H = 34, 23
 OUTLINE = (52, 24, 38, 255)
 
 
@@ -93,8 +93,9 @@ def build():
     g[11][11] = 'd'
     rect(g, 17, 5, 21, 5, 'l')
     # rabito
-    for x, y in [(27, 10), (28, 9), (28, 8), (27, 7)]:
+    for x, y in [(27, 10), (28, 10), (29, 9), (30, 8), (30, 7), (29, 6), (28, 6), (28, 7)]:
         g[y][x] = 'p'
+    g[7][29] = '.'
     return g
 
 

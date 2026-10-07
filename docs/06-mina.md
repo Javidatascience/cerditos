@@ -86,3 +86,7 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 - **Inercia**: tope ×1,25 y 6 mejoras de +0,15. Picar da 0,05 s de producción (mín. 1 moneda). Las mejoras globales ×1,5 se desbloquean mucho más tarde.
 - **Jardín**: cuadrícula 5×5, plantar gratis, flores comunes de 1-20 min con bonos pequeños y raras de 1-12 h con bonos grandes. Dos flores vecinas maduras se cruzan en una casilla vacía (cada 30 s, 25 %, determinista) y dan flores nuevas; la receta se ve en la lista.
 - **Interfaz**: Picar tiene dos secciones (Herramientas / Mejoras); Diario va dentro de Logros.
+
+### Arte (pixel art)
+
+Todo el arte nuevo está dibujado por código, sin imágenes de IA: `tools/make-pig-pixel.py` (el cerdito y sus pieles, `public/pig/`) y `tools/make-pixel-art.py` (18 herramientas y 6 compañeros en 16×16, `public/art/`). Se regeneran con `python tools/make-pig-pixel.py` y `python tools/make-pixel-art.py`. Las flores, la cueva y los logros siguen con emojis. `tools/make-pig-sprites.py` limpia imágenes generadas con IA, por si se vuelve a usar.

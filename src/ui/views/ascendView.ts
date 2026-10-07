@@ -42,7 +42,7 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
     const view = getAscendView(state, ctx.content);
     setText(plumasText, `Plumas: ${formatNumber(view.plumas, notation)} (${formatNumber(view.plumasTotal, notation)} en total)`);
     if (!view.unlocked) {
-      setText(pendingText, `Podrás ascender al conseguir la herramienta ${view.requiredTool.index + 1}: ${view.requiredTool.emoji} ${view.requiredTool.name}.`);
+      setText(pendingText, `Podrás ascender al conseguir la herramienta ${view.requiredTool.index + 1}: ${view.requiredTool.name}.`);
       setText(multiplierText, '');
     } else {
       setText(

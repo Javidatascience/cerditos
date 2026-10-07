@@ -1123,6 +1123,26 @@ body {
   width: auto;
 }
 
+.art-sprite {
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.art-sprite-sm {
+  width: 24px;
+  height: 24px;
+}
+
+.art-sprite-md {
+  width: 32px;
+  height: 32px;
+}
+
+.art-sprite-lg {
+  width: 64px;
+  height: 64px;
+}
+
 .pig-sprite-locked {
   filter: grayscale(1);
   opacity: 0.45;

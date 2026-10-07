@@ -6,7 +6,7 @@ import type { Decimal } from '../../core/num.ts';
 import { achievementViews, statsView, type AchievementView, type RequirementView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { emojiBadge } from '../art.ts';
+import { emojiBadge, spriteBadge } from '../art.ts';
 import { h, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -64,7 +64,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
       const next = own.find((a) => !a.owned);
       const seen = done > 0 || (state.tools[tool.id] ?? 0) > 0;
       return h('li', { className: seen ? 'album-card achievement-gen' : 'album-card achievement-gen achievement-gen-locked', 'aria-hidden': seen ? 'false' : 'true' }, [
-        emojiBadge(tool.emoji),
+        spriteBadge('tools', tool.id),
         h('span', { className: 'upgrade-name' }, [seen ? `${tool.name} (${done}/${own.length})` : `??? (0/${own.length})`]),
         h('span', { className: 'chip-row' }, own.map((a) => h('span', { className: a.owned ? 'chip chip-done' : 'chip' }, [String(a.tool!.count)]))),
         next ? reqLine(next.requirement, format) : h('span', { className: 'album-req album-req-done' }, ['Todos conseguidos']),

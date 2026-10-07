@@ -7,7 +7,7 @@ import { buyGlobalUpgrade, buyTool, useRabbit, buyUpgrade, collectBasket, setBuy
 import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { emojiBadge, pigSprite } from '../art.ts';
+import { artSprite, emojiBadge, pigSprite, spriteBadge } from '../art.ts';
 import { createListSync, h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -28,7 +28,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, handTool, companionsRow]),
+    h('div', { className: 'mine-stage' }, [pigSlot, companionsRow]),
     ownedTools,
     statsLine,
     floats,
@@ -126,7 +126,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       upgradeButton.addEventListener('click', () => ctx.dispatch((state) => void buyUpgrade(state, ctx.content, tool.id)));
       const el = h('li', { className: 'generator-row' }, [
         h('div', { className: 'row-art' }, [
-          emojiBadge(tool.emoji),
+          spriteBadge('tools', tool.id),
           h('div', { className: 'generator-info' }, [
             h('div', { className: 'generator-name-row' }, [h('span', { className: 'generator-name' }, [nameText]), h('span', { className: 'generator-owned' }, [ownedText])]),
             h('span', { className: 'generator-prod' }, [prodText]),
@@ -203,7 +203,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
                 'div',
                 { className: 'chip-row hidden' },
                 ctx.content.tools.slice(0, state.revealed).map((tool) =>
-                  h('button', { className: 'chip chip-button', title: `Gratis: ${tool.name}`, onclick: () => ctx.dispatch((s) => void useRabbit(s, ctx.content, tool.id, Date.now())) }, [tool.emoji]),
+                  h('button', { className: 'chip chip-button', title: `Gratis: ${tool.name}`, onclick: () => ctx.dispatch((s) => void useRabbit(s, ctx.content, tool.id, Date.now())) }, [artSprite('tools', tool.id)]),
                 ),
               )
             : null;
@@ -230,7 +230,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
                 : (c.secondsLeft ?? 0) > 0
                     ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
                     : 'te deja elegir una herramienta gratis:';
-      setText(line.text, `${c.emoji} ${c.name} ${what}`);
+      setText(line.text, `${c.name} ${what}`);
       setStyleProp(line.fill, 'width', `${((c.progress / c.target) * 100).toFixed(1)}%`);
       if (line.chips) setClass(line.chips, 'hidden', (c.secondsLeft ?? 0) > 0);
     });
@@ -238,15 +238,19 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     if (companionIds !== companionsSignature) {
       companionsSignature = companionIds;
       companionsRow.replaceChildren(
-        ...state.activeCompanions.map((id, i) => h('span', { className: `companion companion-${i}` }, [ctx.content.companions.find((c) => c.id === id)?.emoji ?? ''])),
+        ...state.activeCompanions.map((id, i) => h('span', { className: `companion companion-${i}` }, [artSprite('companions', id, 'lg')])),
       );
     }
-    handTool.textContent = best >= 0 ? ctx.content.tools[best]!.emoji : '⛏️';
+    const handId = ctx.content.tools[Math.max(best, 0)]!.id;
+    if (handTool.dataset['tool'] !== handId) {
+      handTool.dataset['tool'] = handId;
+      handTool.replaceChildren(artSprite('tools', handId, 'lg'));
+    }
     const ownedList = ctx.content.tools.filter((t) => (state.tools[t.id] ?? 0) > 0);
     const ownedSignature = ownedList.map((t) => `${t.id}:${state.tools[t.id]}`).join('|');
     if (ownedSignature !== ownedToolsSignature) {
       ownedToolsSignature = ownedSignature;
-      ownedTools.replaceChildren(...ownedList.map((t) => h('span', { className: 'tool-chip', title: t.name }, [`${t.emoji} ${state.tools[t.id]}`])));
+      ownedTools.replaceChildren(...ownedList.map((t) => h('span', { className: 'tool-chip', title: t.name }, [artSprite('tools', t.id, 'sm'), ` ${state.tools[t.id]}`])));
     }
     setText(incomeText, 'Pica para ganar tus primeras monedas y compra un pico.');
     setClass(statsLine, 'hidden', head.income.gt(0) || state.taps > 0);

@@ -6,7 +6,7 @@ import { buyCompanion, buySkin, equipSkin, MAX_ACTIVE_COMPANIONS, toggleCompanio
 import { cosmeticViews, type CosmeticView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { emojiBadge, pigSprite } from '../art.ts';
+import { emojiBadge, pigSprite, spriteBadge } from '../art.ts';
 import { h, setText } from '../dom.ts';
 
 export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
@@ -77,7 +77,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
               : h('span', { className: 'perk-locked' }, [costLine(c)]);
         return h('li', { className: c.owned ? 'cosmetic-row' : 'cosmetic-row cosmetic-row-locked' }, [
           h('div', { className: 'row-art' }, [
-            emojiBadge(c.emoji ?? '🐾', !c.owned),
+            spriteBadge('companions', c.id, !c.owned),
             h('div', { className: 'upgrade-info' }, [
               h('span', { className: 'upgrade-name' }, [c.maxLevel > 0 && c.owned ? `${c.name} (nivel ${c.level}/${c.maxLevel})` : c.name]),
               h('span', { className: 'generator-flavor' }, [c.flavor]),
