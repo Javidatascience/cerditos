@@ -28,7 +28,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, companionsRow]),
+    h('div', { className: 'mine-stage' }, [pigSlot, handTool, companionsRow]),
     ownedTools,
     statsLine,
     floats,
