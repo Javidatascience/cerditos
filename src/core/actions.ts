@@ -159,11 +159,11 @@ export function collectBasket(state: GameState, content: Content): Decimal {
 export type VisitorKind = 'injection' | 'boost' | 'golden';
 
 /** Segundos de ingresos que da la inyección de un visitante. */
-export const VISITOR_INJECTION_SECONDS = 600;
+export const VISITOR_INJECTION_SECONDS = 30;
 /** Multiplicador y duración del impulso de un visitante. */
-export const VISITOR_BOOST = { mult: 5, seconds: 60 };
+export const VISITOR_BOOST = { mult: 3, seconds: 15 };
 /** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 3 bellotas. */
-export const VISITOR_GOLDEN = { injectionSeconds: 1800, mult: 7, seconds: 90, acorns: 3 };
+export const VISITOR_GOLDEN = { injectionSeconds: 180, mult: 5, seconds: 25, acorns: 3 };
 
 /**
  * Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción

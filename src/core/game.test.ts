@@ -149,8 +149,8 @@ describe('tiempo', () => {
     claimVisitor(boosted, CONTENT, 'boost');
     expect(boosted.buff).toEqual({ mult: VISITOR_BOOST.mult, until: VISITOR_BOOST.seconds });
     advance(plain, CONTENT, 90);
-    advance(boosted, CONTENT, 90); // 60 s a ×5 y 30 s a ×1
-    expect(boosted.coins.toNumber() / plain.coins.toNumber()).toBeCloseTo((VISITOR_BOOST.mult * 60 + 30) / 90, 9);
+    advance(boosted, CONTENT, 90); // el impulso dura VISITOR_BOOST.seconds y el resto va a ×1
+    expect(boosted.coins.toNumber() / plain.coins.toNumber()).toBeCloseTo((VISITOR_BOOST.mult * VISITOR_BOOST.seconds + (90 - VISITOR_BOOST.seconds)) / 90, 9);
     expect(boosted.buff).toBeNull();
 
     const x = fresh();

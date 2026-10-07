@@ -23,9 +23,9 @@ export const GARDEN: GardenDef = {
     { id: 'rosa', name: 'Rosa', emoji: '🌹', flavor: 'Con espinas, pero regatea muy bien.', growSeconds: 10 * MIN, effect: { kind: 'costMult', value: 0.8, seconds: 60 }, recipe: ['margarita', 'tulipan'] },
     { id: 'lavanda', name: 'Lavanda', emoji: '🪻', flavor: 'Huele tan bien que no se puede parar de picar.', growSeconds: 20 * MIN, effect: { kind: 'momentumMax', value: 0.25, seconds: 120 }, recipe: ['tulipan', 'tulipan'] },
     { id: 'loto', name: 'Loto', emoji: '🪷', flavor: 'Flota sobre el charco de barro.', growSeconds: 1 * HOUR, effect: { kind: 'prodMult', value: 2, seconds: 60 }, recipe: ['girasol', 'rosa'] },
-    { id: 'hibisco', name: 'Hibisco', emoji: '🌺', flavor: 'Trae una cesta llena de monedas.', growSeconds: 2 * HOUR, effect: { kind: 'coins', value: 1, seconds: 20 * MIN }, recipe: ['rosa', 'lavanda'] },
+    { id: 'hibisco', name: 'Hibisco', emoji: '🌺', flavor: 'Trae una cesta llena de monedas.', growSeconds: 2 * HOUR, effect: { kind: 'coins', value: 1, seconds: 5 * MIN }, recipe: ['rosa', 'lavanda'] },
     { id: 'orquidea', name: 'Orquídea', emoji: '💐', flavor: 'Delicada, pero pica por tres.', growSeconds: 3 * HOUR, effect: { kind: 'tapMult', value: 3, seconds: 60 }, recipe: ['lavanda', 'girasol'] },
     { id: 'flor-de-luna', name: 'Flor de luna', emoji: '🌸', flavor: 'Solo abre de noche y trabaja mientras duermes.', growSeconds: 6 * HOUR, effect: { kind: 'prodMult', value: 3, seconds: 90 }, recipe: ['loto', 'hibisco'] },
-    { id: 'flor-de-oro', name: 'Flor de oro', emoji: '🏵️', flavor: 'La leyenda dice que el cerdito la sueña.', growSeconds: 12 * HOUR, effect: { kind: 'coins', value: 1, seconds: 2 * HOUR }, recipe: ['flor-de-luna', 'orquidea'] },
+    { id: 'flor-de-oro', name: 'Flor de oro', emoji: '🏵️', flavor: 'La leyenda dice que el cerdito la sueña.', growSeconds: 12 * HOUR, effect: { kind: 'coins', value: 1, seconds: 30 * MIN }, recipe: ['flor-de-luna', 'orquidea'] },
   ],
 };

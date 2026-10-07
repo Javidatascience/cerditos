@@ -139,7 +139,9 @@ export type AchievementReq =
   | { kind: 'companionLevels'; count: number }
   | { kind: 'flowersFound'; count: number }
   | { kind: 'shinyFound'; count: number }
-  | { kind: 'harvests'; count: number };
+  | { kind: 'harvests'; count: number }
+  | { kind: 'furnaces'; count: number }
+  | { kind: 'caveNodes'; count: number };
 
 export interface AchievementDef {
   id: string;

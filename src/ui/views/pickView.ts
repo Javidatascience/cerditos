@@ -66,7 +66,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // --- Mejoras globales (×1,5 a todo) y de inercia ---
   const globalNote = h('p', { className: 'settings-hint hidden' });
   const globalList = h('ul', { className: 'upgrade-list' });
-  const globalBlock = h('div', { className: 'global-block hidden' }, [globalList, globalNote]);
+  const globalBlock = h('div', { className: 'global-block' }, [globalList, globalNote]);
   const syncGlobals = createListSync<GlobalUpgradeView & { costText: string }>(
     globalList,
     (u) => u.id,

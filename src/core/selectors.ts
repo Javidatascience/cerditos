@@ -276,6 +276,10 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
       return (f) => `Consigue ${f(D(req.count))} ${req.count === 1 ? 'flor brillante' : 'flores brillantes'} distintas`;
     case 'harvests':
       return (f) => `Recoge ${f(D(req.count))} flores`;
+    case 'furnaces':
+      return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'horno' : 'hornos'} en la cueva`;
+    case 'caveNodes':
+      return (f) => `Compra ${f(D(req.count))} ${req.count === 1 ? 'ventaja' : 'ventajas'} del dragón`;
   }
 }
 

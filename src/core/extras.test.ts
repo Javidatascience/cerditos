@@ -178,7 +178,7 @@ describe('habilidades de los compañeros', () => {
     companionTick(state, CONTENT, 119);
     expect(state.coins.toNumber()).toBe(0);
     companionTick(state, CONTENT, 1);
-    expect(state.coins.toNumber()).toBeCloseTo(base * 90, 6);
+    expect(state.coins.toNumber()).toBeCloseTo(base * 30, 6);
     expect(state.journal.at(-1)?.text).toContain('Gato');
   });
 
@@ -380,7 +380,7 @@ describe('jardín', () => {
     const base = baseIncomePerSecond(state, CONTENT).toNumber();
     const coins = state.coins.toNumber();
     harvestFlower(state, CONTENT, 0, 2 * 3600_000, 0.5);
-    expect(state.coins.toNumber() - coins).toBeCloseTo(base * 1200, 4);
+    expect(state.coins.toNumber() - coins).toBeCloseTo(base * 300, 4);
   });
 });
 

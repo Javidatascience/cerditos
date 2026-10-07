@@ -38,6 +38,10 @@ export function achievementProgress(state: GameState, req: AchievementReq): Requ
       return progress(Object.values(state.garden.found).filter((f) => f.shiny).length, req.count);
     case 'harvests':
       return progress(state.garden.harvests, req.count);
+    case 'furnaces':
+      return progress(Object.values(state.cave.furnaces).reduce((a, b) => a + b, 0), req.count);
+    case 'caveNodes':
+      return progress(Object.keys(state.cave.nodes).length, req.count);
   }
 }
 

@@ -106,11 +106,11 @@ export const COMPANIONS: CompanionDef[] = [
   },
   {
     id: 'gato', name: 'Gato dormilón', emoji: '🐱', flavor: 'De vez en cuando se despierta y te trae un regalo de monedas.', cost: 10, achievement: null,
-    ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 90 },
+    ability: { kind: 'coinGift', everySeconds: 120, incomeSeconds: 30 },
     upgrades: [
-      { cost: 5, ability: { kind: 'coinGift', everySeconds: 100, incomeSeconds: 120 } },
-      { cost: 10, ability: { kind: 'coinGift', everySeconds: 80, incomeSeconds: 150 } },
-      { cost: 16, ability: { kind: 'coinGift', everySeconds: 60, incomeSeconds: 200 } },
+      { cost: 5, ability: { kind: 'coinGift', everySeconds: 110, incomeSeconds: 35 } },
+      { cost: 10, ability: { kind: 'coinGift', everySeconds: 100, incomeSeconds: 40 } },
+      { cost: 16, ability: { kind: 'coinGift', everySeconds: 90, incomeSeconds: 45 } },
     ],
   },
   {
