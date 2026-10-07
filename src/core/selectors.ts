@@ -6,7 +6,7 @@ import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
 import { durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
-import { blowGain, blowReady, caveCostFactor, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
+import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
@@ -314,6 +314,8 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
       return (f) => `Consigue ${f(D(req.count))} ${req.count === 1 ? 'flor brillante' : 'flores brillantes'} distintas`;
     case 'harvests':
       return (f) => `Recoge ${f(D(req.count))} flores`;
+    case 'dragonStage':
+      return (f) => `Haz crecer al dragón hasta la etapa ${f(D(req.count))} (${content.cave.dragon[req.count]?.name ?? '?'})`;
     case 'furnaces':
       return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'horno' : 'hornos'} en la cueva`;
     case 'caveNodes':
@@ -585,13 +587,27 @@ export interface CaveView {
   blowReady: boolean;
   /** Bono total de producción que la cueva da al juego principal. */
   prodBonus: number;
+  /** El dragón: etapa actual, la siguiente (null si ya es anciano) y lo que cuesta alimentarlo. */
+  dragon: { stage: number; spriteId: string; name: string; flavor: string; bonusText: string; next: { name: string; cost: Decimal; bonusText: string } | null; canFeed: boolean };
   furnaces: { id: string; name: string; emoji: string; flavor: string; owned: number; cost: Decimal; each: Decimal; canBuy: boolean }[];
   branches: { id: string; name: string; emoji: string; nodes: { id: string; name: string; flavor: string; cost: number; bought: boolean; lockedBy: string | null; canBuy: boolean }[] }[];
 }
 
 export function caveView(state: GameState, content: Content): CaveView {
-  const mult = caveProduct(state, content, 'embers');
+  const mult = embersFactor(state, content);
+  const stage = content.cave.dragon[state.cave.dragonStage]!;
+  const next = content.cave.dragon[state.cave.dragonStage + 1];
+  const bonusText = (s: { prodMult: number; embersMult: number }) => `×${s.prodMult} a la producción y ×${s.embersMult} a las brasas`;
   return {
+    dragon: {
+      stage: state.cave.dragonStage,
+      spriteId: `dragon-${state.cave.dragonStage}`,
+      name: stage.name,
+      flavor: stage.flavor,
+      bonusText: state.cave.dragonStage === 0 ? 'Aún no da ningún bono.' : `Con él: ×${dragonBonus(state, content).prod.toFixed(2)} a la producción y ×${dragonBonus(state, content).embers.toFixed(2)} a las brasas.`,
+      next: next ? { name: next.name, cost: D(next.cost), bonusText: bonusText(next) } : null,
+      canFeed: next !== undefined && state.cave.embers.gte(next.cost),
+    },
     unlocked: caveUnlocked(state, content),
     unlockPlumas: content.cave.unlockPlumas,
     plumas: state.plumasTotal,
@@ -599,7 +615,7 @@ export function caveView(state: GameState, content: Content): CaveView {
     perSecond: embersPerSecond(state, content),
     blowGain: blowGain(state, content),
     blowReady: blowReady(state, content),
-    prodBonus: caveProduct(state, content, 'prodMult'),
+    prodBonus: caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod,
     furnaces: content.cave.furnaces.map((f) => {
       const owned = state.cave.furnaces[f.id] ?? 0;
       const cost = furnaceCost(content.cave, f, owned, caveCostFactor(state, content));
@@ -618,6 +634,24 @@ export function caveView(state: GameState, content: Content): CaveView {
         }),
     })),
   };
+}
+
+export interface IncomeHistoryView {
+  /** Muestras (tiempo de juego en segundos, log10 de las monedas por segundo base). */
+  points: { t: number; v: number }[];
+  /** Escala vertical: de 0 al mayor log10 visto (redondeado hacia arriba). */
+  maxV: number;
+  /** Segundos de juego que abarca la gráfica. */
+  spanSeconds: number;
+}
+
+/** Datos de la gráfica de ingresos: crece con el tiempo y abarca toda la partida (se submuestrea al llenarse). */
+export function incomeHistory(state: GameState): IncomeHistoryView {
+  const points = state.stats.history;
+  const maxV = Math.max(1, Math.ceil(Math.max(0, ...points.map((p) => p.v))));
+  const first = points[0];
+  const last = points[points.length - 1];
+  return { points: points.map((p) => ({ ...p })), maxV, spanSeconds: first && last ? last.t - first.t : 0 };
 }
 
 /** ¿Está abierta la Cueva (plumas en total suficientes)? */

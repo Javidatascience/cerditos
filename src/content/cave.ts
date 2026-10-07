@@ -5,6 +5,13 @@ import type { CaveDef } from './types.ts';
 
 export const CAVE: CaveDef = {
   unlockPlumas: 10,
+  dragon: [
+    { id: 'huevo', name: 'Huevo', flavor: 'Late despacio, calentito entre las brasas.', cost: 0, prodMult: 1, embersMult: 1 },
+    { id: 'cria', name: 'Cría de dragón', flavor: 'Acaba de romper el cascarón y ya tiene hambre.', cost: 200, prodMult: 1.05, embersMult: 1.2 },
+    { id: 'joven', name: 'Dragón joven', flavor: 'Escupe chispas y persigue a las gallinas.', cost: 20000, prodMult: 1.08, embersMult: 1.3 },
+    { id: 'adulto', name: 'Dragón adulto', flavor: 'Con las alas abiertas tapa media cueva.', cost: 2e6, prodMult: 1.1, embersMult: 1.4 },
+    { id: 'anciano', name: 'Dragón anciano', flavor: 'Sabio, barbudo y dueño de todo el tesoro.', cost: 5e8, prodMult: 1.15, embersMult: 1.5 },
+  ],
   furnaceGrowth: 1.15,
   /** Segundos entre soplidos. */
   blowCooldown: 4,

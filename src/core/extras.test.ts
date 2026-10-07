@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { buyPerk, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { HISTORY_MAX } from './tick.ts';
+import { buyPerk, feedDragon, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
@@ -426,6 +427,42 @@ describe('árbol de ventajas', () => {
     buyPerk(state, CONTENT, 'soplido');
     buyPerk(state, CONTENT, 'hornos-baratos');
     expect(caveCostFactor(state, CONTENT)).toBeCloseTo(0.92, 9);
+  });
+});
+
+describe('dragón y gráfica de ingresos', () => {
+  it('el dragón crece alimentándolo con brasas, en orden, y cada etapa da bonos acumulados', () => {
+    const state = fresh();
+    expect(feedDragon(state, CONTENT)).toBe(false); // cueva cerrada
+    state.plumasTotal = D(10);
+    state.cave.embers = D(100);
+    expect(feedDragon(state, CONTENT)).toBe(false); // cuesta 200
+    state.cave.embers = D(1e12);
+    const before = prodMultiplier(state, CONTENT);
+    expect(feedDragon(state, CONTENT)).toBe(true);
+    expect(state.cave.dragonStage).toBe(1);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(CONTENT.cave.dragon[1]!.prodMult, 9);
+    state.cave.furnaces['brasero'] = 1;
+    const e1 = embersPerSecond(state, CONTENT).toNumber();
+    expect(e1).toBeCloseTo(0.2 * CONTENT.cave.dragon[1]!.embersMult, 9);
+    for (let i = 0; i < 5; i++) feedDragon(state, CONTENT);
+    expect(state.cave.dragonStage).toBe(CONTENT.cave.dragon.length - 1);
+    expect(feedDragon(state, CONTENT)).toBe(false); // ya es anciano
+  });
+
+  it('el historial anota una muestra cada intervalo y, al llenarse, descarta la mitad y duplica el intervalo', () => {
+    const state = fresh();
+    advance(state, CONTENT, 1);
+    expect(state.stats.history.length).toBe(1);
+    advance(state, CONTENT, 10);
+    expect(state.stats.history.length).toBe(1); // aún no ha pasado el intervalo
+    advance(state, CONTENT, state.stats.historyEvery);
+    expect(state.stats.history.length).toBe(2);
+    expect(state.stats.history[0]!.v).toBeGreaterThan(0); // 20 picos → ingresos > 1/s
+    const every = state.stats.historyEvery;
+    for (let i = 0; i < HISTORY_MAX + 5; i++) advance(state, CONTENT, state.stats.historyEvery);
+    expect(state.stats.history.length).toBeLessThanOrEqual(HISTORY_MAX);
+    expect(state.stats.historyEvery).toBeGreaterThan(every);
   });
 });
 

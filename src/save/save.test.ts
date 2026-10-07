@@ -30,7 +30,8 @@ describe('serialize / deserialize', () => {
     state.activeSkin = 'azulado';
     state.companions['topo'] = true;
     state.activeCompanions = ['topo'];
-    state.stats = { visitors: 3, bestIncome: D('1.5e400') };
+    state.stats = { visitors: 3, bestIncome: D('1.5e400'), history: [{ t: 300, v: 12.5 }], historyEvery: 600 };
+    state.cave.dragonStage = 2;
     state.journal.push({ at: 2, text: 'hola' });
 
     const back = deserialize(serialize(state, 456));

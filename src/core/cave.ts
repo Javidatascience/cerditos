@@ -29,11 +29,29 @@ export function caveSum(state: GameState, content: Content, kind: CaveEffect['ki
   return boughtEffects(state, content, kind).reduce((a, b) => a + b, 0);
 }
 
+/** Bonos acumulados de las etapas del dragón alcanzadas (la del huevo no da nada). */
+export function dragonBonus(state: GameState, content: Content): { prod: number; embers: number } {
+  let prod = 1;
+  let embers = 1;
+  for (let i = 1; i <= state.cave.dragonStage; i++) {
+    const stage = content.cave.dragon[i];
+    if (!stage) break;
+    prod *= stage.prodMult;
+    embers *= stage.embersMult;
+  }
+  return { prod, embers };
+}
+
 /** Brasas por segundo. */
 export function embersPerSecond(state: GameState, content: Content): Decimal {
   let total = D(0);
   for (const f of content.cave.furnaces) total = total.add(D(f.baseProd).mul(state.cave.furnaces[f.id] ?? 0));
-  return total.mul(caveProduct(state, content, 'embers')).mul(1 + perkSumOf(state, content, 'caveEmbers'));
+  return total.mul(embersFactor(state, content));
+}
+
+/** Multiplicador de las brasas: ventajas de la cueva, del árbol y etapa del dragón. */
+export function embersFactor(state: GameState, content: Content): number {
+  return caveProduct(state, content, 'embers') * (1 + perkSumOf(state, content, 'caveEmbers')) * dragonBonus(state, content).embers;
 }
 
 export function blowGain(state: GameState, content: Content): Decimal {

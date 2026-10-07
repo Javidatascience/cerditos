@@ -8,6 +8,7 @@ import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { artSprite } from '../art.ts';
 import { h, setClass, setDisabled, setText } from '../dom.ts';
+import { emeraldRain } from '../effects.ts';
 import { formatNumber } from '../format.ts';
 
 export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
@@ -25,8 +26,12 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
   confirmNo.addEventListener('click', () => setClass(confirmBlock, 'hidden', true));
   confirmYes.addEventListener('click', () => {
     setClass(confirmBlock, 'hidden', true);
-    ctx.dispatch((state) => ascend(state, ctx.content, Date.now()));
+    let gained = 0;
+    ctx.dispatch((state) => {
+      gained = ascend(state, ctx.content, Date.now());
+    });
     ctx.requestSave();
+    if (gained > 0 && ctx.effectsOn()) emeraldRain(gained, `+${gained} esmeralda${gained === 1 ? '' : 's'}`);
   });
 
   const container = h('div', { className: 'ascend-view' }, [

@@ -84,6 +84,15 @@ function v11ToV12(old: RawSave): RawSave {
   return { ...old, version: 12, state: { ...state, version: 12, garden: { cells: [], found, buffs: {}, mutateAt: 0, harvests: 0 } } };
 }
 
+/** v12 → v13: etapa del dragón (huevo) y historial de ingresos para la gráfica (vacío). */
+function v12ToV13(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 13 };
+  const state = old['state'];
+  const cave = isPlainObject(state['cave']) ? state['cave'] : {};
+  const stats = isPlainObject(state['stats']) ? state['stats'] : {};
+  return { ...old, version: 13, state: { ...state, version: 13, cave: { ...cave, dragonStage: 0 }, stats: { ...stats, history: [], historyEvery: 300 } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -93,6 +102,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   9: v9ToV10,
   10: v10ToV11,
   11: v11ToV12,
+  12: v12ToV13,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

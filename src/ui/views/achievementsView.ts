@@ -2,8 +2,8 @@
 // una herramienta" se agrupan por herramienta, con una insignia por cantidad; las herramientas que
 // aún no has tenido se ven borrosas y sin nombre. Ver docs/06-mina.md.
 
-import type { Decimal } from '../../core/num.ts';
-import { achievementViews, statsView, type AchievementView, type RequirementView } from '../../core/selectors.ts';
+import { D, type Decimal } from '../../core/num.ts';
+import { achievementViews, incomeHistory, statsView, type AchievementView, type RequirementView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { emojiBadge, spriteBadge } from '../art.ts';
@@ -23,13 +23,60 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
   shinyFound: 'logro-brillo',
   furnaces: 'logro-horno',
   caveNodes: 'nav-cueva',
+  dragonStage: 'nav-cueva',
 };
 
 export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
   const summaryText = document.createTextNode('');
   const statsBox = h('dl', { className: 'stats-grid' });
   const list = h('div', { className: 'achievements-list' });
-  const container = h('div', { className: 'album-view' }, [h('h3', { className: 'fly-heading' }, ['Estadísticas']), statsBox, h('h3', { className: 'fly-heading' }, ['Logros']), h('p', { className: 'settings-hint' }, [summaryText]), list]);
+  // Gráfica de ingresos: una barra por muestra, en escala logarítmica (cada rayita es ×10).
+  const chart = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  chart.setAttribute('class', 'income-chart');
+  chart.setAttribute('viewBox', '0 0 240 100');
+  chart.setAttribute('preserveAspectRatio', 'none');
+  chart.setAttribute('role', 'img');
+  chart.setAttribute('aria-label', 'Gráfica de tus ingresos por segundo a lo largo de la partida');
+  const chartNote = document.createTextNode('');
+  let chartKey = '';
+
+  function drawChart(state: GameState, notation: GameState['settings']['notation']): void {
+    const data = incomeHistory(state);
+    const last = data.points[data.points.length - 1];
+    const key = `${data.points.length}:${last?.t ?? 0}:${data.maxV}`;
+    if (key === chartKey) return;
+    chartKey = key;
+    const ns = 'http://www.w3.org/2000/svg';
+    const parts: SVGElement[] = [];
+    for (let v = 1; v < data.maxV; v++) {
+      const line = document.createElementNS(ns, 'line');
+      const y = 100 - (v / data.maxV) * 96;
+      line.setAttribute('x1', '0');
+      line.setAttribute('x2', '240');
+      line.setAttribute('y1', y.toFixed(1));
+      line.setAttribute('y2', y.toFixed(1));
+      line.setAttribute('class', 'chart-grid');
+      parts.push(line);
+    }
+    const slot = 240 / Math.max(data.points.length, 24);
+    data.points.forEach((p, i) => {
+      const bar = document.createElementNS(ns, 'rect');
+      const height = Math.max(1, (p.v / data.maxV) * 96);
+      bar.setAttribute('x', (i * slot).toFixed(1));
+      bar.setAttribute('y', (100 - height).toFixed(1));
+      bar.setAttribute('width', Math.max(1, slot - 0.6).toFixed(1));
+      bar.setAttribute('height', height.toFixed(1));
+      bar.setAttribute('class', 'chart-bar');
+      parts.push(bar);
+    });
+    chart.replaceChildren(...parts);
+    setText(
+      chartNote,
+      data.points.length < 2 ? 'Aún no hay datos: la gráfica se va llenando mientras juegas.' : `Escala logarítmica: cada rayita es ×10. Abarca ${formatDuration(data.spanSeconds)} de juego y llega hasta ${formatNumber(D(10).pow(data.maxV), notation)}/s.`,
+    );
+  }
+
+  const container = h('div', { className: 'album-view' }, [h('h3', { className: 'fly-heading' }, ['Estadísticas']), statsBox, h('h3', { className: 'fly-heading' }, ['Ingresos']), chart as unknown as HTMLElement, h('p', { className: 'settings-hint' }, [chartNote]), h('h3', { className: 'fly-heading' }, ['Logros']), h('p', { className: 'settings-hint' }, [summaryText]), list]);
   root.appendChild(container);
 
   function reqLine(r: RequirementView, format: (n: Decimal) => string): HTMLElement {
@@ -55,6 +102,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
       ['Logros', `${stats.achievements.done}/${stats.achievements.total}`],
       ['Reliquias', `${stats.relics.done}/${stats.relics.total}`],
     ];
+    drawChart(state, notation);
     statsBox.replaceChildren(...rows.flatMap(([label, value]) => [h('dt', {}, [label]), h('dd', {}, [value])]));
 
     const views = achievementViews(state, ctx.content);

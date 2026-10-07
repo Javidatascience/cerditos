@@ -343,6 +343,16 @@ export function caveBlow(state: GameState, content: Content): Decimal {
   return amount;
 }
 
+/** Alimenta al dragón con brasas para que pase a la siguiente etapa (huevo → cría → joven → adulto → anciano). */
+export function feedDragon(state: GameState, content: Content): boolean {
+  const next = content.cave.dragon[state.cave.dragonStage + 1];
+  if (!next || !caveOpen(state, content) || state.cave.embers.lt(next.cost)) return false;
+  state.cave.embers = state.cave.embers.sub(next.cost);
+  state.cave.dragonStage += 1;
+  addEntry(state, `El dragón ha crecido: ahora es ${next.name.toLowerCase()}.`, gameClockMs(state));
+  return true;
+}
+
 export function buyFurnace(state: GameState, content: Content, id: string): boolean {
   const furnace = content.cave.furnaces.find((f) => f.id === id);
   if (!furnace || !caveOpen(state, content)) return false;

@@ -103,3 +103,10 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 - En la pestaña *Cerdito* van primero los compañeros y debajo las pieles.
 - El cerdito respira (dos fotogramas) y se agacha al picar; con *Efectos* desactivado o con `prefers-reduced-motion` no se anima. El icono de la app y el favicon son el cerdito sobre cielo y hierba (`python tools/make-app-icons.py`).
 - **Ramas nuevas del árbol:** *Un amigo más* (tercer compañero a la vez; pide Abono al nivel 5) y dos zonas con rótulo, abajo del todo: **Jardín** (Más tierra +1 fila por nivel hasta 3, Tierra buena flores ×0,9 de tiempo, Mucho polen +5 % de cruce, Rocío +20 % de duración, Ojo para lo brillante +2 %) y **Cueva** (Más brasas +25 %, Soplido potente +50 %, Hornos de saldo ×0,92, Calor del dragón ×1,05 a la producción). Cada zona pide 5 y 10 esmeraldas en total (`requiresPlumasTotal`) y sus ventajas forman una escalera. Los efectos nuevos viven en `core/perkEffects.ts`. El tercer compañero va subido en el lomo del cerdito.
+
+### Dragón que crece, lluvia de esmeraldas, pista del topo y gráfica
+
+- **Dragón** (cueva): 5 etapas (huevo, cría, joven, adulto, anciano) que se compran con brasas (200, 20 K, 2 M, 500 M). Cada una da bonos acumulados a la producción (×1,05 a ×1,15) y a las brasas (×1,2 a ×1,5). Datos en `content/cave.ts` (`dragon`), sprites `cave/dragon-0..4`. Logros por etapa.
+- **Ascender** lanza una lluvia de esmeraldas con el total ganado (`ui/effects.ts`; se apaga con los efectos).
+- **Pista del topo**: la primera vez que se abre la pestaña Cerdito sin llevar al topo, una caja amarilla dice que lo compres y lo equipes; se guarda en `localStorage` (`cerditos:hint-topo`).
+- **Gráfica de ingresos** en Logros: una barra cada `historyEvery` segundos de juego (empieza en 300) en escala log10; al pasar de 240 muestras se descarta una de cada dos y se duplica el intervalo. Guardado v13.

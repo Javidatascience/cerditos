@@ -31,6 +31,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ...[1, 4, 7, 10].map((n) => ({ id: `flores-${n}`, name: n === 1 ? 'Primera flor' : `${n} flores distintas`, flavor: 'El jardín florece.', requires: { kind: 'flowersFound' as const, count: n } })),
   ...[1, 3, 5, 10].map((n) => ({ id: `brillantes-${n}`, name: n === 1 ? 'Primera flor brillante' : `${n} flores brillantes`, flavor: 'Reluce más que una moneda.', requires: { kind: 'shinyFound' as const, count: n } })),
   ...[1, 10, 25, 50, 100].map((n) => ({ id: `hornos-${n}`, name: n === 1 ? 'Primer horno' : `${n} hornos`, flavor: 'La cueva ya no se enfría.', requires: { kind: 'furnaces' as const, count: n } })),
+  ...[1, 2, 3, 4].map((n) => ({ id: `dragon-etapa-${n}`, name: ['Cría de dragón', 'Dragón joven', 'Dragón adulto', 'Dragón anciano'][n - 1]!, flavor: 'Crece bien alimentado.', requires: { kind: 'dragonStage' as const, count: n } })),
   ...[1, 5, 10].map((n) => ({ id: `ventajas-dragon-${n}`, name: n === 1 ? 'Primera ventaja del dragón' : `${n} ventajas del dragón`, flavor: 'El dragón sonríe, que ya es mucho.', requires: { kind: 'caveNodes' as const, count: n } })),
   ...TOOLS.flatMap((tool) => TOOL_MILESTONES.map((m) => ({ id: `${tool.id}-${m.count}`, name: `${tool.name} ×${m.count}`, flavor: m.flavor, requires: { kind: 'toolCount' as const, tool: tool.id, count: m.count } }))),
 ];

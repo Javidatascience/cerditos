@@ -15,7 +15,34 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
   const companionList = h('ul', { className: 'cosmetic-list' });
   const relicList = h('ul', { className: 'cosmetic-list' });
   const companionHint = document.createTextNode('');
+
+  // Pista de bienvenida: la primera vez, invita a comprar al topo y llevarlo. Se recuerda en localStorage
+  // (es una preferencia de la interfaz, no del guardado) y se quita sola cuando ya lo llevas.
+  const HINT_KEY = 'cerditos:hint-topo';
+  const hintSeen = (): boolean => {
+    try {
+      return window.localStorage.getItem(HINT_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  const markHintSeen = (): void => {
+    try {
+      window.localStorage.setItem(HINT_KEY, '1');
+    } catch {
+      // sin almacenamiento: la pista volverá a salir, no pasa nada
+    }
+  };
+  const hintBox = h('div', { className: 'hint-box hidden' }, [
+    h('span', {}, ['Empieza por aquí: compra al topo y equípalo. Desentierra bellotas mientras picas.']),
+    h('button', { className: 'amount-button', onclick: () => { markHintSeen(); setClassHidden(hintBox); } }, ['Entendido']),
+  ]);
+  function setClassHidden(el: HTMLElement): void {
+    el.classList.add('hidden');
+  }
+
   const container = h('div', { className: 'cosmetics-view' }, [
+    hintBox,
     h('p', { className: 'acorn-line' }, [artSprite('ui', 'bellota', 'sm'), acornsText]),
     h('p', { className: 'settings-hint' }, ['Las bellotas te las da siempre el cerdito viajero cuando lo aceptas (y el topo, si lo llevas). Sirven para compañeros, sus mejoras y pieles.']),
     h('h3', { className: 'fly-heading' }, ['Compañeros']),
@@ -54,6 +81,9 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
     if (key === lastKey) return;
     lastKey = key;
     setText(acornsText, ` Bellotas: ${views.acorns}`);
+    const topoEquipped = views.companions.some((c) => c.id === 'topo' && c.equipped);
+    if (topoEquipped) markHintSeen();
+    hintBox.classList.toggle('hidden', hintSeen() || topoEquipped);
     setText(companionHint, `Acompañan al cerdito en la escena (hasta ${views.maxActive} a la vez). Cada uno hace algo en el fondo mientras lo llevas.`);
 
     skinList.replaceChildren(

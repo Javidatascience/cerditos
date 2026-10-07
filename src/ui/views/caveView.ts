@@ -2,7 +2,7 @@
 // árbol de ventajas por ramas que ayuda un poco al juego principal. Las filas se crean una vez (el
 // contenido es fijo) y solo se actualizan, para que ningún clic se pierda. Ver docs/06-mina.md.
 
-import { buyCaveNode, buyFurnace, caveBlow } from '../../core/actions.ts';
+import { buyCaveNode, buyFurnace, caveBlow, feedDragon } from '../../core/actions.ts';
 import { caveView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -17,6 +17,22 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
   const blowText = document.createTextNode('');
   const blowButton = h('button', { className: 'tap-button' }, [blowText]) as HTMLButtonElement;
   blowButton.addEventListener('click', () => ctx.dispatch((s) => void caveBlow(s, ctx.content)));
+
+  // El dragón: crece al alimentarlo con brasas y cada etapa da bonos.
+  const dragonSlot = h('div', { className: 'dragon-slot' });
+  let shownDragon = '';
+  const dragonName = document.createTextNode('');
+  const dragonFlavor = document.createTextNode('');
+  const dragonBonus = document.createTextNode('');
+  const feedCost = document.createTextNode('');
+  const feedNext = document.createTextNode('');
+  const feedButton = h('button', { className: 'buy-button' }, [feedNext, feedCost, artSprite('ui', 'brasa', 'sm'), ')']) as HTMLButtonElement;
+  feedButton.addEventListener('click', () => ctx.dispatch((s) => void feedDragon(s, ctx.content)));
+  const dragonCard = h('div', { className: 'dragon-card' }, [
+    dragonSlot,
+    h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [dragonName]), h('span', { className: 'generator-flavor' }, [dragonFlavor]), h('span', { className: 'upgrade-effect' }, [dragonBonus])]),
+    feedButton,
+  ]);
 
   const furnaceRows = ctx.content.cave.furnaces.map((f) => {
     const ownedText = document.createTextNode('');
@@ -55,6 +71,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
   const lockText = document.createTextNode('');
   const body = h('div', {}, [
     h('p', { className: 'settings-hint' }, [artSprite('ui', 'brasa', 'sm'), embersText, ' · ', rateText]),
+    dragonCard,
     blowButton,
     h('p', { className: 'settings-hint' }, [bonusText]),
     h('h3', { className: 'fly-heading' }, ['Hornos']),
@@ -62,7 +79,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     h('h3', { className: 'fly-heading' }, ['Ventajas del dragón']),
     ...branchBlocks,
   ]);
-  const container = h('div', { className: 'mine-view' }, [h('div', { className: 'cave-title' }, [artSprite('cave', 'dragon', 'lg'), h('h3', { className: 'fly-heading' }, ['Cueva del Dragón'])]), h('p', { className: 'settings-hint' }, [lockText]), body]);
+  const container = h('div', { className: 'mine-view' }, [h('div', { className: 'cave-title' }, [h('h3', { className: 'fly-heading' }, ['Cueva del Dragón'])]), h('p', { className: 'settings-hint' }, [lockText]), body]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -70,7 +87,20 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     const view = caveView(state, ctx.content);
     setClass(body, 'hidden', !view.unlocked);
     setText(lockText, view.unlocked ? '' : `La cueva se abre al conseguir ${view.unlockPlumas} esmeraldas en total (llevas ${formatNumber(view.plumas, notation)}). Las esmeraldas se consiguen ascendiendo.`);
-    setText(embersText, ` ${formatNumber(view.embers, notation)} brasas`);
+    if (view.dragon.spriteId !== shownDragon) {
+      shownDragon = view.dragon.spriteId;
+      dragonSlot.replaceChildren(artSprite('cave', shownDragon, 'lg'));
+    }
+    setText(dragonName, view.dragon.name);
+    setText(dragonFlavor, view.dragon.flavor);
+    setText(dragonBonus, view.dragon.next ? `${view.dragon.bonusText} Al crecer (${view.dragon.next.name.toLowerCase()}): ${view.dragon.next.bonusText}.` : view.dragon.bonusText);
+    setClass(feedButton, 'hidden', view.dragon.next === null);
+    if (view.dragon.next) {
+      setText(feedNext, 'Alimentar (');
+      setText(feedCost, `${formatNumber(view.dragon.next.cost, notation)} `);
+    }
+    setDisabled(feedButton, !view.dragon.canFeed);
+    setText(embersText,` ${formatNumber(view.embers, notation)} brasas`);
     setText(rateText, `+${formatNumber(view.perSecond, notation)}/s`);
     setText(blowText, view.blowReady ? `Soplar (+${formatNumber(view.blowGain, notation)})` : 'Soplar…');
     setDisabled(blowButton, !view.blowReady);

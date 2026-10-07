@@ -8,7 +8,23 @@ import { embersPerSecond } from './cave.ts';
 import { baseIncomePerSecond, momentumMult } from './formulas.ts';
 import { gameClockMs } from './journal.ts';
 import { updateReveals } from './reveal.ts';
+import type { Decimal } from './num.ts';
 import type { GameState } from './state.ts';
+
+/** Muestras máximas del historial de ingresos; al llenarse se descarta una de cada dos y se duplica el intervalo. */
+export const HISTORY_MAX = 240;
+
+/** Anota los ingresos por segundo (en log10) cada `historyEvery` segundos de juego, para la gráfica. */
+function recordHistory(state: GameState, base: Decimal): void {
+  const stats = state.stats;
+  const last = stats.history[stats.history.length - 1];
+  if (last && state.time - last.t < stats.historyEvery) return;
+  stats.history.push({ t: state.time, v: base.lte(1) ? 0 : base.log10() });
+  if (stats.history.length > HISTORY_MAX) {
+    stats.history = stats.history.filter((_, i) => i % 2 === 0);
+    stats.historyEvery *= 2;
+  }
+}
 
 /** Avanza `dt` segundos el juego. Muta `state`. */
 export function advance(state: GameState, content: Content, dt: number): void {
@@ -49,6 +65,7 @@ export function advance(state: GameState, content: Content, dt: number): void {
 
   const income = base.mul(momentumMult(state, content));
   if (income.gt(state.stats.bestIncome)) state.stats.bestIncome = income;
+  recordHistory(state, base);
 
   updateReveals(state, content);
   updateAchievements(state, content, gameClockMs(state));

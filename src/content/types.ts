@@ -165,6 +165,7 @@ export type AchievementReq =
   | { kind: 'flowersFound'; count: number }
   | { kind: 'shinyFound'; count: number }
   | { kind: 'harvests'; count: number }
+  | { kind: 'dragonStage'; count: number }
   | { kind: 'furnaces'; count: number }
   | { kind: 'caveNodes'; count: number };
 
@@ -200,9 +201,21 @@ export interface CaveNodeDef {
   effect: CaveEffect;
 }
 
+/** Etapa del dragón: se alcanza alimentándolo con brasas (`cost`) y da bonos acumulados a la producción y a las brasas. */
+export interface DragonStageDef {
+  id: string;
+  name: string;
+  flavor: string;
+  cost: number;
+  prodMult: number;
+  embersMult: number;
+}
+
 export interface CaveDef {
   /** Plumas en total necesarias para abrir la cueva. */
   unlockPlumas: number;
+  /** La primera etapa (huevo) es el punto de partida y no cuesta nada; el resto se compran en orden. */
+  dragon: DragonStageDef[];
   furnaceGrowth: number;
   blowCooldown: number;
   blowSeconds: number;

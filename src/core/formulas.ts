@@ -2,7 +2,7 @@
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
 import type { CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
-import { caveProduct, caveSum } from './cave.ts';
+import { caveProduct, caveSum, dragonBonus } from './cave.ts';
 import { gardenProduct, gardenSum } from './garden.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
@@ -136,7 +136,7 @@ export function globalMultiplier(state: GameState, content: Content): number {
 
 /** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * gardenProduct(state, content, 'prodMult');
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod * gardenProduct(state, content, 'prodMult');
 }
 
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
