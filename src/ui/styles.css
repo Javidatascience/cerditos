@@ -1114,12 +1114,12 @@ body {
 }
 
 .mine-pig .pig-sprite {
-  height: 115px; /* 5 píxeles de pantalla por píxel del sprite: nítido */
+  height: 105px; /* 5 píxeles de pantalla por píxel del sprite: nítido */
 }
 
 .pig-sprite {
   image-rendering: pixelated;
-  height: 46px;
+  height: 42px;
   width: auto;
 }
 

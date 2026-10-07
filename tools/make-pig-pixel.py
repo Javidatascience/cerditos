@@ -2,7 +2,7 @@
 
 Uso:  python tools/make-pig-pixel.py [--out carpeta] [--preview ruta.png]
 
-No parte de ninguna imagen: construye la figura con formas sencillas sobre una rejilla de 36x26 píxeles,
+No parte de ninguna imagen: construye la figura con formas sencillas sobre una rejilla de 31x23 píxeles,
 dibuja el contorno automáticamente y genera una variante por cada piel de src/content/game.ts
 (el color de la piel manda: el claro, el oscuro y la nariz salen de él). Salida: public/pig/<piel>.png.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-W, H = 36, 26
+W, H = 31, 23
 OUTLINE = (52, 24, 38, 255)
 
 
@@ -56,42 +56,44 @@ def rect(grid, x0, y0, x1, y1, ch):
 
 
 def build():
+    """Cerdito de tres cuartos mirando a la izquierda: cabeza grande y cercana, hocico abajo, cuerpo detrás."""
     g = [['.'] * W for _ in range(H)]
-    # patas (las de atrás, algo más oscuras)
-    rect(g, 6, 18, 10, 22, 'd')
-    rect(g, 17, 18, 21, 22, 'd')
-    rect(g, 11, 18, 15, 23, 'p')
-    rect(g, 23, 18, 27, 23, 'p')
+    # patas (las lejanas, más oscuras)
+    rect(g, 17, 15, 19, 19, 'd')
+    rect(g, 12, 15, 14, 19, 'd')
+    rect(g, 22, 15, 24, 20, 'p')
+    rect(g, 15, 15, 17, 20, 'p')
+    rect(g, 7, 15, 9, 20, 'p')
     # cuerpo y cabeza
-    ellipse(g, 15, 13, 12, 7.5, 'p')
-    ellipse(g, 26, 12, 7, 6.5, 'p')
-    # oreja
-    for y, (x0, x1) in zip(range(3, 8), [(23, 24), (22, 25), (22, 26), (22, 27), (23, 27)]):
+    ellipse(g, 18, 10, 9.5, 6.5, 'p')
+    ellipse(g, 10, 10, 8, 7, 'p')
+    # orejas: la cercana grande, la lejana asoma
+    for y, (x0, x1) in zip(range(2, 6), [(9, 11), (8, 12), (8, 13), (8, 13)]):
         rect(g, x0, y, x1, y, 'p')
-    rect(g, 23, 5, 25, 7, 'd')
-    # hocico
-    rect(g, 31, 11, 34, 15, 'l')
-    rect(g, 31, 10, 33, 10, 'l')
-    rect(g, 32, 12, 32, 13, 'n')
-    rect(g, 34, 12, 34, 13, 'n')
+    rect(g, 9, 4, 11, 5, 'd')
+    for y, (x0, x1) in zip(range(3, 6), [(3, 4), (2, 5), (2, 5)]):
+        rect(g, x0, y, x1, y, 'p')
+    rect(g, 3, 4, 4, 5, 'd')
     # barriga clara
     for y in range(H):
         for x in range(W):
-            if g[y][x] == 'p' and ((x - 15) / 8.5) ** 2 + ((y - 17.5) / 3) ** 2 <= 1 and x < 23:
+            if g[y][x] == 'p' and ((x - 19) / 6) ** 2 + ((y - 14.5) / 2.5) ** 2 <= 1 and x > 14:
                 g[y][x] = 'l'
-    # sombreado inferior del cuerpo y brillo del lomo
-    for x in range(5, 24):
-        if g[19][x] == 'p' or g[18][x] == 'p':
-            g[18][x] = 'd' if g[18][x] == 'p' else g[18][x]
-    rect(g, 9, 7, 13, 7, 'l')
-    # ojo y mejilla
-    g[9][28] = 'e'
-    g[10][28] = 'e'
-    g[9][29] = 'w'
-    g[13][28] = 'd'
-    g[13][29] = 'd'
+    # hocico (visto casi de frente) con dos fosas
+    ellipse(g, 5.5, 12.5, 4, 3, 'l')
+    rect(g, 4, 12, 4, 13, 'n')
+    rect(g, 7, 12, 7, 13, 'n')
+    # ojos
+    rect(g, 8, 8, 8, 9, 'e')
+    g[8][9] = 'w'
+    rect(g, 3, 8, 3, 9, 'e')
+    g[8][4] = 'w'
+    # mejilla y brillo del lomo
+    g[11][10] = 'd'
+    g[11][11] = 'd'
+    rect(g, 17, 5, 21, 5, 'l')
     # rabito
-    for x, y in [(3, 11), (2, 10), (2, 9), (3, 8), (4, 8), (4, 9)]:
+    for x, y in [(27, 10), (28, 9), (28, 8), (27, 7)]:
         g[y][x] = 'p'
     return g
 
