@@ -3,10 +3,10 @@
 
 import type { AchievementReq, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
-import { rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
+import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
-import { flowerActive, flowerAvailable, gardenUnlocked, growMs } from './garden.ts';
-import { blowGain, blowReady, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
+import { durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
+import { blowGain, blowReady, caveCostFactor, caveProduct, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
@@ -214,6 +214,24 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
       return `+${effect.perLevel * level} h de producción mientras no estás`;
     case 'momentumMax':
       return `+${effect.perLevel * level} al tope de la inercia`;
+    case 'companionSlots':
+      return `+${effect.perLevel * level} compañero a la vez`;
+    case 'gardenRows':
+      return `+${effect.perLevel * level} fila${effect.perLevel * level === 1 ? '' : 's'} de casillas en el jardín`;
+    case 'gardenGrowth':
+      return `las flores tardan ×${(effect.perLevel ** level).toFixed(2)} en crecer`;
+    case 'gardenMutation':
+      return `+${Math.round(effect.perLevel * level * 100)} % de probabilidad de cruce`;
+    case 'gardenDuration':
+      return `+${Math.round(effect.perLevel * level * 100)} % de duración de los bonos de las flores`;
+    case 'gardenShiny':
+      return `+${Math.round(effect.perLevel * level * 100)} % de probabilidad de flor brillante`;
+    case 'caveEmbers':
+      return `+${Math.round(effect.perLevel * level * 100)} % de brasas por segundo`;
+    case 'caveBlow':
+      return `+${Math.round(effect.perLevel * level * 100)} % de brasas por soplido`;
+    case 'caveCost':
+      return `hornos ×${(effect.perLevel ** level).toFixed(2)} de coste`;
   }
 }
 
@@ -226,6 +244,7 @@ export function perkViews(state: GameState, content: Content): PerkView[] {
     const missingRequirements = perk.requires
       .filter((id) => perkLevelOf(state, id) < needed)
       .map((id) => `${content.perks.find((p) => p.id === id)?.name ?? id} (nivel ${needed})`);
+    if (perk.requiresPlumasTotal !== undefined && state.plumasTotal.lt(perk.requiresPlumasTotal)) missingRequirements.push(`${perk.requiresPlumasTotal} esmeraldas en total`);
     const levels = perk.maxLevel ?? 1;
     return {
       icon: perk.icon ?? 'esmeralda',
@@ -412,9 +431,10 @@ function achievementName(content: Content, id: string | null): string | null {
   return id === null ? null : (content.achievements.find((a) => a.id === id)?.name ?? id);
 }
 
-export function cosmeticViews(state: GameState, content: Content): { acorns: number; skins: CosmeticView[]; companions: CosmeticView[]; relics: RelicView[] } {
+export function cosmeticViews(state: GameState, content: Content): { acorns: number; maxActive: number; skins: CosmeticView[]; companions: CosmeticView[]; relics: RelicView[] } {
   return {
     acorns: state.acorns,
+    maxActive: maxActiveCompanions(state, content),
     skins: content.skins.map((s) => {
       const owned = skinOwned(state, s);
       return {
@@ -582,7 +602,7 @@ export function caveView(state: GameState, content: Content): CaveView {
     prodBonus: caveProduct(state, content, 'prodMult'),
     furnaces: content.cave.furnaces.map((f) => {
       const owned = state.cave.furnaces[f.id] ?? 0;
-      const cost = furnaceCost(content.cave, f, owned);
+      const cost = furnaceCost(content.cave, f, owned, caveCostFactor(state, content));
       return { id: f.id, name: f.name, emoji: f.emoji, flavor: f.flavor, owned, cost, each: D(f.baseProd).mul(mult), canBuy: state.cave.embers.gte(cost) };
     }),
     branches: content.cave.branches.map((b) => ({
@@ -610,6 +630,8 @@ export interface GardenView {
   unlockPlumas: number;
   plumas: Decimal;
   cols: number;
+  /** Casillas que podría llegar a tener (con todas las ventajas de Más tierra); la UI crea tantas y oculta las que aún no hay. */
+  maxCells: number;
   shinyPercent: number;
   /** Bonos temporales activos ahora. */
   active: { id: string; emoji: string; name: string; secondsLeft: number }[];
@@ -618,8 +640,8 @@ export interface GardenView {
   flowers: { id: string; name: string; emoji: string; flavor: string; growSeconds: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; recipeText: string | null }[];
 }
 
-function gardenEffectText(effect: GardenEffect, shiny: boolean): string {
-  const seconds = effect.seconds * (shiny ? 2 : 1);
+function gardenEffectText(effect: GardenEffect, shiny: boolean, factor = 1): string {
+  const seconds = Math.round(effect.seconds * (shiny ? 2 : 1) * factor);
   switch (effect.kind) {
     case 'prodMult':
       return `producción ×${effect.value} durante ${formatDurationShort(seconds)}`;
@@ -643,7 +665,7 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
   const cells = state.garden.cells.map((p, index) => {
     const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
     if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
-    const total = growMs(flower);
+    const total = growMs(state, content, flower);
     const elapsed = Math.max(0, now - p.plantedAt);
     return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total };
   });
@@ -652,7 +674,8 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
     unlockPlumas: content.garden.unlockPlumas,
     plumas: state.plumasTotal,
     cols: content.garden.cols,
-    shinyPercent: Math.round(content.garden.shinyChance * 100),
+    maxCells: content.garden.cols * gardenMaxRows(content),
+    shinyPercent: Math.round(shinyChance(state, content) * 100),
     active: flowers.filter((f) => flowerActive(state, f.id)).map((f) => ({ id: f.id, emoji: f.emoji, name: f.name, secondsLeft: (state.garden.buffs[f.id] ?? 0) - state.time })),
     cells,
     readyCount: cells.filter((c) => c.ready).length,
@@ -665,12 +688,12 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         name: f.name,
         emoji: f.emoji,
         flavor: f.flavor,
-        growSeconds: f.growSeconds,
+        growSeconds: growMs(state, content, f) / 1000,
         available: flowerAvailable(state, content, i),
         found: got !== undefined,
         shiny: got?.shiny === true,
         count: got?.count ?? 0,
-        effectText: `${gardenEffectText(f.effect, false)} (brillante: ${gardenEffectText(f.effect, true)})`,
+        effectText: `${gardenEffectText(f.effect, false, durationFactor(state, content))} (brillante: ${gardenEffectText(f.effect, true, durationFactor(state, content))})`,
         recipeText: f.recipe ? `Cruza ${name(p)?.name} con ${name(q)?.name} en casillas vecinas` : null,
       };
     }),

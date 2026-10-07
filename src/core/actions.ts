@@ -25,8 +25,9 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
-import { blowGain, blowReady, furnaceCost } from './cave.ts';
-import { flowerAvailable, gardenUnlocked, growMs, neighbors, rand01 } from './garden.ts';
+import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
+import { durationFactor, flowerAvailable, gardenRows, gardenUnlocked, growMs, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
+import { perkSumOf } from './perkEffects.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
@@ -116,7 +117,14 @@ export function buyPerk(state: GameState, content: Content, perkId: PerkId): boo
   if (state.plumas.lt(cost)) return false;
   state.plumas = state.plumas.sub(cost);
   state.perks[perkId] = level + 1;
+  syncGardenCells(state, content); // Más tierra añade filas de casillas
   return true;
+}
+
+/** Ajusta el número de casillas del jardín a las filas actuales (solo crece: añade casillas vacías). */
+function syncGardenCells(state: GameState, content: Content): void {
+  const wanted = content.garden.cols * gardenRows(state, content);
+  while (state.garden.cells.length < wanted) state.garden.cells.push(null);
 }
 
 /**
@@ -233,6 +241,11 @@ export function upgradeCompanion(state: GameState, content: Content, id: string)
 
 export const MAX_ACTIVE_COMPANIONS = 2;
 
+/** Compañeros que se pueden llevar a la vez: 2 de base más los que dé Un amigo más. */
+export function maxActiveCompanions(state: GameState, content: Content): number {
+  return MAX_ACTIVE_COMPANIONS + Math.round(perkSumOf(state, content, 'companionSlots'));
+}
+
 /** Pone o quita un compañero que ya se tiene de la escena (si hay demasiados, sale el más antiguo). */
 export function toggleCompanion(state: GameState, content: Content, id: string): boolean {
   const companion = content.companions.find((c) => c.id === id);
@@ -240,7 +253,7 @@ export function toggleCompanion(state: GameState, content: Content, id: string):
   if (state.activeCompanions.includes(id)) {
     state.activeCompanions = state.activeCompanions.filter((c) => c !== id);
   } else {
-    state.activeCompanions = [...state.activeCompanions, id].slice(-MAX_ACTIVE_COMPANIONS);
+    state.activeCompanions = [...state.activeCompanions, id].slice(-maxActiveCompanions(state, content));
   }
   return true;
 }
@@ -333,7 +346,7 @@ export function caveBlow(state: GameState, content: Content): Decimal {
 export function buyFurnace(state: GameState, content: Content, id: string): boolean {
   const furnace = content.cave.furnaces.find((f) => f.id === id);
   if (!furnace || !caveOpen(state, content)) return false;
-  const cost = furnaceCost(content.cave, furnace, state.cave.furnaces[id] ?? 0);
+  const cost = furnaceCost(content.cave, furnace, state.cave.furnaces[id] ?? 0, caveCostFactor(state, content));
   if (state.cave.embers.lt(cost)) return false;
   state.cave.embers = state.cave.embers.sub(cost);
   state.cave.furnaces[id] = (state.cave.furnaces[id] ?? 0) + 1;
@@ -366,13 +379,13 @@ export function plantFlower(state: GameState, content: Content, cell: number, fl
 export function harvestFlower(state: GameState, content: Content, cell: number, now: number, roll: number): { shiny: boolean; isNew: boolean } | null {
   const planted = state.garden.cells[cell];
   const flower = planted ? content.garden.flowers.find((f) => f.id === planted.flower) : undefined;
-  if (!planted || !flower || now - planted.plantedAt < growMs(flower)) return null;
+  if (!planted || !flower || now - planted.plantedAt < growMs(state, content, flower)) return null;
   const before = state.garden.found[flower.id];
-  const shiny = roll < content.garden.shinyChance;
+  const shiny = roll < shinyChance(state, content);
   state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny };
   state.garden.cells[cell] = null;
   state.garden.harvests += 1;
-  const seconds = flower.effect.seconds * (shiny ? 2 : 1); // la brillante dura (o da) el doble
+  const seconds = flower.effect.seconds * (shiny ? 2 : 1) * durationFactor(state, content); // la brillante dura (o da) el doble
   if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
   else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time + seconds);
   if (before === undefined) addEntry(state, `Has descubierto la flor ${flower.name}.`, gameClockMs(state));
@@ -385,10 +398,10 @@ function mutateOnce(state: GameState, content: Content, at: number, interval: nu
   const g = content.garden;
   const cells = state.garden.cells;
   const matureAround = (i: number): string[] =>
-    neighbors(i, g.cols, g.rows).flatMap((n) => {
+    neighbors(i, g.cols, gardenRows(state, content)).flatMap((n) => {
       const c = cells[n];
       const def = c ? g.flowers.find((f) => f.id === c.flower) : undefined;
-      return c && def && at - c.plantedAt >= growMs(def) ? [c.flower] : [];
+      return c && def && at - c.plantedAt >= growMs(state, content, def) ? [c.flower] : [];
     });
   const spawned: [number, string][] = [];
   cells.forEach((cell, i) => {
@@ -400,7 +413,7 @@ function mutateOnce(state: GameState, content: Content, at: number, interval: nu
       const [p, q] = f.recipe;
       const ok = p === q ? around.filter((x) => x === p).length >= 2 : around.includes(p) && around.includes(q);
       if (!ok) continue;
-      if (rand01(state.createdAt, interval, i) < g.mutationChance) spawned.push([i, f.id]);
+      if (rand01(state.createdAt, interval, i) < mutationChance(state, content)) spawned.push([i, f.id]);
       break;
     }
   });

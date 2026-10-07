@@ -35,6 +35,7 @@ export function perkAvailable(state: GameState, perk: PerkDef): boolean {
 /** ¿Se cumplen los requisitos de otras ventajas (cada una al nivel pedido)? Ignora el tope propio. */
 export function perkRequirementsMet(state: GameState, perk: PerkDef): boolean {
   const needed = perk.requiresLevel ?? 1;
+  if (perk.requiresPlumasTotal !== undefined && state.plumasTotal.lt(perk.requiresPlumasTotal)) return false;
   return perk.requires.every((id) => perkLevelOf(state, id) >= needed);
 }
 

@@ -37,7 +37,9 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     }),
   );
 
-  const cellButtons = Array.from({ length: garden.cols * garden.rows }, (_, index) => {
+  // Se crean las casillas que puede llegar a haber (con las filas de Más tierra) y se ocultan las que aún no existen.
+  const extraRows = ctx.content.perks.reduce((sum, p) => sum + (p.effect.kind === 'gardenRows' ? p.effect.perLevel * (p.maxLevel ?? 0) : 0), 0);
+  const cellButtons = Array.from({ length: garden.cols * (garden.rows + Math.round(extraRows)) }, (_, index) => {
     const btn = h('button', { className: 'garden-cell' }, ['']) as HTMLButtonElement;
     btn.addEventListener('click', () =>
       ctx.dispatch((s) => {
@@ -98,6 +100,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     setText(harvestText, view.readyCount > 0 ? `Recoger todo lo listo (${view.readyCount})` : 'Nada listo todavía');
     setDisabled(harvestAll, view.readyCount === 0);
 
+    cellButtons.forEach((btn, i) => setClass(btn, 'hidden', i >= view.cells.length));
     view.cells.forEach((cell, i) => {
       const btn = cellButtons[i];
       if (!btn) return;

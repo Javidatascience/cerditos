@@ -1704,8 +1704,23 @@ button {
   background: var(--color-surface);
 }
 
+/* Cielo plano y, debajo, una franja de hierba anclada al escenario (no a un porcentaje: si la escena crece
+   porque las etiquetas de herramientas ocupan varias líneas, el cerdito sigue pisando la hierba). */
 .mine-scene {
-  background: linear-gradient(var(--sky) 0 72%, var(--grass) 72% 100%);
+  background: var(--sky);
+  isolation: isolate;
+}
+
+.mine-scene::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 100px;
+  bottom: 0;
+  background: var(--grass);
+  border-top: 3px solid var(--ink);
 }
 
 .mine-stats,
@@ -1944,8 +1959,32 @@ button {
   }
 }
 
+/* Compañeros: anclados al escenario (no a la escena entera) y más arriba, detrás del cerdito, sobre la hierba */
+.mine-stage {
+  position: relative;
+}
+
 .mine-companions {
-  bottom: 30px;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  z-index: 2;
+}
+
+.mine-pig {
+  z-index: 1;
+}
+
+/* El tercer compañero (Un amigo más) va subido en el lomo del cerdito, más pequeño */
+.companion-2 {
+  position: absolute;
+  left: calc(50% - 24px);
+  bottom: 78px;
+}
+
+.companion-2 .art-sprite {
+  width: 48px;
+  height: 48px;
 }
 
 /* Iconos de monedas y bellotas */
@@ -1972,6 +2011,17 @@ button {
 .perk-tree {
   position: relative;
   margin: 8px auto 24px;
+}
+
+.perk-section {
+  position: absolute;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 2px;
+  right: 0;
 }
 
 .perk-lines {

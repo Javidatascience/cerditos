@@ -3,6 +3,8 @@
 // fuera de rango. No cambia `state.version` ni la forma del GameState (eso es cosa de una migración).
 
 import type { Content } from '../content/types.ts';
+import { gardenRows } from '../core/garden.ts';
+import { perkSumOf } from '../core/perkEffects.ts';
 import type { GameState } from '../core/state.ts';
 
 function clampInt(value: number, min: number, max: number): number {
@@ -34,7 +36,7 @@ export function normalize(state: GameState, content: Content): GameState {
   if (!skinIds.has(state.activeSkin)) state.activeSkin = content.skins[0]?.id ?? '';
   const companionIds = new Set(content.companions.map((c) => c.id));
   for (const id of Object.keys(state.companions)) if (!companionIds.has(id)) delete state.companions[id];
-  state.activeCompanions = state.activeCompanions.filter((id, i, all) => companionIds.has(id) && all.indexOf(id) === i).slice(-2);
+  state.activeCompanions = state.activeCompanions.filter((id, i, all) => companionIds.has(id) && all.indexOf(id) === i);
   for (const id of Object.keys(state.companionProgress)) {
     const v = state.companionProgress[id];
     if (!companionIds.has(id) || typeof v !== 'number' || !Number.isFinite(v) || v < 0) delete state.companionProgress[id];
@@ -45,10 +47,6 @@ export function normalize(state: GameState, content: Content): GameState {
     else state.companionLevels[id] = clampInt(state.companionLevels[id] ?? 0, 0, def.upgrades.length);
   }
   const flowerIds = new Set(content.garden.flowers.map((f) => f.id));
-  state.garden.cells = Array.from({ length: content.garden.cols * content.garden.rows }, (_, i) => {
-    const p = state.garden.cells[i];
-    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt } : null;
-  });
   state.garden.harvests = clampInt(state.garden.harvests, 0, Number.MAX_SAFE_INTEGER);
   if (!Number.isFinite(state.garden.mutateAt)) state.garden.mutateAt = 0;
   for (const id of Object.keys(state.garden.found)) {
@@ -77,6 +75,13 @@ export function normalize(state: GameState, content: Content): GameState {
     if (!perk) delete state.perks[id];
     else state.perks[id] = clampInt(state.perks[id] ?? 0, 0, perk.maxLevel ?? Number.MAX_SAFE_INTEGER);
   }
+
+  // Casillas del jardín: tantas como filas haya (las de base más las de Más tierra, ya acotadas arriba).
+  state.garden.cells = Array.from({ length: content.garden.cols * gardenRows(state, content) }, (_, i) => {
+    const p = state.garden.cells[i];
+    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt } : null;
+  });
+  state.activeCompanions = state.activeCompanions.slice(-(2 + Math.round(perkSumOf(state, content, 'companionSlots'))));
 
   const achievementIds = new Set(content.achievements.map((a) => a.id));
   for (const id of Object.keys(state.achievements)) if (!achievementIds.has(id)) delete state.achievements[id];

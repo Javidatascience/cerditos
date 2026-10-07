@@ -114,7 +114,12 @@ export function mountPerkTreeView(root: HTMLElement, ctx: UiContext): View {
   ]);
   bubble.addEventListener('click', (e) => e.stopPropagation());
 
-  const tree = h('div', { className: 'perk-tree', style: `width:${width}px;height:${height}px` }, [svg as unknown as HTMLElement, ...nodes.map((n) => n.el), bubble]);
+  // Rótulos de zona ("Jardín", "Cueva del Dragón") encima de la primera ventaja de cada una.
+  const labels = perks
+    .filter((p) => p.section)
+    .map((p) => h('div', { className: 'perk-section', style: `left:${PAD_X - NODE / 2}px;top:${position(p.id, 1).y - NODE / 2 - 34}px` }, [p.section!]));
+
+  const tree = h('div', { className: 'perk-tree', style: `width:${width}px;height:${height}px` }, [svg as unknown as HTMLElement, ...labels, ...nodes.map((n) => n.el), bubble]);
   tree.addEventListener('click', () => {
     selected = null;
     setClass(bubble, 'hidden', true);

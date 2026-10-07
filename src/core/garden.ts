@@ -4,6 +4,7 @@
 // o 15 s offline), así que el borde del bono puede desviarse unos segundos como mucho.
 
 import type { Content, GardenEffect } from '../content/types.ts';
+import { perkProductOf, perkSumMax, perkSumOf } from './perkEffects.ts';
 import type { GameState } from './state.ts';
 
 export function flowerActive(state: GameState, id: string): boolean {
@@ -35,8 +36,32 @@ export function flowerAvailable(state: GameState, content: Content, index: numbe
   return flower !== undefined && (flower.recipe === null || state.garden.found[flower.id] !== undefined);
 }
 
-export function growMs(flower: { growSeconds: number }): number {
-  return flower.growSeconds * 1000;
+/** Tiempo de crecimiento de una flor en ms, con las ventajas del árbol (Tierra buena). */
+export function growMs(state: GameState, content: Content, flower: { growSeconds: number }): number {
+  return flower.growSeconds * 1000 * perkProductOf(state, content, 'gardenGrowth');
+}
+
+/** Filas de casillas del jardín: las de base más las que dé Más tierra. */
+export function gardenRows(state: GameState, content: Content): number {
+  return content.garden.rows + Math.round(perkSumOf(state, content, 'gardenRows'));
+}
+
+/** Filas máximas que podría llegar a tener (todas las ventajas de Más tierra compradas), para dimensionar la UI y el guardado. */
+export function gardenMaxRows(content: Content): number {
+  return content.garden.rows + Math.round(perkSumMax(content, 'gardenRows'));
+}
+
+/** Probabilidad de cruce por casilla vacía y de flor brillante, y factor de duración de los bonos (con las ventajas). */
+export function mutationChance(state: GameState, content: Content): number {
+  return content.garden.mutationChance + perkSumOf(state, content, 'gardenMutation');
+}
+
+export function shinyChance(state: GameState, content: Content): number {
+  return content.garden.shinyChance + perkSumOf(state, content, 'gardenShiny');
+}
+
+export function durationFactor(state: GameState, content: Content): number {
+  return 1 + perkSumOf(state, content, 'gardenDuration');
 }
 
 /** Casillas vecinas (arriba, abajo, izquierda, derecha) de una casilla de la cuadrícula. */

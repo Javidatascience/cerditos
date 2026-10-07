@@ -2,7 +2,7 @@
 // los regala un logro) y las reliquias (bonos permanentes que dan algunos logros). Los compañeros
 // hacen algo útil en el fondo; las pieles son de adorno. Ver docs/06-mina.md.
 
-import { buyCompanion, buySkin, equipSkin, MAX_ACTIVE_COMPANIONS, toggleCompanion, upgradeCompanion } from '../../core/actions.ts';
+import { buyCompanion, buySkin, equipSkin, toggleCompanion, upgradeCompanion } from '../../core/actions.ts';
 import { cosmeticViews, type CosmeticView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -14,11 +14,12 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
   const skinList = h('ul', { className: 'cosmetic-list' });
   const companionList = h('ul', { className: 'cosmetic-list' });
   const relicList = h('ul', { className: 'cosmetic-list' });
+  const companionHint = document.createTextNode('');
   const container = h('div', { className: 'cosmetics-view' }, [
     h('p', { className: 'acorn-line' }, [artSprite('ui', 'bellota', 'sm'), acornsText]),
     h('p', { className: 'settings-hint' }, ['Las bellotas te las da siempre el cerdito viajero cuando lo aceptas (y el topo, si lo llevas). Sirven para compañeros, sus mejoras y pieles.']),
     h('h3', { className: 'fly-heading' }, ['Compañeros']),
-    h('p', { className: 'settings-hint' }, [`Acompañan al cerdito en la escena (hasta ${MAX_ACTIVE_COMPANIONS} a la vez). Cada uno hace algo en el fondo mientras lo llevas.`]),
+    h('p', { className: 'settings-hint' }, [companionHint]),
     companionList,
     h('h3', { className: 'fly-heading' }, ['Pieles']),
     skinList,
@@ -53,6 +54,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
     if (key === lastKey) return;
     lastKey = key;
     setText(acornsText, ` Bellotas: ${views.acorns}`);
+    setText(companionHint, `Acompañan al cerdito en la escena (hasta ${views.maxActive} a la vez). Cada uno hace algo en el fondo mientras lo llevas.`);
 
     skinList.replaceChildren(
       ...views.skins.map((skin) => {

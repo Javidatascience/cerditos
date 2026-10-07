@@ -113,7 +113,65 @@ def perk_raices(c):
     c.pts('y', (3, 2), (11, 3))
 
 
+def perk_compania(c):
+    c.ell(6, 9, 3.4, 3, 'p')
+    for x, y in [(2, 5), (4, 2), (8, 2), (10, 5)]:
+        c.ell(x, y, 1.5, 1.8, 'p')
+    c.pts('P', (5, 10), (7, 10))
+    c.rect(11, 8, 11, 13, 'y')
+    c.rect(9, 10, 13, 11, 'y')
+    c.pts('w', (11, 9), (10, 10))
+
+
+def perk_parcelas(c):
+    for x0, y0 in [(1, 6), (7, 6), (1, 10), (7, 10)]:
+        c.rect(x0, y0, x0 + 4, y0 + 3, 'b')
+        c.rect(x0, y0 + 3, x0 + 4, y0 + 3, 'B')
+    c.line(4, 5, 4, 2, 'N')
+    c.ell(2.5, 2, 2, 1.2, 'n')
+    c.ell(5.8, 1.5, 2, 1.2, 'l')
+    c.pts('n', (9, 8), (10, 7), (9, 7))
+
+
+def perk_crecimiento(c):
+    c.ell(5, 12, 4.5, 1.4, 'B')
+    c.line(5, 12, 5, 6, 'N')
+    c.ell(3, 7, 2.4, 1.5, 'n')
+    c.ell(7, 6, 2.4, 1.5, 'l')
+    c.rect(11, 3, 11, 10, 'y')
+    c.pts('y', (10, 4), (12, 4), (9, 5), (13, 5))
+    c.pts('Y', (11, 11), (11, 12))
+
+
+def perk_polen(c):
+    petals(c, 4, 9, 'p', 'y', 2.4, 1.5, 6)
+    c.line(4, 11, 4, 13, 'N')
+    c.pts('y', (9, 2), (11, 4), (8, 5), (12, 1), (10, 7), (7, 3))
+    c.pts('Y', (9, 3), (11, 5))
+
+
+def perk_rocio(c):
+    for y, hw in zip(range(3, 12), [0, 1, 1, 2, 3, 3, 4, 4, 3]):
+        c.rect(7 - hw, y, 6 + hw + 1, y, 'c')
+    c.rect(4, 8, 5, 10, 'w')
+    c.rect(10, 9, 10, 11, 'C')
+    c.pts('w', (6, 5), (6, 6))
+    c.pts('c', (2, 3), (12, 2), (11, 12))
+
+
+def perk_soplido(c):
+    c.line(1, 4, 10, 4, 'w')
+    c.line(1, 7, 12, 7, 'W')
+    c.line(1, 10, 9, 10, 'w')
+    c.pts('w', (11, 3), (12, 4), (11, 5), (13, 8), (12, 9), (10, 11), (10, 9))
+    c.pts('O', (12, 6), (13, 7), (11, 6))
+    c.pts('y', (12, 7))
+
+
 GEMS = {
+    'perk-compania': perk_compania, 'perk-parcelas': perk_parcelas, 'perk-crecimiento': perk_crecimiento, 'perk-polen': perk_polen,
+    'perk-rocio': perk_rocio, 'perk-soplido': perk_soplido, 'perk-brillo': destello, 'perk-brasas': brasa, 'perk-hornos': horno,
+    'perk-calor': dragon,
     'esmeralda': esmeralda, 'bellota': bellota, 'brasa': brasa, 'moneda': moneda,
     'perk-abono': perk_abono, 'perk-comienzo': perk_comienzo, 'perk-manos': perk_manos, 'perk-descanso': perk_descanso,
     'perk-ahorro': perk_ahorro, 'perk-vuelo': perk_vuelo, 'perk-raices': perk_raices,

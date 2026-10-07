@@ -54,7 +54,25 @@ export type PerkEffect =
   | { kind: 'perPlumaBonus'; perLevel: number }
   | { kind: 'offlineHours'; perLevel: number }
   /** Sube el tope de la inercia (+perLevel al multiplicador máximo). */
-  | { kind: 'momentumMax'; perLevel: number };
+  | { kind: 'momentumMax'; perLevel: number }
+  /** Compañeros que se pueden llevar a la vez (+perLevel por nivel). */
+  | { kind: 'companionSlots'; perLevel: number }
+  /** Jardín: filas extra de casillas (+perLevel por nivel). */
+  | { kind: 'gardenRows'; perLevel: number }
+  /** Jardín: tiempo de crecimiento ×perLevel^nivel. */
+  | { kind: 'gardenGrowth'; perLevel: number }
+  /** Jardín: +perLevel a la probabilidad de cruce por nivel. */
+  | { kind: 'gardenMutation'; perLevel: number }
+  /** Jardín: +perLevel (fracción) a la duración de los bonos por nivel. */
+  | { kind: 'gardenDuration'; perLevel: number }
+  /** Jardín: +perLevel a la probabilidad de flor brillante por nivel. */
+  | { kind: 'gardenShiny'; perLevel: number }
+  /** Cueva: +perLevel (fracción) a las brasas por segundo por nivel. */
+  | { kind: 'caveEmbers'; perLevel: number }
+  /** Cueva: +perLevel (fracción) a lo que da cada soplido por nivel. */
+  | { kind: 'caveBlow'; perLevel: number }
+  /** Cueva: coste de los hornos ×perLevel^nivel. */
+  | { kind: 'caveCost'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;
@@ -66,6 +84,10 @@ export interface PerkDef {
   requires: PerkId[];
   /** Nivel que hay que tener en cada ventaja requerida (1 si no se indica). */
   requiresLevel?: number;
+  /** Esmeraldas ganadas en total que hacen falta para poder comprarla (p. ej. las del jardín o la cueva). */
+  requiresPlumasTotal?: number;
+  /** Rótulo de la zona del árbol que empieza en esta ventaja (se pinta encima de su primer círculo). */
+  section?: string;
   effect: PerkEffect;
   /** Icono (sprite de `public/art/ui/`) y posición en el árbol: cada nivel es un nodo; `dir` dice hacia dónde crece la cadena. */
   icon?: string;

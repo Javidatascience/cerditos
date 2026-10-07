@@ -4,6 +4,8 @@ import { updateAchievements } from './achievements.ts';
 import { buyPerk, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
+import { caveCostFactor, embersPerSecond } from './cave.ts';
+import { growMs, mutationChance } from './garden.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
 import { createInitialState, type GameState } from './state.ts';
 import { advance } from './tick.ts';
@@ -387,6 +389,43 @@ describe('árbol de ventajas', () => {
     expect(buyPerk(state, CONTENT, 'manos')).toBe(true);
     for (let i = 0; i < 10; i++) buyPerk(state, CONTENT, 'abono');
     expect(state.perks['abono']).toBe(5);
+  });
+
+  it('Un amigo más permite llevar 3 compañeros a la vez (y pide Abono al nivel 5)', () => {
+    const state = fresh();
+    state.plumas = D(1e6);
+    state.acorns = 100;
+    for (const id of ['topo', 'gato', 'perro']) buyCompanion(state, CONTENT, id);
+    for (const id of ['topo', 'gato', 'perro']) toggleCompanion(state, CONTENT, id);
+    expect(state.activeCompanions).toEqual(['gato', 'perro']);
+    expect(buyPerk(state, CONTENT, 'compania')).toBe(false);
+    for (let i = 0; i < 5; i++) buyPerk(state, CONTENT, 'abono');
+    expect(buyPerk(state, CONTENT, 'compania')).toBe(true);
+    toggleCompanion(state, CONTENT, 'topo');
+    expect(state.activeCompanions).toEqual(['gato', 'perro', 'topo']);
+  });
+
+  it('las ramas del jardín y la cueva piden esmeraldas en total, y sus efectos se aplican', () => {
+    const state = fresh();
+    state.plumas = D(1e6);
+    expect(buyPerk(state, CONTENT, 'parcelas')).toBe(false); // pide 5 esmeraldas en total
+    state.plumasTotal = D(10);
+    expect(buyPerk(state, CONTENT, 'parcelas')).toBe(true);
+    expect(state.garden.cells.length).toBe(CONTENT.garden.cols * (CONTENT.garden.rows + 1));
+    expect(buyPerk(state, CONTENT, 'polen')).toBe(false); // antes Tierra buena
+    buyPerk(state, CONTENT, 'abonado');
+    buyPerk(state, CONTENT, 'polen');
+    expect(mutationChance(state, CONTENT)).toBeCloseTo(CONTENT.garden.mutationChance + 0.05, 9);
+    state.garden.found['margarita'] = { count: 1, shiny: false };
+    const flower = CONTENT.garden.flowers[0]!;
+    expect(growMs(state, CONTENT, flower)).toBeCloseTo(flower.growSeconds * 1000 * 0.9, 6);
+    buyPerk(state, CONTENT, 'brasas');
+    expect(embersPerSecond(state, CONTENT).toNumber()).toBe(0);
+    state.cave.furnaces['brasero'] = 1;
+    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.2 * 1.25, 9);
+    buyPerk(state, CONTENT, 'soplido');
+    buyPerk(state, CONTENT, 'hornos-baratos');
+    expect(caveCostFactor(state, CONTENT)).toBeCloseTo(0.92, 9);
   });
 });
 
