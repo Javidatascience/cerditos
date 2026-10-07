@@ -23,13 +23,14 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   let ownedToolsSignature = '';
   const floats = h('div', { className: 'float-layer' });
   const incomeText = document.createTextNode('');
+  const statsLine = h('p', { className: 'mine-stats' }, [incomeText]);
   const handTool = h('div', { className: 'mine-block', 'aria-hidden': 'true' }, ['⛏️']);
   const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
   const scene = h('div', { className: 'mine-scene' }, [
     h('div', { className: 'mine-stage' }, [pigSlot, handTool, companionsRow]),
     ownedTools,
-    h('p', { className: 'mine-stats' }, [incomeText]),
+    statsLine,
     floats,
   ]);
 
@@ -128,7 +129,6 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           emojiBadge(tool.emoji),
           h('div', { className: 'generator-info' }, [
             h('div', { className: 'generator-name-row' }, [h('span', { className: 'generator-name' }, [nameText]), h('span', { className: 'generator-owned' }, [ownedText])]),
-            h('span', { className: 'generator-flavor' }, [tool.flavor]),
             h('span', { className: 'generator-prod' }, [prodText]),
             h('span', { className: 'generator-flavor' }, [milestoneText]),
             h('span', { className: 'need-line' }, [needText]),
@@ -160,7 +160,26 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     },
   );
 
-  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, companionBlock, globalBlock, basketBlock, amountRow, toolList, moreHint]);
+  // Dos secciones para no alargar la pantalla: herramientas y mejoras (globales y de inercia).
+  const toolsPane = h('div', {}, [amountRow, toolList, moreHint]);
+  const upgradesPane = h('div', { className: 'hidden' }, [globalBlock]);
+  const modeLabels = new Map<'tools' | 'upgrades', Text>([
+    ['tools', document.createTextNode('Herramientas')],
+    ['upgrades', document.createTextNode('Mejoras')],
+  ]);
+  let mode: 'tools' | 'upgrades' = 'tools';
+  const modeButtons = (['tools', 'upgrades'] as const).map((m) => {
+    const btn = h('button', { className: 'amount-button', onclick: () => { mode = m; applyMode(); } }, [modeLabels.get(m)!]) as HTMLButtonElement;
+    return [m, btn] as const;
+  });
+  function applyMode(): void {
+    setClass(toolsPane, 'hidden', mode !== 'tools');
+    setClass(upgradesPane, 'hidden', mode !== 'upgrades');
+    for (const [m, btn] of modeButtons) setClass(btn, 'active', m === mode);
+  }
+  const modeRow = h('div', { className: 'amount-row' }, modeButtons.map(([, b]) => b));
+  applyMode();
+  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, companionBlock, basketBlock, modeRow, toolsPane, upgradesPane]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -230,16 +249,17 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       ownedToolsSignature = ownedSignature;
       ownedTools.replaceChildren(...ownedList.map((t) => h('span', { className: 'tool-chip', title: t.name }, [`${t.emoji} ${state.tools[t.id]}`])));
     }
-    setText(incomeText, head.income.gt(0) ? `El cerdito gana ${formatNumber(head.income, notation)} monedas por segundo` : 'Pica para ganar tus primeras monedas y compra un pico.');
+    setText(incomeText, 'Pica para ganar tus primeras monedas y compra un pico.');
+    setClass(statsLine, 'hidden', head.income.gt(0) || state.taps > 0);
     setText(tapText, `Picar (+${formatNumber(head.tapGain, notation)})`);
-    setText(momentumText, `Inercia ×${head.momentum.mult.toFixed(2)} (máx. ×${head.momentum.max.toFixed(0)}): pica seguido para subirla`);
+    setText(momentumText, `Inercia ×${head.momentum.mult.toFixed(2)} (máx. ×${head.momentum.max.toFixed(2)})`);
     setStyleProp(momentumFill, 'width', `${(head.momentum.fraction * 100).toFixed(1)}%`);
 
     const globals = globalUpgradeViews(state, ctx.content);
     syncGlobals(globals.available.map((u) => ({ ...u, costText: `Comprar (${formatNumber(u.cost, notation)})` })));
-    setClass(globalBlock, 'hidden', globals.available.length === 0 && globals.nextUnlockAt === null);
-    setClass(globalNote, 'hidden', globals.nextUnlockAt === null);
-    if (globals.nextUnlockAt !== null) setText(globalNote, `Siguiente mejora al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.`);
+    setText(modeLabels.get('upgrades')!, globals.available.length > 0 ? `Mejoras (${globals.available.length})` : 'Mejoras');
+    setClass(globalNote, 'hidden', globals.nextUnlockAt === null && globals.available.length > 0);
+    setText(globalNote, globals.nextUnlockAt !== null ? `Siguiente mejora al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.` : 'No quedan más mejoras por ahora.');
 
     const basket = basketView(state, ctx.content);
     setText(basketText, `Cesta: ${formatNumber(basket.value, notation)}${basket.fill >= 1 ? ' (llena)' : ''}`);

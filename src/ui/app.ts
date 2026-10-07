@@ -4,18 +4,17 @@
 
 import { VISITOR_INJECTION_SECONDS } from '../core/actions.ts';
 import { claimVisitor, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
-import { caveUnlocked, gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
+import { gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
 import { h, setClass, setText } from './dom.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
-import { mountAchievementsView } from './views/achievementsView.ts';
 import { mountCaveView } from './views/caveView.ts';
 import { mountGardenView } from './views/gardenView.ts';
 import { mountCosmeticsView } from './views/cosmeticsView.ts';
 import { mountFlyView } from './views/flyView.ts';
-import { mountJournalView } from './views/journalView.ts';
+import { mountLogbookView } from './views/logbookView.ts';
 import { mountPickView } from './views/pickView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 
@@ -49,8 +48,7 @@ const TABS: TabDef[] = [
   { id: 'cosmetics', label: 'Cerdito', icon: '🐷', mount: mountCosmeticsView },
   { id: 'garden', label: 'Jardín', icon: '🌱', mount: mountGardenView },
   { id: 'cave', label: 'Cueva', icon: '🐉', mount: mountCaveView },
-  { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountAchievementsView },
-  { id: 'journal', label: 'Diario', icon: '📜', mount: mountJournalView },
+  { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountLogbookView },
   { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
 ];
 
@@ -169,9 +167,6 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const flowers = gardenView(state, content, 0).active.map((a) => ` · ${a.emoji} ${formatDuration(a.secondsLeft)}`).join('');
     setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}${flowers}`);
     setClass(header, 'boosted', state.buff !== null);
-    const cave = caveUnlocked(state, content);
-    const caveButton = navButtons.get('cave');
-    if (caveButton) setClass(caveButton, 'hidden', !cave);
     activeView?.update(state);
   }
 

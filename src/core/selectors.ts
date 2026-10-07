@@ -538,6 +538,9 @@ export function companionStatusViews(state: GameState, content: Content, now: nu
 }
 
 export interface CaveView {
+  unlocked: boolean;
+  unlockPlumas: number;
+  plumas: Decimal;
   embers: Decimal;
   perSecond: Decimal;
   blowGain: Decimal;
@@ -551,6 +554,9 @@ export interface CaveView {
 export function caveView(state: GameState, content: Content): CaveView {
   const mult = caveProduct(state, content, 'embers');
   return {
+    unlocked: caveUnlocked(state, content),
+    unlockPlumas: content.cave.unlockPlumas,
+    plumas: state.plumasTotal,
     embers: state.cave.embers,
     perSecond: embersPerSecond(state, content),
     blowGain: blowGain(state, content),

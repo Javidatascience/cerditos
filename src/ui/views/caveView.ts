@@ -50,8 +50,8 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     h('section', { className: 'album-set' }, [h('h3', {}, [`${b.emoji} ${b.name}`]), h('ul', { className: 'perk-list' }, nodeRows.filter((r) => r.branch === b.id).map((r) => r.el))]),
   );
 
-  const container = h('div', { className: 'mine-view' }, [
-    h('h3', { className: 'fly-heading' }, ['Cueva del Dragón']),
+  const lockText = document.createTextNode('');
+  const body = h('div', {}, [
     h('p', { className: 'settings-hint' }, [embersText, ' · ', rateText]),
     blowButton,
     h('p', { className: 'settings-hint' }, [bonusText]),
@@ -60,11 +60,14 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     h('h3', { className: 'fly-heading' }, ['Ventajas del dragón']),
     ...branchBlocks,
   ]);
+  const container = h('div', { className: 'mine-view' }, [h('h3', { className: 'fly-heading' }, ['Cueva del Dragón']), h('p', { className: 'settings-hint' }, [lockText]), body]);
   root.appendChild(container);
 
   function update(state: GameState): void {
     const notation = state.settings.notation;
     const view = caveView(state, ctx.content);
+    setClass(body, 'hidden', !view.unlocked);
+    setText(lockText, view.unlocked ? '' : `La cueva se abre al conseguir ${view.unlockPlumas} plumas en total (llevas ${formatNumber(view.plumas, notation)}). Las plumas se consiguen ascendiendo.`);
     setText(embersText, `🔥 ${formatNumber(view.embers, notation)} brasas`);
     setText(rateText, `+${formatNumber(view.perSecond, notation)}/s`);
     setText(blowText, view.blowReady ? `Soplar (+${formatNumber(view.blowGain, notation)})` : 'Soplar…');

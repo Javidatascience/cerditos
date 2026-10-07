@@ -78,3 +78,11 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 - **Cerdito viajero dorado**: 10 % de las visitas; da 30 min de ingresos, ×7 durante 90 s y 3 bellotas. La tarjeta del visitante es ahora flotante sobre la navegación, con cuenta atrás y vibración.
 - **Inercia**: empieza en ×1,5 de tope y sube con 6 mejoras de monedas (+0,5 cada una, en la lista de mejoras de la pestaña Picar, se pierden al ascender), reliquias y ventajas. Se empieza con 4 bellotas.
 - **Costes**: `costGrowth` 1,15 → 1,17 y mejoras de herramienta ×7 (antes ×5).
+
+### Revisión de economía y jardín (2026-10-07)
+
+- **Herramientas**: 18, con los costes y la producción base de los edificios de Cookie Clicker (wiki: precio × 1,15^n; aquí `costGrowth` 1,17). Cada una cuesta ~12-15× la anterior y produce ~5-8×, así que las altas tardan horas en amortizarse. Con `npm run calibrate`, un jugador óptimo asciende por primera vez a las ~9 h.
+- **Plumas**: como las fichas celestiales (1 por cada raíz cúbica de lo ganado entre 1e8; cada pluma +1 %). La Cueva pide 10 plumas en total y el Jardín 5.
+- **Inercia**: tope ×1,25 y 6 mejoras de +0,15. Picar da 0,05 s de producción (mín. 1 moneda). Las mejoras globales ×1,5 se desbloquean mucho más tarde.
+- **Jardín**: cuadrícula 5×5, plantar gratis, flores comunes de 1-20 min con bonos pequeños y raras de 1-12 h con bonos grandes. Dos flores vecinas maduras se cruzan en una casilla vacía (cada 30 s, 25 %, determinista) y dan flores nuevas; la receta se ve en la lista.
+- **Interfaz**: Picar tiene dos secciones (Herramientas / Mejoras); Diario va dentro de Logros.
