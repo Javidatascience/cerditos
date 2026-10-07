@@ -266,6 +266,16 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
       return (f) => `Consigue ${f(D(req.count))} plumas en total`;
     case 'lifetime':
       return (f) => `Gana ${f(D(req.amount))} monedas en total`;
+    case 'companionsOwned':
+      return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'compañero' : 'compañeros'}`;
+    case 'companionLevels':
+      return (f) => `Mejora a tus compañeros ${f(D(req.count))} ${req.count === 1 ? 'nivel' : 'niveles'} en total`;
+    case 'flowersFound':
+      return (f) => `Descubre ${f(D(req.count))} ${req.count === 1 ? 'flor' : 'flores'} distintas`;
+    case 'shinyFound':
+      return (f) => `Consigue ${f(D(req.count))} ${req.count === 1 ? 'flor brillante' : 'flores brillantes'} distintas`;
+    case 'harvests':
+      return (f) => `Recoge ${f(D(req.count))} flores`;
   }
 }
 
@@ -566,20 +576,22 @@ export function caveView(state: GameState, content: Content): CaveView {
   };
 }
 
-/** ¿Está abierta la Cueva (se tiene al dragón)? */
+/** ¿Está abierta la Cueva (plumas en total suficientes)? */
 export function caveUnlocked(state: GameState, content: Content): boolean {
-  return content.companions.some((c) => c.ability.kind === 'fireBreath' && companionOwned(state, c));
+  return state.plumasTotal.gte(content.cave.unlockPlumas);
 }
-
 
 export interface GardenView {
   unlocked: boolean;
-  unlockAt: Decimal;
+  unlockPlumas: number;
+  plumas: Decimal;
+  cols: number;
   shinyPercent: number;
   /** Bonos temporales activos ahora. */
   active: { id: string; emoji: string; name: string; secondsLeft: number }[];
-  plots: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean }[];
-  flowers: { id: string; name: string; emoji: string; flavor: string; growHours: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; requires: string | null }[];
+  cells: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean }[];
+  readyCount: number;
+  flowers: { id: string; name: string; emoji: string; flavor: string; growSeconds: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; recipeText: string | null }[];
 }
 
 function gardenEffectText(effect: GardenEffect, shiny: boolean): string {
@@ -604,32 +616,38 @@ function formatDurationShort(seconds: number): string {
 
 export function gardenView(state: GameState, content: Content, now: number): GardenView {
   const flowers = content.garden.flowers;
+  const cells = state.garden.cells.map((p, index) => {
+    const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
+    if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
+    const total = growMs(flower);
+    const elapsed = Math.max(0, now - p.plantedAt);
+    return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total };
+  });
   return {
     unlocked: gardenUnlocked(state, content),
-    unlockAt: D(content.garden.unlockLifetime),
+    unlockPlumas: content.garden.unlockPlumas,
+    plumas: state.plumasTotal,
+    cols: content.garden.cols,
     shinyPercent: Math.round(content.garden.shinyChance * 100),
     active: flowers.filter((f) => flowerActive(state, f.id)).map((f) => ({ id: f.id, emoji: f.emoji, name: f.name, secondsLeft: (state.garden.buffs[f.id] ?? 0) - state.time })),
-    plots: state.garden.plots.map((p, index) => {
-      const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
-      if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
-      const total = growMs(flower);
-      const elapsed = Math.max(0, now - p.plantedAt);
-      return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total };
-    }),
+    cells,
+    readyCount: cells.filter((c) => c.ready).length,
     flowers: flowers.map((f, i) => {
       const got = state.garden.found[f.id];
+      const [p, q] = f.recipe ?? [null, null];
+      const name = (id: string | null) => flowers.find((x) => x.id === id);
       return {
         id: f.id,
         name: f.name,
         emoji: f.emoji,
         flavor: f.flavor,
-        growHours: f.growHours,
+        growSeconds: f.growSeconds,
         available: flowerAvailable(state, content, i),
         found: got !== undefined,
         shiny: got?.shiny === true,
         count: got?.count ?? 0,
         effectText: `${gardenEffectText(f.effect, false)} (brillante: ${gardenEffectText(f.effect, true)})`,
-        requires: i === 0 ? null : (flowers[i - 1]?.name ?? null),
+        recipeText: f.recipe ? `Cruza ${name(p)?.emoji} ${name(p)?.name} con ${name(q)?.emoji} ${name(q)?.name} en casillas vecinas` : null,
       };
     }),
   };

@@ -28,6 +28,16 @@ export function achievementProgress(state: GameState, req: AchievementReq): Requ
       return progress(state.plumasTotal, req.count);
     case 'lifetime':
       return progress(state.lifetime, req.amount);
+    case 'companionsOwned':
+      return progress(Object.keys(state.companions).length, req.count);
+    case 'companionLevels':
+      return progress(Object.values(state.companionLevels).reduce((a, b) => a + b, 0), req.count);
+    case 'flowersFound':
+      return progress(Object.keys(state.garden.found).length, req.count);
+    case 'shinyFound':
+      return progress(Object.values(state.garden.found).filter((f) => f.shiny).length, req.count);
+    case 'harvests':
+      return progress(state.garden.harvests, req.count);
   }
 }
 

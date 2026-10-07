@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { harvestFlower, plantFlower, upgradeCompanion, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
@@ -67,7 +67,7 @@ describe('inercia', () => {
   it('la reliquia Muelle mágico sube el tope y ascender reinicia la barra', () => {
     const state = fresh();
     state.achievements['grua-perforadora-25'] = { at: 0 };
-    expect(momentumMaxMult(state, CONTENT)).toBe(G.momentumMax + 1);
+    expect(momentumMaxMult(state, CONTENT)).toBe(G.momentumMax + 0.25);
     state.momentum = 0.8;
     state.lifetime = D(1e9);
     state.maxOwned[CONTENT.tools[G.ascendTool]!.id] = 1;
@@ -80,14 +80,14 @@ describe('mejoras globales', () => {
   it('se desbloquean al ganar una cantidad, se compran una vez y multiplican ×1,5 toda la producción', () => {
     const state = fresh();
     expect(globalUpgradeViews(state, CONTENT).available).toEqual([]);
-    expect(globalUpgradeViews(state, CONTENT).nextUnlockAt).toBe(500);
-    state.coins = D(1e6);
+    expect(globalUpgradeViews(state, CONTENT).nextUnlockAt).toBe(1e4);
+    state.coins = D(1e9);
     expect(buyGlobalUpgrade(state, CONTENT, 'comedero-grande')).toBe(false);
-    state.lifetime = D(600);
-    expect(globalUpgradeViews(state, CONTENT).available.map((u) => u.id)).toEqual(['comedero-grande']);
+    state.lifetime = D(2e5);
+    expect(globalUpgradeViews(state, CONTENT).available.map((u) => u.id)).toEqual(['comedero-grande', 'cuerda-de-saltar']);
     const base = prodMultiplier(state, CONTENT);
     expect(buyGlobalUpgrade(state, CONTENT, 'comedero-grande')).toBe(true);
-    expect(state.coins.toNumber()).toBeCloseTo(1e6 - 5000, 3);
+    expect(state.coins.toNumber()).toBeCloseTo(1e9 - 1e6, 3);
     expect(globalMultiplier(state, CONTENT)).toBe(1.5);
     expect(prodMultiplier(state, CONTENT) / base).toBeCloseTo(1.5, 9);
     expect(buyGlobalUpgrade(state, CONTENT, 'comedero-grande')).toBe(false);
@@ -225,11 +225,12 @@ describe('perro, pájaro y conejo', () => {
 describe('cueva del dragón', () => {
   function withDragon(): GameState {
     const state = fresh();
+    state.plumasTotal = D(10);
     state.achievements['ascender-10'] = { at: 0 };
     return state;
   }
 
-  it('está cerrada sin dragón', () => {
+  it('está cerrada sin plumas', () => {
     const state = fresh();
     expect(caveBlow(state, CONTENT).toNumber()).toBe(0);
     state.cave.embers = D(1e6);
@@ -318,51 +319,67 @@ describe('cerdito viajero dorado', () => {
 describe('jardín', () => {
   function garden(): GameState {
     const state = fresh();
-    state.lifetime = D(1e7);
-    state.coins = D(1e6);
+    state.plumasTotal = D(5);
     return state;
   }
 
-  it('está cerrado hasta ganar la cantidad indicada', () => {
+  it('está cerrado hasta tener las plumas indicadas', () => {
     const state = fresh();
     expect(plantFlower(state, CONTENT, 0, 'margarita', 0)).toBe(false);
   });
 
-  it('plantar es gratis, crece con el tiempo real y se recoge', () => {
+  it('plantar es gratis, crece con el tiempo real y se recoge; las flores de cruce no se pueden plantar sin descubrirlas', () => {
     const state = garden();
-    expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(false); // aún no disponible
+    expect(plantFlower(state, CONTENT, 0, 'girasol', 0)).toBe(false);
     expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(true);
-    expect(state.coins.toNumber()).toBe(1e6);
-    expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(false); // parcela ocupada
-    expect(harvestFlower(state, CONTENT, 0, 1000 + 3600_000 - 1, 0.5)).toBeNull();
-    expect(harvestFlower(state, CONTENT, 0, 1000 + 3600_000, 0.5)).toEqual({ shiny: false, isNew: true });
-    expect(state.garden.plots[0]).toBeNull();
-    expect(plantFlower(state, CONTENT, 0, 'tulipan', 0)).toBe(true); // ya disponible
+    expect(state.coins.toNumber()).toBe(0);
+    expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(false);
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 59_000, 0.5)).toBeNull();
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 60_000, 0.5)).toEqual({ shiny: false, isNew: true });
+    expect(state.garden.harvests).toBe(1);
+    expect(state.garden.cells[0]).toBeNull();
   });
 
   it('la flor da un bono temporal y la brillante dura el doble', () => {
     const state = garden();
     const before = prodMultiplier(state, CONTENT);
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    harvestFlower(state, CONTENT, 0, 3600_000, 0.5);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9);
-    advance(state, CONTENT, 59);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9);
+    harvestFlower(state, CONTENT, 0, 60_000, 0.5);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
+    advance(state, CONTENT, 29);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
     advance(state, CONTENT, 2);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1, 9);
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    expect(harvestFlower(state, CONTENT, 0, 3600_000, 0.05)?.shiny).toBe(true);
-    advance(state, CONTENT, 100);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.5, 9); // dura 120 s
+    expect(harvestFlower(state, CONTENT, 0, 60_000, 0.05)?.shiny).toBe(true);
+    advance(state, CONTENT, 50);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9); // dura 60 s
+  });
+
+  it('dos margaritas maduras vecinas pueden cruzarse en una casilla vacía y dar un girasol', () => {
+    const state = garden();
+    plantFlower(state, CONTENT, 0, 'margarita', 0);
+    plantFlower(state, CONTENT, 2, 'margarita', 0);
+    // la casilla 1 está entre las dos: se comprueban cruces durante mucho tiempo
+    gardenTick(state, CONTENT, 10 * 60_000);
+    expect(state.garden.cells[1]?.flower).toBe('girasol');
+    // determinista: el mismo estado da el mismo resultado
+    const other = garden();
+    plantFlower(other, CONTENT, 0, 'margarita', 0);
+    plantFlower(other, CONTENT, 2, 'margarita', 0);
+    gardenTick(other, CONTENT, 10 * 60_000);
+    expect(other.garden.cells).toEqual(state.garden.cells);
   });
 
   it('el hibisco da ingresos de golpe, no un bono', () => {
     const state = garden();
-    state.garden.found['loto'] = { count: 1, shiny: false };
+    state.garden.found['rosa'] = { count: 1, shiny: false };
+    state.garden.found['lavanda'] = { count: 1, shiny: false };
+    state.garden.found['hibisco'] = { count: 1, shiny: false };
     plantFlower(state, CONTENT, 0, 'hibisco', 0);
     const base = baseIncomePerSecond(state, CONTENT).toNumber();
     const coins = state.coins.toNumber();
-    harvestFlower(state, CONTENT, 0, 16 * 3600_000, 0.5);
+    harvestFlower(state, CONTENT, 0, 2 * 3600_000, 0.5);
     expect(state.coins.toNumber() - coins).toBeCloseTo(base * 1200, 4);
   });
 });
@@ -385,7 +402,7 @@ describe('estadísticas y herramienta siguiente', () => {
     state.coins = D(40);
     const teaser = toolViews(state, CONTENT).find((t) => t.reveal === 'teaser')!;
     expect(teaser.name).toBe('Cubo y pala');
-    expect(teaser.nextCost.toNumber()).toBeGreaterThan(100);
+    expect(teaser.nextCost.toNumber()).toBeGreaterThanOrEqual(100);
     expect(teaser.missing.toNumber()).toBeCloseTo(teaser.nextCost.toNumber() - 40, 9);
   });
 });

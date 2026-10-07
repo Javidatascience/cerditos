@@ -26,7 +26,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, breathSeconds, furnaceCost } from './cave.ts';
-import { flowerAvailable, gardenUnlocked, growMs } from './garden.ts';
+import { flowerAvailable, gardenUnlocked, growMs, neighbors, rand01 } from './garden.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
 import { updateReveals } from './reveal.ts';
@@ -320,8 +320,7 @@ export function useRabbit(state: GameState, content: Content, toolId: ToolId, no
 // ---------------------------------------------------------------------------
 
 function caveOpen(state: GameState, content: Content): boolean {
-  const dragon = content.companions.find((c) => c.ability.kind === 'fireBreath');
-  return dragon !== undefined && companionOwned(state, dragon);
+  return state.plumasTotal.gte(content.cave.unlockPlumas);
 }
 
 /** Sopla sobre las brasas: da brasas con un breve enfriamiento. Devuelve lo ganado (0 si no se pudo). */
@@ -356,26 +355,74 @@ export function buyCaveNode(state: GameState, content: Content, id: string): boo
 // Jardín (tiempo real: `now` en epoch ms; `roll` es un número al azar en [0,1) que pone la UI)
 // ---------------------------------------------------------------------------
 
-/** Planta una flor en una parcela vacía (es gratis). */
-export function plantFlower(state: GameState, content: Content, plot: number, flowerId: string, now: number): boolean {
+/** Planta una flor en una casilla vacía (es gratis). */
+export function plantFlower(state: GameState, content: Content, cell: number, flowerId: string, now: number): boolean {
   const index = content.garden.flowers.findIndex((f) => f.id === flowerId);
-  if (index < 0 || plot < 0 || plot >= content.garden.plots || state.garden.plots[plot] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
-  state.garden.plots[plot] = { flower: flowerId, plantedAt: now };
+  if (index < 0 || cell < 0 || cell >= state.garden.cells.length || state.garden.cells[cell] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
+  if (!state.garden.cells.some((c) => c)) state.garden.mutateAt = now; // los cruces empiezan a contar desde la primera flor
+  state.garden.cells[cell] = { flower: flowerId, plantedAt: now };
   return true;
 }
 
-/** Recoge una flor crecida. Devuelve null si no está lista; si no, si ha salido brillante. */
-export function harvestFlower(state: GameState, content: Content, plot: number, now: number, roll: number): { shiny: boolean; isNew: boolean } | null {
-  const planted = state.garden.plots[plot];
+/** Recoge una flor crecida. Devuelve null si no está lista; si no, si ha salido brillante y si es nueva. */
+export function harvestFlower(state: GameState, content: Content, cell: number, now: number, roll: number): { shiny: boolean; isNew: boolean } | null {
+  const planted = state.garden.cells[cell];
   const flower = planted ? content.garden.flowers.find((f) => f.id === planted.flower) : undefined;
   if (!planted || !flower || now - planted.plantedAt < growMs(flower)) return null;
   const before = state.garden.found[flower.id];
   const shiny = roll < content.garden.shinyChance;
   state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny };
-  state.garden.plots[plot] = null;
+  state.garden.cells[cell] = null;
+  state.garden.harvests += 1;
   const seconds = flower.effect.seconds * (shiny ? 2 : 1); // la brillante dura (o da) el doble
   if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
   else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time + seconds);
-  addEntry(state, shiny ? `¡Ha salido una ${flower.name} brillante!` : `Has recogido una ${flower.name}.`, gameClockMs(state));
+  if (before === undefined) addEntry(state, `Has descubierto la flor ${flower.name}.`, gameClockMs(state));
+  else if (shiny && !before.shiny) addEntry(state, `¡Ha salido una ${flower.name} brillante!`, gameClockMs(state));
   return { shiny, isNew: before === undefined };
+}
+
+/** Un cruce: cada casilla vacía con las dos flores de una receta maduras a su lado puede dar la flor nueva. */
+function mutateOnce(state: GameState, content: Content, at: number, interval: number): void {
+  const g = content.garden;
+  const cells = state.garden.cells;
+  const matureAround = (i: number): string[] =>
+    neighbors(i, g.cols, g.rows).flatMap((n) => {
+      const c = cells[n];
+      const def = c ? g.flowers.find((f) => f.id === c.flower) : undefined;
+      return c && def && at - c.plantedAt >= growMs(def) ? [c.flower] : [];
+    });
+  const spawned: [number, string][] = [];
+  cells.forEach((cell, i) => {
+    if (cell) return;
+    const around = matureAround(i);
+    if (around.length < 2) return;
+    for (const f of g.flowers) {
+      if (!f.recipe) continue;
+      const [p, q] = f.recipe;
+      const ok = p === q ? around.filter((x) => x === p).length >= 2 : around.includes(p) && around.includes(q);
+      if (!ok) continue;
+      if (rand01(state.createdAt, interval, i) < g.mutationChance) spawned.push([i, f.id]);
+      break;
+    }
+  });
+  for (const [i, flower] of spawned) cells[i] = { flower, plantedAt: at };
+}
+
+/** Pone al día los cruces del jardín hasta `now` (como mucho 1 h de intervalos de golpe). */
+export function gardenTick(state: GameState, content: Content, now: number): void {
+  if (!gardenUnlocked(state, content)) return;
+  const step = content.garden.mutationSeconds * 1000;
+  const g = state.garden;
+  if (!g.cells.some((c) => c)) {
+    g.mutateAt = now;
+    return;
+  }
+  let done = 0;
+  while (g.mutateAt + step <= now && done < 120) {
+    g.mutateAt += step;
+    done += 1;
+    mutateOnce(state, content, g.mutateAt, Math.floor(g.mutateAt / step));
+  }
+  if (g.mutateAt + step <= now) g.mutateAt = now;
 }

@@ -1,9 +1,10 @@
 // La Cueva del Dragón: mini mundo aparte con su propia moneda (brasas), hornos y un árbol de
-// ventajas por ramas. Se abre al tener al Dragoncito y es permanente (no se reinicia al ascender).
+// ventajas por ramas. Se abre al conseguir 10 plumas en total y es permanente (no se reinicia al ascender).
 
 import type { CaveDef } from './types.ts';
 
 export const CAVE: CaveDef = {
+  unlockPlumas: 10,
   furnaceGrowth: 1.15,
   /** Segundos entre soplidos. */
   blowCooldown: 4,

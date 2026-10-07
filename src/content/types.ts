@@ -134,7 +134,12 @@ export type AchievementReq =
   | { kind: 'taps'; count: number }
   | { kind: 'ascensions'; count: number }
   | { kind: 'plumasTotal'; count: number }
-  | { kind: 'lifetime'; amount: number };
+  | { kind: 'lifetime'; amount: number }
+  | { kind: 'companionsOwned'; count: number }
+  | { kind: 'companionLevels'; count: number }
+  | { kind: 'flowersFound'; count: number }
+  | { kind: 'shinyFound'; count: number }
+  | { kind: 'harvests'; count: number };
 
 export interface AchievementDef {
   id: string;
@@ -169,6 +174,8 @@ export interface CaveNodeDef {
 }
 
 export interface CaveDef {
+  /** Plumas en total necesarias para abrir la cueva. */
+  unlockPlumas: number;
   furnaceGrowth: number;
   blowCooldown: number;
   blowSeconds: number;
@@ -190,14 +197,21 @@ export interface GardenFlowerDef {
   name: string;
   emoji: string;
   flavor: string;
-  growHours: number;
+  growSeconds: number;
   effect: GardenEffect;
+  /** Dos flores vecinas que, al cruzarse en una casilla vacía, pueden dar esta (null = se planta desde el principio). */
+  recipe: [string, string] | null;
 }
 
 export interface GardenDef {
-  plots: number;
+  cols: number;
+  rows: number;
   shinyChance: number;
-  unlockLifetime: number;
+  /** Plumas en total necesarias para abrir el jardín. */
+  unlockPlumas: number;
+  /** Cada cuántos segundos reales se comprueban los cruces, y la probabilidad por casilla vacía. */
+  mutationSeconds: number;
+  mutationChance: number;
   flowers: GardenFlowerDef[];
 }
 

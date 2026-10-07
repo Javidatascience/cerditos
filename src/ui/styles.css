@@ -1512,3 +1512,32 @@ body {
   color: #c9962a;
   font-weight: 800;
 }
+
+/* Jardín: cuadrícula de casillas */
+.garden-grid {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.garden-cell {
+  aspect-ratio: 1;
+  font-size: 1.6rem;
+  line-height: 1;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: #d9c2a0;
+  box-shadow: 0 2px 0 var(--color-shadow);
+  cursor: pointer;
+  padding: 0;
+}
+
+.garden-cell-growing {
+  background: #cfe3b4;
+}
+
+.garden-cell-ready {
+  background: #fff1b8;
+  border-color: #c9962a;
+  animation: visitor-glow 1.4s ease-in-out infinite;
+}

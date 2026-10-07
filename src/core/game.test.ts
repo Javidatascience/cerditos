@@ -42,13 +42,13 @@ describe('al empezar', () => {
 
   it('picar da 1 moneda sin producción, y comprar el pico sube los ingresos a 0,1/s', () => {
     const state = fresh();
-    for (let i = 0; i < 10; i++) expect(tap(state, CONTENT).toNumber()).toBe(1);
-    expect(state.taps).toBe(10);
+    for (let i = 0; i < 15; i++) expect(tap(state, CONTENT).toNumber()).toBe(1);
+    expect(state.taps).toBe(15);
     expect(buyTool(state, CONTENT, PICO.id, 1)).toBe(1);
     expect(state.coins.toNumber()).toBe(0);
     expect(baseIncomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1, 9);
-    // y picar sube la inercia: 10 picos = 0,3 de barra
-    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1 * (1 + (CONTENT.game.momentumMax - 1) * 0.3), 9);
+    // y picar sube la inercia: 15 picos = 0,45 de barra
+    expect(incomePerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.1 * (1 + (CONTENT.game.momentumMax - 1) * 0.45), 9);
   });
 });
 
@@ -162,7 +162,7 @@ describe('tiempo', () => {
 
   it('un toque vale 1 s de producción cuando ya hay producción', () => {
     const state = fresh();
-    state.tools[PICO.id] = 100;
+    state.tools[PICO.id] = 1000;
     expect(tapGain(state, CONTENT).toNumber()).toBeCloseTo(incomePerSecond(state, CONTENT).toNumber() * G.tapSeconds, 9);
   });
 });

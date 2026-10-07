@@ -4,7 +4,7 @@
 // página en blanco se enseña el motivo y un botón para borrar los datos guardados.
 
 import { CONTENT } from './content/index.ts';
-import { companionTick } from './core/actions.ts';
+import { companionTick, gardenTick } from './core/actions.ts';
 import { visitorModifiers } from './core/formulas.ts';
 import { simulateOffline } from './core/offline.ts';
 import { advance } from './core/tick.ts';
@@ -69,6 +69,7 @@ function start(): void {
     if (awaySeconds > 1) pendingOfflineSummary = simulateOffline(state, CONTENT, awaySeconds);
   }
   state.lastTickAt = now;
+  gardenTick(state, CONTENT, now);
 
   function persist(): void {
     saveGame(storage, state, Date.now());
@@ -97,6 +98,7 @@ function start(): void {
         companionTick(state, CONTENT, dt); // solo con el juego abierto
         visitor.tick(dt); // solo cuenta el tiempo con el juego abierto, nunca el offline
       }
+      gardenTick(state, CONTENT, tickNow); // el jardín va en tiempo real, también tras una ausencia
       app.update(state);
     } catch (err) {
       failed = true; // se para el bucle para no repetir el error cada 250 ms

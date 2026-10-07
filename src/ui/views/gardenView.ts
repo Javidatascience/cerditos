@@ -1,91 +1,121 @@
-// Vista "Jardín": parcelas donde las flores crecen muy despacio (horas de reloj real, también con el
-// juego cerrado). Cada flor distinta que recoges da un bono pasivo; si sale brillante, vale el doble.
+// Vista "Jardín": una cuadrícula donde eliges una semilla y tocas casillas vacías para plantarla; las
+// flores maduras se recogen tocándolas. Dos flores vecinas maduras pueden cruzarse y dar una nueva.
 // Los nodos se crean una vez y solo se actualizan (ningún clic se pierde). Ver docs/06-mina.md.
 
 import { harvestFlower, plantFlower } from '../../core/actions.ts';
 import { gardenView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { h, setClass, setStyleProp, setText } from '../dom.ts';
+import { h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
 export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
-  const flowers = ctx.content.garden.flowers;
-  const introText = document.createTextNode('');
+  const garden = ctx.content.garden;
+  const flowers = garden.flowers;
+  let selected = flowers[0]!.id;
+  let lastState: GameState | null = null;
 
-  const plotRows = Array.from({ length: ctx.content.garden.plots }, (_, index) => {
-    const title = document.createTextNode('');
-    const status = document.createTextNode('');
-    const emoji = h('div', { className: 'garden-plot-emoji', 'aria-hidden': 'true' }, ['🟫']);
-    const fill = h('div', { className: 'progress-bar-inner' });
-    const bar = h('div', { className: 'progress-bar', role: 'presentation' }, [fill]);
-    const harvest = h('button', { className: 'buy-button' }, ['Recoger']) as HTMLButtonElement;
-    harvest.addEventListener('click', () => ctx.dispatch((s) => void harvestFlower(s, ctx.content, index, Date.now(), Math.random())));
-    const seeds = flowers.map((f) => {
-      const btn = h('button', { className: 'chip chip-button', title: `Plantar ${f.name}` }, [f.emoji]) as HTMLButtonElement;
-      btn.addEventListener('click', () => ctx.dispatch((s) => void plantFlower(s, ctx.content, index, f.id, Date.now())));
-      return btn;
+  const introText = document.createTextNode('');
+  const harvestText = document.createTextNode('');
+
+  const seedButtons = flowers.map((f) => {
+    const btn = h('button', { className: 'chip chip-button', title: f.name }, [f.emoji]) as HTMLButtonElement;
+    btn.addEventListener('click', () => {
+      selected = f.id;
+      if (lastState) update(lastState);
     });
-    const seedRow = h('div', { className: 'chip-row' }, seeds);
-    const el = h('div', { className: 'garden-plot' }, [emoji, h('div', { className: 'upgrade-name' }, [title]), h('div', { className: 'settings-hint' }, [status]), bar, harvest, seedRow]);
-    return { el, title, status, emoji, fill, bar, harvest, seeds, seedRow };
+    return btn;
   });
+  const seedRow = h('div', { className: 'chip-row' }, seedButtons);
+
+  const harvestAll = h('button', { className: 'buy-button' }, [harvestText]) as HTMLButtonElement;
+  harvestAll.addEventListener('click', () =>
+    ctx.dispatch((s) => {
+      const now = Date.now();
+      s.garden.cells.forEach((_, i) => void harvestFlower(s, ctx.content, i, now, Math.random()));
+    }),
+  );
+
+  const cellButtons = Array.from({ length: garden.cols * garden.rows }, (_, index) => {
+    const btn = h('button', { className: 'garden-cell' }, ['']) as HTMLButtonElement;
+    btn.addEventListener('click', () =>
+      ctx.dispatch((s) => {
+        const now = Date.now();
+        if (harvestFlower(s, ctx.content, index, now, Math.random()) === null) void plantFlower(s, ctx.content, index, selected, now);
+      }),
+    );
+    return btn;
+  });
+  const grid = h('div', { className: 'garden-grid' }, cellButtons);
+  grid.style.gridTemplateColumns = `repeat(${garden.cols}, 1fr)`;
 
   const flowerRows = flowers.map((f) => {
     const nameText = document.createTextNode('');
     const flavorText = document.createTextNode('');
     const effectText = document.createTextNode('');
+    const recipeText = document.createTextNode('');
     const el = h('li', { className: 'cosmetic-row' }, [
-      h('div', { className: 'row-art' }, [h('span', { className: 'garden-plot-emoji', 'aria-hidden': 'true' }, [f.emoji]), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-flavor' }, [flavorText]), h('span', { className: 'upgrade-effect' }, [effectText])])]),
+      h('div', { className: 'row-art' }, [
+        h('span', { className: 'garden-plot-emoji', 'aria-hidden': 'true' }, [f.emoji]),
+        h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-flavor' }, [flavorText]), h('span', { className: 'upgrade-effect' }, [effectText]), h('span', { className: 'perk-locked' }, [recipeText])]),
+      ]),
     ]);
-    return { id: f.id, el, nameText, flavorText, effectText };
+    return { el, nameText, flavorText, effectText, recipeText };
   });
 
+  const playArea = h('div', {}, [seedRow, grid, harvestAll]);
   const container = h('div', { className: 'cosmetics-view' }, [
     h('h3', { className: 'fly-heading' }, ['Jardín']),
     h('p', { className: 'settings-hint' }, [introText]),
-    h('div', { className: 'garden-plots' }, plotRows.map((r) => r.el)),
+    playArea,
     h('h3', { className: 'fly-heading' }, ['Flores']),
     h('ul', { className: 'cosmetic-list' }, flowerRows.map((r) => r.el)),
   ]);
   root.appendChild(container);
 
   function update(state: GameState): void {
+    lastState = state;
     const notation = state.settings.notation;
-    const now = Date.now();
-    const view = gardenView(state, ctx.content, now);
+    const view = gardenView(state, ctx.content, Date.now());
+    setClass(playArea, 'hidden', !view.unlocked);
     if (!view.unlocked) {
-      setText(introText, `El jardín se abre al ganar ${formatNumber(view.unlockAt, notation)} monedas en total (llevas ${formatNumber(state.lifetime, notation)}).`);
+      setText(introText, `El jardín se abre al conseguir ${view.unlockPlumas} plumas en total (llevas ${formatNumber(view.plumas, notation)}). Las plumas se consiguen ascendiendo.`);
     } else {
       const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.emoji} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
-      setText(introText, `Plantar es gratis. Las flores crecen despacio, aunque cierres el juego, y al recogerlas dan un bono temporal. Hay un ${view.shinyPercent} % de que salga brillante (el bono dura el doble).${activeNow}`);
+      setText(
+        introText,
+        `Elige una semilla y toca las casillas vacías; toca una flor madura para recogerla. Plantar es gratis. Dos flores vecinas maduras pueden cruzarse en una casilla vacía y dar una flor nueva. Al recogerlas dan un bono temporal; hay un ${view.shinyPercent} % de que salgan brillantes (el bono dura el doble).${activeNow}`,
+      );
     }
-    setClass(container.querySelector('.garden-plots') as HTMLElement, 'hidden', !view.unlocked);
 
-    view.plots.forEach((plot, i) => {
-      const row = plotRows[i];
-      if (!row) return;
-      const empty = plot.flowerId === null;
-      row.emoji.textContent = empty ? '🟫' : plot.ready ? plot.emoji : '🌱';
-      setText(row.title, empty ? 'Parcela vacía' : plot.flowerName);
-      setText(row.status, empty ? 'Elige qué plantar:' : plot.ready ? '¡Lista!' : `Crece… ${formatDuration(plot.readyInSeconds)}`);
-      setStyleProp(row.fill, 'width', `${(plot.progress * 100).toFixed(1)}%`);
-      setClass(row.bar, 'hidden', empty);
-      setClass(row.harvest, 'hidden', !plot.ready);
-      setClass(row.seedRow, 'hidden', !empty);
-      view.flowers.forEach((f, k) => {
-        const btn = row.seeds[k];
-        if (!btn) return;
-        setClass(btn, 'hidden', !f.available);
-      });
+    view.flowers.forEach((f, i) => {
+      const btn = seedButtons[i];
+      if (!btn) return;
+      setClass(btn, 'hidden', !f.available);
+      setClass(btn, 'chip-done', f.id === selected);
+    });
+    setText(harvestText, view.readyCount > 0 ? `Recoger todo lo listo (${view.readyCount})` : 'Nada listo todavía');
+    setDisabled(harvestAll, view.readyCount === 0);
+
+    view.cells.forEach((cell, i) => {
+      const btn = cellButtons[i];
+      if (!btn) return;
+      const empty = cell.flowerId === null;
+      const glyph = empty ? '' : cell.ready ? cell.emoji : '🌱';
+      if (btn.textContent !== glyph) btn.textContent = glyph;
+      btn.title = empty ? 'Casilla vacía' : cell.ready ? `${cell.flowerName}: toca para recoger` : `${cell.flowerName}: ${formatDuration(cell.readyInSeconds)}`;
+      setClass(btn, 'garden-cell-ready', cell.ready);
+      setClass(btn, 'garden-cell-growing', !empty && !cell.ready);
     });
 
     view.flowers.forEach((f, i) => {
       const row = flowerRows[i];
       if (!row) return;
-      setText(row.nameText, f.available || f.found ? `${f.name}${f.shiny ? ' ✨' : ''}${f.count > 0 ? ` ×${f.count}` : ''}` : '???');
-      setText(row.flavorText, f.available || f.found ? `${f.flavor} Tarda ${f.growHours} h.` : `Recoge antes: ${f.requires ?? ''}`);
-      setText(row.effectText, f.available || f.found ? `Al recogerla: ${f.effectText}` : '');
+      const known = f.available || f.found;
+      setText(row.nameText, known ? `${f.name}${f.shiny ? ' ✨' : ''}${f.count > 0 ? ` ×${f.count}` : ''}` : '???');
+      setText(row.flavorText, known ? `${f.flavor} Tarda ${formatDuration(f.growSeconds)}.` : '');
+      setText(row.effectText, known ? `Al recogerla: ${f.effectText}` : '');
+      setText(row.recipeText, f.recipeText ?? '');
       setClass(row.el, 'cosmetic-row-locked', !f.found);
     });
   }

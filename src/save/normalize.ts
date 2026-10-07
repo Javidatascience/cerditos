@@ -45,10 +45,12 @@ export function normalize(state: GameState, content: Content): GameState {
     else state.companionLevels[id] = clampInt(state.companionLevels[id] ?? 0, 0, def.upgrades.length);
   }
   const flowerIds = new Set(content.garden.flowers.map((f) => f.id));
-  state.garden.plots = Array.from({ length: content.garden.plots }, (_, i) => {
-    const p = state.garden.plots[i];
+  state.garden.cells = Array.from({ length: content.garden.cols * content.garden.rows }, (_, i) => {
+    const p = state.garden.cells[i];
     return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt } : null;
   });
+  state.garden.harvests = clampInt(state.garden.harvests, 0, Number.MAX_SAFE_INTEGER);
+  if (!Number.isFinite(state.garden.mutateAt)) state.garden.mutateAt = 0;
   for (const id of Object.keys(state.garden.found)) {
     const f = state.garden.found[id];
     if (!flowerIds.has(id) || !f) delete state.garden.found[id];

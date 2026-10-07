@@ -24,15 +24,38 @@ export function gardenSum(state: GameState, content: Content, kind: GardenEffect
   return active(state, content, kind).reduce((a, b) => a + b, 0);
 }
 
+/** Se abre al conseguir cierto número de plumas en total (no se gastan: cuenta el histórico). */
 export function gardenUnlocked(state: GameState, content: Content): boolean {
-  return state.lifetime.gte(content.garden.unlockLifetime);
+  return state.plumasTotal.gte(content.garden.unlockPlumas);
 }
 
-/** Una flor se puede plantar si es la primera o ya se recogió la anterior. */
+/** Una flor se puede plantar si no nace de un cruce o ya se recogió alguna vez. */
 export function flowerAvailable(state: GameState, content: Content, index: number): boolean {
-  return index === 0 || state.garden.found[content.garden.flowers[index - 1]!.id] !== undefined;
+  const flower = content.garden.flowers[index];
+  return flower !== undefined && (flower.recipe === null || state.garden.found[flower.id] !== undefined);
 }
 
-export function growMs(flower: { growHours: number }): number {
-  return flower.growHours * 3600_000;
+export function growMs(flower: { growSeconds: number }): number {
+  return flower.growSeconds * 1000;
+}
+
+/** Casillas vecinas (arriba, abajo, izquierda, derecha) de una casilla de la cuadrícula. */
+export function neighbors(index: number, cols: number, rows: number): number[] {
+  const x = index % cols;
+  const y = Math.floor(index / cols);
+  const out: number[] = [];
+  if (y > 0) out.push(index - cols);
+  if (y < rows - 1) out.push(index + cols);
+  if (x > 0) out.push(index - 1);
+  if (x < cols - 1) out.push(index + 1);
+  return out;
+}
+
+/** Número pseudoaleatorio determinista en [0,1) a partir de tres enteros (el cruce no usa Math.random: así es igual offline). */
+export function rand01(a: number, b: number, c: number): number {
+  let h = (Math.imul(a | 0, 0x9e3779b1) ^ Math.imul(b | 0, 0x85ebca6b) ^ Math.imul(c | 0, 0xc2b2ae35)) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+  h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0;
+  h = (h ^ (h >>> 15)) >>> 0;
+  return h / 4294967296;
 }

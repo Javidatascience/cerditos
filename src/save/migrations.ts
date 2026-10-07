@@ -75,6 +75,15 @@ function v10ToV11(old: RawSave): RawSave {
   return { ...old, version: 11, state: { ...state, version: 11, garden: { ...garden, buffs: {} } } };
 }
 
+/** v11 → v12: el jardín pasa a una cuadrícula con cruces; se conservan las flores descubiertas y se vacían las parcelas. */
+function v11ToV12(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 12 };
+  const state = old['state'];
+  const garden = isPlainObject(state['garden']) ? state['garden'] : {};
+  const found = isPlainObject(garden['found']) ? garden['found'] : {};
+  return { ...old, version: 12, state: { ...state, version: 12, garden: { cells: [], found, buffs: {}, mutateAt: 0, harvests: 0 } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -83,6 +92,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   8: v8ToV9,
   9: v9ToV10,
   10: v10ToV11,
+  11: v11ToV12,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

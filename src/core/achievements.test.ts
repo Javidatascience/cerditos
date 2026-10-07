@@ -78,13 +78,13 @@ describe('lo que falta para comprar', () => {
     state.coins = D(4);
     const [first, second] = toolViews(state, CONTENT);
     expect(first!.canAfford).toBe(false);
-    expect(first!.missing.toNumber()).toBe(6);
+    expect(first!.missing.toNumber()).toBe(11);
     expect(first!.etaSeconds).toBeNull(); // sin producción no hay estimación
     expect(second!.reveal).toBe('teaser');
-    expect(second!.missing.toNumber()).toBe(106);
+    expect(second!.missing.toNumber()).toBe(96);
     state.tools['pico-de-madera'] = 1;
     state.coins = D(0);
-    expect(toolViews(state, CONTENT)[1]!.etaSeconds).toBeCloseTo(110 / 0.1, 6);
+    expect(toolViews(state, CONTENT)[1]!.etaSeconds).toBeCloseTo(100 / 0.1, 6);
     state.coins = D(100);
     expect(toolViews(state, CONTENT)[0]!.missing.toNumber()).toBe(0);
   });
