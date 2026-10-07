@@ -23,7 +23,7 @@ COL = {
     'r': (230, 64, 64), 'R': (160, 32, 48), 'p': (255, 150, 170), 'P': (214, 96, 128),
     'c': (96, 208, 240), 'C': (48, 112, 208), 'D': (24, 56, 130),   # azules
     'n': (96, 200, 96), 'N': (48, 130, 72), 'l': (176, 232, 120),   # verdes
-    'm': (170, 100, 220), 'M': (100, 56, 160), 'k': (40, 36, 56),   # morados y negro
+    'q': (255, 205, 218), 'm': (170, 100, 220), 'M': (100, 56, 160), 'k': (40, 36, 56),   # morados y negro
 }
 
 
@@ -366,14 +366,347 @@ def dragon(c):
     c.pts('Y', (6, 4), (7, 3), (8, 4))
 
 
-COMPANIONS = {'topo': topo, 'perro': perro, 'pajaro': pajaro, 'gato': gato, 'conejo': conejo, 'dragon': dragon}
+COMPANIONS = {'topo': topo, 'perro': perro, 'pajaro': pajaro, 'gato': gato, 'conejo': conejo}
+CAVE = {'dragon': dragon}
+
+# ---------------------------------------------------------------- flores y hierbas
+
+
+def stem(c, x=7, top=7, leaves=True):
+    c.line(x, top, x, 13, 'N')
+    if leaves:
+        c.pts('n', (x - 2, 11), (x - 1, 11), (x - 1, 10), (x + 1, 9), (x + 2, 9), (x + 2, 8))
+
+
+def petals(c, cx, cy, color, center, reach=2.6, size=1.7, count=6):
+    import math
+    for i in range(count):
+        a = 2 * math.pi * i / count - math.pi / 2
+        c.ell(cx + reach * math.cos(a), cy + reach * math.sin(a), size, size, color)
+    c.ell(cx, cy, 1.5, 1.5, center)
+
+
+def margarita(c):
+    stem(c, top=8)
+    petals(c, 7, 5, 'w', 'y', 2.6, 1.6, 8)
+    c.pts('W', (4, 6), (10, 6), (7, 8))
+
+
+def tulipan(c):
+    stem(c, top=8)
+    c.ell(7, 5, 3.3, 3.5, 'r')
+    c.pts('r', (4, 1), (7, 1), (10, 1), (4, 2), (7, 2), (10, 2))
+    c.pts('R', (4, 7), (5, 7), (9, 7), (10, 7), (6, 3), (8, 3))
+    c.pts('p', (5, 4), (5, 5))
+
+
+def girasol(c):
+    stem(c, top=9)
+    petals(c, 7, 5, 'y', 'B', 3.3, 1.7, 10)
+    c.ell(7, 5, 2.4, 2.4, 'B')
+    c.pts('b', (6, 4), (8, 6))
+    c.pts('Y', (2, 5), (12, 5), (7, 1), (7, 9))
+
+
+def rosa(c):
+    stem(c, top=8)
+    c.ell(7, 5, 3.6, 3.6, 'r')
+    c.pts('R', (7, 3), (6, 4), (7, 5), (8, 4), (5, 6), (9, 6), (7, 7))
+    c.pts('p', (6, 2), (5, 3), (8, 4))
+    c.pts('N', (6, 9), (8, 10))
+
+
+def lavanda(c):
+    c.line(7, 6, 7, 13, 'N')
+    c.line(4, 8, 4, 13, 'N')
+    c.line(10, 8, 10, 13, 'N')
+    for x, top in ((7, 0), (4, 3), (10, 3)):
+        for y in range(top, top + 6):
+            c.p(x, y, 'm' if y % 2 == 0 else 'M')
+            c.p(x - 1 if y % 2 else x + 1, y, 'M' if y % 2 else 'm')
+    c.pts('n', (5, 11), (9, 11))
+
+
+def loto(c):
+    c.rect(0, 10, 13, 12, 'C')
+    c.rect(1, 10, 12, 10, 'c')
+    for y, hw in zip(range(2, 10), [0, 1, 1, 2, 2, 3, 3, 3]):
+        c.rect(7 - hw, y, 7 + hw, y, 'p')
+    c.pts('q', (7, 3), (7, 4), (6, 6))
+    c.line(2, 5, 4, 9, 'P')
+    c.line(12, 5, 10, 9, 'P')
+    c.rect(2, 11, 3, 11, 'c')
+    c.pts('n', (3, 10), (4, 10), (10, 10), (11, 10))
+
+
+def hibisco(c):
+    stem(c, top=8)
+    petals(c, 7, 5, 'O', 'R', 2.8, 2.0, 5)
+    c.line(7, 5, 11, 2, 'R')
+    c.pts('y', (11, 1), (12, 2), (11, 2))
+    c.pts('p', (4, 3), (10, 7))
+
+
+def orquidea(c):
+    c.line(7, 13, 6, 8, 'N')
+    c.line(6, 8, 8, 4, 'N')
+    c.pts('n', (4, 11), (5, 11), (9, 11), (10, 10))
+    c.ell(5, 3, 2.2, 2.0, 'm')
+    c.ell(10, 4, 2.2, 2.0, 'm')
+    c.ell(7.5, 2, 2.0, 1.6, 'M')
+    c.ell(7.5, 5.5, 2.0, 2.4, 'w')
+    c.pts('P', (7, 5), (8, 6), (7, 7))
+    c.pts('y', (7, 3), (8, 3))
+    c.ell(4, 8, 1.4, 1.4, 'm')
+
+
+def luna(c):
+    stem(c, top=9)
+    c.ell(7, 5, 4, 4, 'W')
+    for y in range(N):
+        for x in range(N):
+            if ((x - 9) / 3.2) ** 2 + ((y - 4) / 3.2) ** 2 <= 1:
+                c.g[y][x] = None
+    c.pts('w', (4, 4), (5, 3), (4, 6))
+    c.pts('c', (11, 1), (12, 3), (1, 2), (11, 8), (2, 8))
+    c.pts('y', (9, 4), (10, 5))
+
+
+def oro(c):
+    stem(c, top=8)
+    petals(c, 7, 5, 'y', 'O', 2.7, 1.9, 8)
+    c.pts('Y', (7, 8), (4, 5), (10, 5))
+    c.pts('w', (3, 3), (10, 2), (5, 7), (0, 0), (13, 1), (12, 8), (1, 7))
+
+
+def brote(c):
+    c.ell(7, 12, 5, 1.6, 'B')
+    c.line(7, 12, 7, 7, 'N')
+    c.ell(4.5, 6, 3.2, 1.9, 'n')
+    c.ell(9.5, 5, 3.2, 1.9, 'l')
+    c.pts('N', (6, 6), (8, 5))
+    c.pts('b', (3, 12), (11, 12))
+
+
+def semilla(c):
+    c.ell(7, 12, 6, 1.8, 'B')
+    c.ell(7, 8, 1.6, 2, 'n')
+    c.pts('l', (7, 7), (7, 6))
+    c.pts('b', (4, 12), (10, 12))
+
+
+FLOWERS = {
+    'margarita': margarita, 'tulipan': tulipan, 'girasol': girasol, 'rosa': rosa, 'lavanda': lavanda,
+    'loto': loto, 'hibisco': hibisco, 'orquidea': orquidea, 'flor-de-luna': luna, 'flor-de-oro': oro,
+    'brote': brote, 'semilla': semilla,
+}
+
+# ---------------------------------------------------------------- hornos y ramas de la cueva
+
+
+def flama(c, x=7, base=9, height=8):
+    for i in range(height):
+        w = max(0, (height - i) // 3 + (1 if i > height // 2 else 0))
+        c.rect(x - w, base - i, x + w, base - i, 'O' if i > 2 else 'r')
+    c.rect(x - 1, base - 3, x + 1, base, 'y')
+    c.pts('w', (x, base - 1))
+
+
+def brasero(c):
+    c.ell(7, 9, 5.6, 3.6, 'G')
+    c.rect(1, 8, 12, 9, 'g')
+    c.rect(2, 12, 5, 13, 'G')
+    c.rect(9, 12, 12, 13, 'G')
+    flama(c, 7, 8, 8)
+
+
+def fragua(c):
+    c.rect(2, 7, 11, 8, 'g')
+    c.rect(1, 6, 3, 7, 'g')
+    c.rect(4, 9, 9, 10, 'G')
+    c.rect(3, 11, 10, 13, 'G')
+    c.rect(2, 6, 11, 6, 's')
+    c.rect(3, 4, 8, 5, 'O')
+    c.rect(3, 4, 5, 4, 'y')
+    c.pts('y', (10, 2), (11, 4), (9, 1), (12, 5))
+    c.pts('w', (4, 4))
+
+
+def horno(c):
+    c.rect(1, 4, 12, 13, 'g')
+    c.rect(1, 4, 12, 5, 's')
+    c.rect(1, 13, 12, 13, 'G')
+    c.rect(4, 7, 9, 13, 'k')
+    c.rect(5, 9, 8, 13, 'O')
+    c.rect(6, 10, 7, 13, 'y')
+    c.rect(9, 0, 11, 3, 'G')
+    c.pts('W', (10, 0), (11, 1))
+    c.pts('G', (2, 8), (11, 9), (2, 11), (12, 12))
+
+
+def corazon(c):
+    c.ell(4.5, 5, 3.2, 3.2, 'R')
+    c.ell(9.5, 5, 3.2, 3.2, 'R')
+    for y, hw in zip(range(6, 13), [6, 5, 4, 3, 2, 1, 0]):
+        c.rect(7 - hw, y, 6 + hw, y, 'R')
+    c.line(5, 4, 7, 7, 'O')
+    c.line(7, 7, 6, 10, 'O')
+    c.line(9, 3, 9, 6, 'O')
+    c.pts('y', (5, 4), (7, 7), (9, 4))
+    c.pts('p', (3, 3), (4, 3))
+
+
+def escudo(c):
+    c.rect(2, 1, 11, 7, 'C')
+    for y, hw in zip(range(8, 13), [5, 4, 3, 2, 1]):
+        c.rect(7 - hw, y, 6 + hw, y, 'C')
+    c.rect(3, 2, 10, 2, 'c')
+    c.rect(6, 3, 7, 10, 'c')
+    c.rect(3, 5, 10, 6, 'c')
+    c.pts('w', (4, 3), (5, 3))
+
+
+def bolsa(c):
+    c.ell(7, 9, 5, 4, 'B')
+    c.ell(7, 9, 3.6, 2.8, 'b')
+    c.rect(5, 3, 9, 4, 'b')
+    c.rect(4, 2, 10, 2, 'B')
+    c.rect(6, 5, 7, 5, 'B')
+    c.rect(6, 7, 7, 11, 'y')
+    c.pts('Y', (5, 8), (8, 8), (5, 10), (8, 10))
+
+
+FURNACES = {'brasero': brasero, 'fragua': fragua, 'horno-de-roca': horno, 'corazon-de-lava': corazon,
+            'rama-fuego': lambda c: flama(c, 7, 11, 11), 'rama-escamas': escudo, 'rama-tesoro': bolsa}
+
+# ---------------------------------------------------------------- iconos de menú, logros y mejoras
+
+
+def pluma(c):
+    r = 2 ** 0.5
+    for y in range(N):
+        for x in range(N):
+            u = ((x - 7.5) + (6.5 - y)) / r      # a lo largo de la pluma
+            v = ((x - 7.5) - (6.5 - y)) / r      # a lo ancho
+            if (u / 6.2) ** 2 + (v / 2.9) ** 2 <= 1:
+                c.p(x, y, 'B' if abs(v) < 0.55 else ('W' if v > 0 else 'w'))
+    c.line(1, 13, 4, 10, 'B')
+    c.pts('c', (10, 3), (11, 2), (9, 4))
+
+
+def cara_cerdo(c):
+    c.ell(7, 8, 5.8, 5, 'p')
+    c.rect(1, 2, 4, 4, 'p')
+    c.rect(9, 2, 12, 4, 'p')
+    c.rect(2, 3, 3, 4, 'P')
+    c.rect(10, 3, 11, 4, 'P')
+    c.ell(7, 10, 2.8, 2, 'q')
+    c.pts('P', (6, 10), (8, 10))
+    c.pts('k', (4, 7), (10, 7))
+
+
+def copa(c):
+    c.rect(3, 1, 10, 6, 'y')
+    c.rect(4, 1, 5, 5, 'w')
+    c.rect(9, 3, 10, 6, 'Y')
+    c.rect(0, 2, 2, 4, 'y')
+    c.rect(11, 2, 13, 4, 'y')
+    c.rect(6, 7, 7, 9, 'Y')
+    c.rect(4, 10, 9, 12, 'O')
+    c.rect(4, 10, 9, 10, 'y')
+    c.pts('Y', (3, 6), (10, 6))
+
+
+def engranaje(c):
+    for x0, y0, x1, y1 in [(6, 0, 7, 1), (6, 12, 7, 13), (0, 6, 1, 7), (12, 6, 13, 7), (2, 2, 3, 3), (10, 2, 11, 3), (2, 10, 3, 11), (10, 10, 11, 11)]:
+        c.rect(x0, y0, x1, y1, 'g')
+    c.ell(6.5, 6.5, 5.2, 5.2, 'g')
+    for y in range(N):
+        for x in range(N):
+            if ((x - 6.5) / 2.1) ** 2 + ((y - 6.5) / 2.1) ** 2 <= 1:
+                c.g[y][x] = None
+    c.pts('s', (3, 4), (4, 3), (3, 5))
+    c.pts('G', (9, 9), (10, 8))
+
+
+def medalla(c):
+    c.line(3, 0, 6, 5, 'r')
+    c.line(10, 0, 7, 5, 'C')
+    c.rect(2, 0, 4, 1, 'r')
+    c.rect(9, 0, 11, 1, 'C')
+    c.ell(7, 9, 4.4, 4.4, 'y')
+    c.ell(7, 9, 2.8, 2.8, 'Y')
+    c.pts('y', (7, 8), (6, 9), (8, 9), (7, 10), (7, 9))
+    c.pts('w', (4, 7))
+
+
+def moneda(c):
+    c.ell(7, 7, 5.6, 5.6, 'y')
+    c.ell(7, 7, 4, 4, 'Y')
+    c.rect(6, 4, 7, 10, 'y')
+    c.rect(5, 5, 8, 5, 'y')
+    c.rect(5, 9, 8, 9, 'y')
+    c.pts('w', (3, 4), (4, 3))
+
+
+def mano(c):
+    c.rect(3, 6, 10, 12, 'q')
+    for x in (3, 5, 7, 9):
+        c.rect(x, 2 if x != 3 else 3, x + 1, 6, 'q')
+    c.rect(1, 7, 2, 10, 'q')
+    c.pts('p', (4, 11), (6, 11), (8, 11))
+    c.pts('P', (3, 12), (10, 12))
+
+
+def pata(c):
+    c.ell(7, 9, 3.6, 3.2, 'p')
+    for x, y in [(2, 5), (5, 2), (9, 2), (12, 5)]:
+        c.ell(x, y, 1.6, 1.9, 'p')
+    c.pts('P', (6, 10), (8, 10))
+
+
+def estrella(c):
+    rows = [(1, [(6, 7)]), (2, [(6, 7)]), (3, [(5, 8)]), (4, [(5, 8)]), (5, [(1, 12)]), (6, [(2, 11)]), (7, [(3, 10)]), (8, [(4, 9)]),
+            (9, [(3, 10)]), (10, [(3, 5), (8, 10)]), (11, [(2, 4), (9, 11)]), (12, [(2, 3), (10, 11)])]
+    for y, spans in rows:
+        for x0, x1 in spans:
+            c.rect(x0, y, x1, y, 'y')
+    c.pts('w', (6, 2), (5, 5), (4, 5))
+    c.pts('Y', (3, 6), (10, 6), (6, 9), (7, 9))
+
+
+def muelle(c):
+    for y in range(1, 13, 3):
+        c.rect(3, y, 10, y, 'g')
+        c.rect(3, y + 1, 4, y + 1, 'G')
+        c.rect(9, y + 1, 10, y + 1, 'g')
+    c.rect(2, 0, 11, 0, 'G')
+    c.rect(2, 13, 11, 13, 'G')
+    c.pts('s', (4, 1), (4, 4), (4, 7), (4, 10))
+
+
+def destello(c):
+    c.rect(6, 1, 7, 12, 'c')
+    c.rect(1, 6, 12, 7, 'c')
+    c.rect(6, 4, 7, 9, 'w')
+    c.rect(4, 6, 9, 7, 'w')
+    c.pts('y', (3, 3), (10, 3), (3, 10), (10, 10))
+
+
+UI = {
+    'nav-picar': pico, 'nav-ascender': pluma, 'nav-cerdito': cara_cerdo, 'nav-jardin': brote, 'nav-cueva': dragon,
+    'nav-logros': copa, 'nav-ajustes': engranaje,
+    'logro-flor': margarita, 'logro-horno': brasero,
+    'logro': medalla, 'logro-monedas': moneda, 'logro-picos': pico, 'logro-companeros': pata, 'logro-brillo': destello,
+    'mejora-global': estrella, 'mejora-inercia': muelle,
+}
 
 
 def main() -> None:
     args = sys.argv[1:]
     out = Path(args[args.index('--out') + 1]) if '--out' in args else ROOT / 'public' / 'art'
     sheets = []
-    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS)):
+    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI)):
         (out / folder).mkdir(parents=True, exist_ok=True)
         for sprite_id, fn in table.items():
             c = Canvas()
@@ -382,7 +715,7 @@ def main() -> None:
             img.save(out / folder / f'{sprite_id}.png')
             sheets.append(img)
     if '--preview' in args:
-        scale, cols = 6, 8
+        scale, cols = 6, 10
         rows = (len(sheets) + cols - 1) // cols
         cell = (N + 2) * scale + 8
         sheet = Image.new('RGBA', (cols * cell, rows * cell), (225, 235, 215, 255))

@@ -69,7 +69,7 @@ Tranquilo por defecto: sin cajas ni gacha, sin rachas ni recompensas diarias, si
 
 ## Compañeros y Cueva del Dragón
 
-Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mejor herramienta. Pájaro: el cerdito viajero llega un tercio más rápido. Gato: regalo de monedas cada 2 min. Conejo: 1 herramienta gratis cada 6 h reales. Dragoncito (logro de 10 ascensiones): sopla la inercia al máximo cada 3 min y abre la **Cueva** (pestaña propia, permanente): brasas, 4 hornos y un árbol por ramas (Fuego, Escamas, Tesoro) que da hasta ~×1,33 a la producción, más cesta, estancia del visitante y offline. Contenido en `src/content/cave.ts`.
+Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mejor herramienta. Pájaro: el cerdito viajero llega un tercio más rápido. Gato: regalo de monedas cada 2 min. Conejo: 1 herramienta gratis cada 6 h reales. La **Cueva del Dragón** ya no es un compañero: se abre al conseguir 10 plumas en total (pestaña propia, permanente): brasas, 4 hornos y un árbol por ramas (Fuego, Escamas, Tesoro) que da hasta ~×1,33 a la producción, más inercia, cesta, estancia del visitante y offline. Contenido en `src/content/cave.ts`.
 
 ### Mejoras de compañeros, Jardín y visitante dorado
 
@@ -89,4 +89,4 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 
 ### Arte (pixel art)
 
-Todo el arte nuevo está dibujado por código, sin imágenes de IA: `tools/make-pig-pixel.py` (el cerdito y sus pieles, `public/pig/`) y `tools/make-pixel-art.py` (18 herramientas y 6 compañeros en 16×16, `public/art/`). Se regeneran con `python tools/make-pig-pixel.py` y `python tools/make-pixel-art.py`. Las flores, la cueva y los logros siguen con emojis. `tools/make-pig-sprites.py` limpia imágenes generadas con IA, por si se vuelve a usar.
+Todo el arte nuevo está dibujado por código, sin imágenes de IA: `tools/make-pig-pixel.py` (el cerdito y sus pieles, `public/pig/`) y `tools/make-pixel-art.py` (18 herramientas y 6 compañeros en 16×16, `public/art/`). Se regeneran con `python tools/make-pig-pixel.py` y `python tools/make-pixel-art.py`. También están dibujadas las flores, los brotes, los hornos y ramas de la cueva, el dragón, el menú, los logros y las mejoras (carpetas de `public/art/`). Quedan con emoji las reliquias y algunos textos sueltos. El cerdito viajero usa la piel dorada. `tools/make-pig-sprites.py` limpia imágenes generadas con IA, por si se vuelve a usar.

@@ -23,9 +23,9 @@ export const CAVE: CaveDef = {
   ],
   nodes: [
     { id: 'fuego-interior', branch: 'fuego', name: 'Fuego interior', flavor: 'El dragón respira más hondo.', cost: 50, requires: null, effect: { kind: 'embers', value: 1.5 } },
-    { id: 'aliento-frecuente', branch: 'fuego', name: 'Aliento frecuente', flavor: 'Sopla fuego a la inercia cada 150 s.', cost: 400, requires: 'fuego-interior', effect: { kind: 'breathSeconds', value: 150 } },
+    { id: 'aliento-frecuente', branch: 'fuego', name: 'Aliento cálido', flavor: 'Calienta las patitas: +0,1 al tope de la inercia.', cost: 400, requires: 'fuego-interior', effect: { kind: 'momentumMax', value: 0.1 } },
     { id: 'llama-eterna', branch: 'fuego', name: 'Llama eterna', flavor: 'Nunca se apaga, ni de noche.', cost: 3000, requires: 'aliento-frecuente', effect: { kind: 'embers', value: 2 } },
-    { id: 'aliento-ardiente', branch: 'fuego', name: 'Aliento ardiente', flavor: 'Sopla fuego a la inercia cada 120 s.', cost: 20000, requires: 'llama-eterna', effect: { kind: 'breathSeconds', value: 120 } },
+    { id: 'aliento-ardiente', branch: 'fuego', name: 'Aliento ardiente', flavor: 'Un soplo de fuego más: +0,15 al tope de la inercia.', cost: 20000, requires: 'llama-eterna', effect: { kind: 'momentumMax', value: 0.15 } },
     { id: 'escamas-de-bronce', branch: 'escamas', name: 'Escamas de bronce', flavor: 'Brillan y dan suerte a la mina.', cost: 200, requires: null, effect: { kind: 'prodMult', value: 1.1 } },
     { id: 'escamas-de-plata', branch: 'escamas', name: 'Escamas de plata', flavor: 'Más duras que el mejor pico.', cost: 2500, requires: 'escamas-de-bronce', effect: { kind: 'prodMult', value: 1.1 } },
     { id: 'escamas-de-oro', branch: 'escamas', name: 'Escamas de oro', flavor: 'El cerdito se mira en ellas.', cost: 25000, requires: 'escamas-de-plata', effect: { kind: 'prodMult', value: 1.1 } },

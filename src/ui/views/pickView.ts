@@ -76,7 +76,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       buy.addEventListener('click', () => ctx.dispatch((state) => void buyGlobalUpgrade(state, ctx.content, def.id)));
       const el = h('li', { className: 'upgrade-row' }, [
         h('div', { className: 'row-art' }, [
-          emojiBadge('✨'),
+          spriteBadge('ui', def.momentumAdd > 0 ? 'mejora-inercia' : 'mejora-global'),
           h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [def.name]), h('span', { className: 'upgrade-effect' }, [def.momentumAdd > 0 ? `+${def.momentumAdd} al tope de la inercia · ${def.flavor}` : `×${def.mult} a toda la producción · ${def.flavor}`])]),
         ]),
         buy,
@@ -223,13 +223,11 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           ? `desentierra una bellota en ${Math.ceil(c.target - c.progress)} picos`
           : c.kind === 'coinGift'
             ? `te trae monedas en ${formatDuration(c.secondsLeft ?? 0)}`
-            : c.kind === 'fireBreath'
-              ? `sopla fuego en ${formatDuration(c.secondsLeft ?? 0)}`
-              : c.kind === 'bestToolMult' || c.kind === 'visitorSpeed'
-                ? c.describe
-                : (c.secondsLeft ?? 0) > 0
-                    ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
-                    : 'te deja elegir una herramienta gratis:';
+            : c.kind === 'bestToolMult' || c.kind === 'visitorSpeed'
+              ? c.describe
+              : (c.secondsLeft ?? 0) > 0
+                ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
+                : 'te deja elegir una herramienta gratis:';
       setText(line.text, `${c.name} ${what}`);
       setStyleProp(line.fill, 'width', `${((c.progress / c.target) * 100).toFixed(1)}%`);
       if (line.chips) setClass(line.chips, 'hidden', (c.secondsLeft ?? 0) > 0);

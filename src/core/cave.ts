@@ -22,11 +22,6 @@ export function caveSum(state: GameState, content: Content, kind: CaveEffect['ki
   return boughtEffects(state, content, kind).reduce((a, b) => a + b, 0);
 }
 
-/** Intervalo del aliento del dragón: el menor de los comprados (o el base). */
-export function breathSeconds(state: GameState, content: Content, base: number): number {
-  return Math.min(base, ...boughtEffects(state, content, 'breathSeconds'));
-}
-
 /** Brasas por segundo. */
 export function embersPerSecond(state: GameState, content: Content): Decimal {
   let total = D(0);

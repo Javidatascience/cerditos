@@ -6,6 +6,7 @@ import { buyCaveNode, buyFurnace, caveBlow } from '../../core/actions.ts';
 import { caveView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
+import { artSprite, spriteBadge } from '../art.ts';
 import { h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatNumber } from '../format.ts';
 
@@ -24,8 +25,9 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     const button = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
     button.addEventListener('click', () => ctx.dispatch((s) => void buyFurnace(s, ctx.content, f.id)));
     const el = h('li', { className: 'generator-row' }, [
+      spriteBadge('furnaces', f.id),
       h('div', { className: 'perk-info' }, [
-        h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [`${f.emoji} ${f.name}`]), h('span', { className: 'generator-owned' }, [ownedText])]),
+        h('div', { className: 'generator-name-row' }, [h('span', { className: 'upgrade-name' }, [f.name]), h('span', { className: 'generator-owned' }, [ownedText])]),
         h('span', { className: 'generator-flavor' }, [f.flavor]),
         h('span', { className: 'upgrade-effect' }, [prodText]),
       ]),
@@ -47,7 +49,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
   });
 
   const branchBlocks = ctx.content.cave.branches.map((b) =>
-    h('section', { className: 'album-set' }, [h('h3', {}, [`${b.emoji} ${b.name}`]), h('ul', { className: 'perk-list' }, nodeRows.filter((r) => r.branch === b.id).map((r) => r.el))]),
+    h('section', { className: 'album-set' }, [h('h3', { className: 'branch-heading' }, [artSprite('furnaces', `rama-${b.id}`, 'sm'), ` ${b.name}`]), h('ul', { className: 'perk-list' }, nodeRows.filter((r) => r.branch === b.id).map((r) => r.el))]),
   );
 
   const lockText = document.createTextNode('');
@@ -60,7 +62,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     h('h3', { className: 'fly-heading' }, ['Ventajas del dragón']),
     ...branchBlocks,
   ]);
-  const container = h('div', { className: 'mine-view' }, [h('h3', { className: 'fly-heading' }, ['Cueva del Dragón']), h('p', { className: 'settings-hint' }, [lockText]), body]);
+  const container = h('div', { className: 'mine-view' }, [h('div', { className: 'cave-title' }, [artSprite('cave', 'dragon', 'lg'), h('h3', { className: 'fly-heading' }, ['Cueva del Dragón'])]), h('p', { className: 'settings-hint' }, [lockText]), body]);
   root.appendChild(container);
 
   function update(state: GameState): void {

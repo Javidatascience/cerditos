@@ -97,8 +97,6 @@ export type CompanionAbility =
   | { kind: 'tapAcorn'; every: number }
   /** Cada `everySeconds` de juego abierto trae un regalo de `incomeSeconds` segundos de ingresos. */
   | { kind: 'coinGift'; everySeconds: number; incomeSeconds: number }
-  /** Cada `everySeconds` de juego abierto llena la barra de inercia al máximo. */
-  | { kind: 'fireBreath'; everySeconds: number }
   /** Multiplica la producción de la mejor herramienta que tengas. */
   | { kind: 'bestToolMult'; mult: number }
   /** El cerdito viajero llega `speed` veces más rápido. */
@@ -152,7 +150,7 @@ export interface AchievementDef {
 
 /** Efecto de una ventaja de la cueva sobre el juego. */
 export interface CaveEffect {
-  kind: 'embers' | 'breathSeconds' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours';
+  kind: 'embers' | 'momentumMax' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours';
   value: number;
 }
 

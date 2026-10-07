@@ -137,7 +137,9 @@ export function pigSprite(skinId: string, locked = false): HTMLImageElement {
 }
 
 /** Sprite en pixel art de una herramienta o un compañero (public/art/<tipo>/<id>.png, generado con tools/make-pixel-art.py). */
-export function artSprite(kind: 'tools' | 'companions', id: string, size: 'sm' | 'md' | 'lg' = 'md'): HTMLImageElement {
+export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui';
+
+export function artSprite(kind: ArtKind, id: string, size: 'sm' | 'md' | 'lg' = 'md'): HTMLImageElement {
   const img = document.createElement('img');
   img.className = `art-sprite art-sprite-${size}`;
   img.src = `${import.meta.env.BASE_URL}art/${kind}/${id}.png`;
@@ -148,7 +150,7 @@ export function artSprite(kind: 'tools' | 'companions', id: string, size: 'sm' |
 }
 
 /** Insignia (como la de los emojis) con un sprite dentro. */
-export function spriteBadge(kind: 'tools' | 'companions', id: string, locked = false): HTMLSpanElement {
+export function spriteBadge(kind: ArtKind, id: string, locked = false): HTMLSpanElement {
   const el = document.createElement('span');
   el.className = locked ? 'emoji-badge emoji-badge-locked' : 'emoji-badge';
   el.setAttribute('aria-hidden', 'true');

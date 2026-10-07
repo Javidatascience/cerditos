@@ -135,7 +135,7 @@ export function prodMultiplier(state: GameState, content: Content): number {
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
 export function momentumMaxMult(state: GameState, content: Content): number {
   const bought = content.globalUpgrades.reduce((sum, u) => sum + (state.globalUpgrades[u.id] ? (u.momentumAdd ?? 0) : 0), 0);
-  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax');
+  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax') + caveSum(state, content, 'momentumMax');
 }
 
 /** Multiplicador de la inercia con la barra en `momentum` (0..1): 1 + (máx − 1) · barra. */

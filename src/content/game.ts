@@ -122,11 +122,6 @@ export const COMPANIONS: CompanionDef[] = [
       { cost: 16, ability: { kind: 'freeTool', cooldownHours: 3 } },
     ],
   },
-  {
-    id: 'dragon', name: 'Dragoncito', emoji: '🐉', flavor: 'Un regalo por diez ascensiones. Su aliento enciende la inercia al máximo y abre su cueva.', cost: null, achievement: 'ascender-10',
-    ability: { kind: 'fireBreath', everySeconds: 180 },
-    upgrades: [],
-  },
 ];
 
 /** Reliquias: bonos permanentes que dan algunos logros. */

@@ -25,7 +25,7 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
-import { blowGain, blowReady, breathSeconds, furnaceCost } from './cave.ts';
+import { blowGain, blowReady, furnaceCost } from './cave.ts';
 import { flowerAvailable, gardenUnlocked, growMs, neighbors, rand01 } from './garden.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
@@ -270,20 +270,16 @@ function companionTap(state: GameState, content: Content): void {
 export function companionTick(state: GameState, content: Content, dt: number): void {
   for (const c of activeCompanionDefs(state, content)) {
     const ability = companionAbility(state, c);
-    if (ability.kind !== 'coinGift' && ability.kind !== 'fireBreath') continue;
-    const every = ability.kind === 'fireBreath' ? breathSeconds(state, content, ability.everySeconds) : ability.everySeconds;
+    if (ability.kind !== 'coinGift') continue;
+    const every = ability.everySeconds;
     const progress = (state.companionProgress[c.id] ?? 0) + dt;
     if (progress < every) {
       state.companionProgress[c.id] = progress;
       continue;
     }
     state.companionProgress[c.id] = 0;
-    if (ability.kind === 'coinGift') {
-      gain(state, content, baseIncomePerSecond(state, content).mul(ability.incomeSeconds));
-      addEntry(state, `${c.name} te ha traído un regalo de monedas.`, gameClockMs(state));
-    } else {
-      state.momentum = 1;
-    }
+    gain(state, content, baseIncomePerSecond(state, content).mul(ability.incomeSeconds));
+    addEntry(state, `${c.name} te ha traído un regalo de monedas.`, gameClockMs(state));
   }
 }
 

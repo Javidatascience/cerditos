@@ -132,16 +132,15 @@ describe('bellotas, pieles, compañeros y reliquias', () => {
   it('los compañeros se compran, se llevan (máximo 2) y el sobrante quita el más antiguo', () => {
     const state = fresh();
     state.acorns = 100;
-    for (const id of ['topo', 'gato']) expect(buyCompanion(state, CONTENT, id)).toBe(true);
-    expect(toggleCompanion(state, CONTENT, 'dragon')).toBe(false);
+    for (const id of ['topo', 'gato', 'perro']) expect(buyCompanion(state, CONTENT, id)).toBe(true);
+    expect(toggleCompanion(state, CONTENT, 'conejo')).toBe(false); // sin comprar
     toggleCompanion(state, CONTENT, 'topo');
     toggleCompanion(state, CONTENT, 'gato');
-    state.achievements['ascender-10'] = { at: 0 };
-    toggleCompanion(state, CONTENT, 'dragon');
-    expect(state.activeCompanions).toEqual(['gato', 'dragon']);
+    toggleCompanion(state, CONTENT, 'perro');
+    expect(state.activeCompanions).toEqual(['gato', 'perro']);
     expect(state.activeCompanions.length).toBeLessThanOrEqual(MAX_ACTIVE_COMPANIONS);
     toggleCompanion(state, CONTENT, 'gato');
-    expect(state.activeCompanions).toEqual(['dragon']);
+    expect(state.activeCompanions).toEqual(['perro']);
   });
 
   it('las reliquias se consiguen con su logro y dan su bono', () => {
@@ -182,14 +181,6 @@ describe('habilidades de los compañeros', () => {
     expect(state.journal.at(-1)?.text).toContain('Gato');
   });
 
-  it('el dragón enciende la inercia al máximo cada 180 s', () => {
-    const state = fresh();
-    state.activeCompanions = ['dragon'];
-    companionTick(state, CONTENT, 179);
-    expect(state.momentum).toBe(0);
-    companionTick(state, CONTENT, 1);
-    expect(state.momentum).toBe(1);
-  });
 });
 
 describe('perro, pájaro y conejo', () => {
@@ -226,7 +217,6 @@ describe('cueva del dragón', () => {
   function withDragon(): GameState {
     const state = fresh();
     state.plumasTotal = D(10);
-    state.achievements['ascender-10'] = { at: 0 };
     return state;
   }
 
@@ -261,14 +251,13 @@ describe('cueva del dragón', () => {
     expect(visitorModifiers(state, CONTENT).stayBonus).toBe(5);
   });
 
-  it('el aliento frecuente acorta el intervalo del dragón y ascender no borra la cueva', () => {
+  it('el aliento cálido sube el tope de la inercia y ascender no borra la cueva', () => {
     const state = withDragon();
     state.cave.embers = D(1e6);
+    const before = momentumMaxMult(state, CONTENT);
     buyCaveNode(state, CONTENT, 'fuego-interior');
     buyCaveNode(state, CONTENT, 'aliento-frecuente');
-    state.activeCompanions = ['dragon'];
-    companionTick(state, CONTENT, 150);
-    expect(state.momentum).toBe(1);
+    expect(momentumMaxMult(state, CONTENT)).toBeCloseTo(before + 0.1, 9);
     state.lifetime = D(1e9);
     state.maxOwned[CONTENT.tools[G.ascendTool]!.id] = 1;
     ascend(state, CONTENT, 0);

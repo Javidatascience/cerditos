@@ -10,6 +10,21 @@ import { emojiBadge, spriteBadge } from '../art.ts';
 import { h, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
+/** Icono de cada tipo de logro. */
+const ACHIEVEMENT_ICONS: Record<string, string> = {
+  taps: 'logro-picos',
+  lifetime: 'logro-monedas',
+  ascensions: 'nav-ascender',
+  plumasTotal: 'nav-ascender',
+  companionsOwned: 'logro-companeros',
+  companionLevels: 'logro-companeros',
+  flowersFound: 'logro-flor',
+  harvests: 'logro-flor',
+  shinyFound: 'logro-brillo',
+  furnaces: 'logro-horno',
+  caveNodes: 'nav-cueva',
+};
+
 export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
   const summaryText = document.createTextNode('');
   const statsBox = h('dl', { className: 'stats-grid' });
@@ -47,7 +62,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
 
     const card = (a: AchievementView) =>
       h('li', { className: a.owned ? 'album-card' : 'album-card album-card-locked' }, [
-        emojiBadge('🏅', !a.owned),
+        spriteBadge('ui', ACHIEVEMENT_ICONS[a.kind] ?? 'logro', !a.owned),
         h('span', { className: 'upgrade-name' }, [a.name]),
         h('span', { className: 'generator-flavor' }, [a.owned ? a.flavor : '???']),
         reqLine(a.requirement, format),

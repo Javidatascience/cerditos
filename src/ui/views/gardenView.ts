@@ -6,6 +6,7 @@ import { harvestFlower, plantFlower } from '../../core/actions.ts';
 import { gardenView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
+import { artSprite } from '../art.ts';
 import { h, setClass, setDisabled, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -19,7 +20,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
   const harvestText = document.createTextNode('');
 
   const seedButtons = flowers.map((f) => {
-    const btn = h('button', { className: 'chip chip-button', title: f.name }, [f.emoji]) as HTMLButtonElement;
+    const btn = h('button', { className: 'chip chip-button', title: f.name }, [artSprite('flowers', f.id, 'sm')]) as HTMLButtonElement;
     btn.addEventListener('click', () => {
       selected = f.id;
       if (lastState) update(lastState);
@@ -56,7 +57,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     const recipeText = document.createTextNode('');
     const el = h('li', { className: 'cosmetic-row' }, [
       h('div', { className: 'row-art' }, [
-        h('span', { className: 'garden-plot-emoji', 'aria-hidden': 'true' }, [f.emoji]),
+        artSprite('flowers', f.id, 'md'),
         h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [nameText]), h('span', { className: 'generator-flavor' }, [flavorText]), h('span', { className: 'upgrade-effect' }, [effectText]), h('span', { className: 'perk-locked' }, [recipeText])]),
       ]),
     ]);
@@ -81,7 +82,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     if (!view.unlocked) {
       setText(introText, `El jardín se abre al conseguir ${view.unlockPlumas} plumas en total (llevas ${formatNumber(view.plumas, notation)}). Las plumas se consiguen ascendiendo.`);
     } else {
-      const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.emoji} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
+      const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.name} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
       setText(
         introText,
         `Elige una semilla y toca las casillas vacías; toca una flor madura para recogerla. Plantar es gratis. Dos flores vecinas maduras pueden cruzarse en una casilla vacía y dar una flor nueva. Al recogerlas dan un bono temporal; hay un ${view.shinyPercent} % de que salgan brillantes (el bono dura el doble).${activeNow}`,
@@ -101,8 +102,11 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
       const btn = cellButtons[i];
       if (!btn) return;
       const empty = cell.flowerId === null;
-      const glyph = empty ? '' : cell.ready ? cell.emoji : '🌱';
-      if (btn.textContent !== glyph) btn.textContent = glyph;
+      const glyph = empty ? '' : cell.ready ? (cell.flowerId ?? '') : 'brote';
+      if (btn.dataset['glyph'] !== glyph) {
+        btn.dataset['glyph'] = glyph;
+        btn.replaceChildren(...(glyph ? [artSprite('flowers', glyph, 'md')] : []));
+      }
       btn.title = empty ? 'Casilla vacía' : cell.ready ? `${cell.flowerName}: toca para recoger` : `${cell.flowerName}: ${formatDuration(cell.readyInSeconds)}`;
       setClass(btn, 'garden-cell-ready', cell.ready);
       setClass(btn, 'garden-cell-growing', !empty && !cell.ready);

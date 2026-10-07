@@ -250,6 +250,8 @@ export interface AchievementView {
   flavor: string;
   owned: boolean;
   requirement: RequirementView;
+  /** Tipo de requisito (la UI elige el icono). */
+  kind: AchievementReq['kind'];
   /** Si es de "tener N de una herramienta": la herramienta (la UI las agrupa por herramienta). */
   tool: { id: string; name: string; emoji: string; count: number } | null;
 }
@@ -293,6 +295,7 @@ export function achievementViews(state: GameState, content: Content): Achievemen
       flavor: a.flavor,
       owned: state.achievements[a.id] !== undefined,
       requirement: { ...achievementProgress(state, req), describe: describeRequirement(content, req) },
+      kind: req.kind,
       tool: tool && req.kind === 'toolCount' ? { id: tool.id, name: tool.name, emoji: tool.emoji, count: req.count } : null,
     };
   });
@@ -488,8 +491,6 @@ export function abilityText(a: CompanionAbility): string {
       return `1 bellota cada ${a.every} picos`;
     case 'coinGift':
       return `${a.incomeSeconds} s de ingresos cada ${a.everySeconds} s`;
-    case 'fireBreath':
-      return `inercia al máximo cada ${a.everySeconds} s`;
     case 'bestToolMult':
       return `tu mejor herramienta ×${a.mult}`;
     case 'visitorSpeed':
@@ -499,7 +500,7 @@ export function abilityText(a: CompanionAbility): string {
   }
 }
 
-export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'fireBreath' | 'bestToolMult' | 'visitorSpeed' | 'freeTool';
+export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'bestToolMult' | 'visitorSpeed' | 'freeTool';
 
 export interface CompanionStatusView {
   id: string;
@@ -526,10 +527,6 @@ export function companionStatusViews(state: GameState, content: Content, now: nu
         return [{ ...base, progress: Math.min(progress, ability.every), target: ability.every, secondsLeft: null }];
       case 'coinGift':
         return [{ ...base, progress: Math.min(progress, ability.everySeconds), target: ability.everySeconds, secondsLeft: Math.max(0, ability.everySeconds - progress) }];
-      case 'fireBreath': {
-        const every = Math.min(ability.everySeconds, ...content.cave.nodes.filter((n) => state.cave.nodes[n.id] && n.effect.kind === 'breathSeconds').map((n) => n.effect.value));
-        return [{ ...base, progress: Math.min(progress, every), target: every, secondsLeft: Math.max(0, every - progress) }];
-      }
       case 'freeTool': {
         const total = ability.cooldownHours * 3600;
         const wait = rabbitWaitSeconds(state, content, now);
@@ -657,7 +654,7 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         shiny: got?.shiny === true,
         count: got?.count ?? 0,
         effectText: `${gardenEffectText(f.effect, false)} (brillante: ${gardenEffectText(f.effect, true)})`,
-        recipeText: f.recipe ? `Cruza ${name(p)?.emoji} ${name(p)?.name} con ${name(q)?.emoji} ${name(q)?.name} en casillas vecinas` : null,
+        recipeText: f.recipe ? `Cruza ${name(p)?.name} con ${name(q)?.name} en casillas vecinas` : null,
       };
     }),
   };

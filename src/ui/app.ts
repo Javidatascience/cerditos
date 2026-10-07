@@ -7,6 +7,7 @@ import { claimVisitor, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts'
 import { gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
+import { artSprite, pigSprite } from './art.ts';
 import { h, setClass, setText } from './dom.ts';
 import { formatDuration, formatNumber } from './format.ts';
 import type { VisitorScheduler } from './visitor.ts';
@@ -43,13 +44,13 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: 'pick', label: 'Picar', icon: '⛏️', mount: mountPickView },
-  { id: 'fly', label: 'Ascender', icon: '🪶', mount: mountFlyView },
-  { id: 'cosmetics', label: 'Cerdito', icon: '🐷', mount: mountCosmeticsView },
-  { id: 'garden', label: 'Jardín', icon: '🌱', mount: mountGardenView },
-  { id: 'cave', label: 'Cueva', icon: '🐉', mount: mountCaveView },
-  { id: 'achievements', label: 'Logros', icon: '🏅', mount: mountLogbookView },
-  { id: 'settings', label: 'Ajustes', icon: '⚙️', mount: mountSettingsView },
+  { id: 'pick', label: 'Picar', icon: 'nav-picar', mount: mountPickView },
+  { id: 'fly', label: 'Ascender', icon: 'nav-ascender', mount: mountFlyView },
+  { id: 'cosmetics', label: 'Cerdito', icon: 'nav-cerdito', mount: mountCosmeticsView },
+  { id: 'garden', label: 'Jardín', icon: 'nav-jardin', mount: mountGardenView },
+  { id: 'cave', label: 'Cueva', icon: 'nav-cueva', mount: mountCaveView },
+  { id: 'achievements', label: 'Logros', icon: 'nav-logros', mount: mountLogbookView },
+  { id: 'settings', label: 'Ajustes', icon: 'nav-ajustes', mount: mountSettingsView },
 ];
 
 export interface App {
@@ -95,7 +96,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
     TABS.map((t) => {
       const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [
-        h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [t.icon]),
+        h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [artSprite('ui', t.icon)]),
         h('span', { className: 'nav-label' }, [t.label]),
       ]) as HTMLButtonElement;
       navButtons.set(t.id, btn);
@@ -103,10 +104,33 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     }),
   );
 
+  // Bonos temporales de las flores: un icono y los segundos que le quedan, junto a los ingresos.
+  const flowerBuffs = h('span', { className: 'flower-buffs' });
+  const flowerBuffNodes = new Map<string, { el: HTMLElement; text: Text }>();
+  function renderFlowerBuffs(active: { id: string; secondsLeft: number }[]): void {
+    for (const [id, node] of flowerBuffNodes) {
+      if (!active.some((a) => a.id === id)) {
+        node.el.remove();
+        flowerBuffNodes.delete(id);
+      }
+    }
+    for (const a of active) {
+      let node = flowerBuffNodes.get(a.id);
+      if (!node) {
+        const text = document.createTextNode('');
+        const el = h('span', { className: 'flower-buff' }, [artSprite('flowers', a.id, 'sm'), text]);
+        flowerBuffs.appendChild(el);
+        node = { el, text };
+        flowerBuffNodes.set(a.id, node);
+      }
+      setText(node.text, ` ${formatDuration(a.secondsLeft)}`);
+    }
+  }
+
   const header = h('header', { className: 'app-header' }, [
     h('div', { className: 'header-text' }, [
       h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [coinsText]), h('span', { className: 'currency-name' }, [acornsText])]),
-      h('div', { className: 'per-second-row' }, [incomeText]),
+      h('div', { className: 'per-second-row' }, [incomeText, flowerBuffs]),
     ]),
   ]);
 
@@ -138,7 +162,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       visitorBar = h('div', {});
       visitorSlot.replaceChildren(
         h('div', { className: kind === 'golden' ? 'visitor-card visitor-card-golden' : 'visitor-card', role: 'alert' }, [
-          h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, [kind === 'golden' ? '✨🐷' : '🐷']),
+          h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, [pigSprite('dorado')]),
           h('span', { className: 'visitor-text' }, [text, h('span', { className: 'visitor-left' }, [visitorLeft])]),
           accept,
           h('div', { className: 'visitor-timer', 'aria-hidden': 'true' }, [visitorBar]),
@@ -164,8 +188,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     setText(coinsText, `🪙 ${formatNumber(head.coins, notation)}`);
     setText(acornsText, `🌰 ${head.bellotas}`);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
-    const flowers = gardenView(state, content, 0).active.map((a) => ` · ${a.emoji} ${formatDuration(a.secondsLeft)}`).join('');
-    setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}${flowers}`);
+    setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
+    renderFlowerBuffs(gardenView(state, content, 0).active);
     setClass(header, 'boosted', state.buff !== null);
     activeView?.update(state);
   }

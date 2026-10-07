@@ -1543,6 +1543,44 @@ body {
   font-weight: 800;
 }
 
+/* Iconos pixel art del menú, la cueva y el jardín */
+.nav-icon .art-sprite {
+  width: 32px;
+  height: 32px;
+}
+
+.flower-buffs {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.flower-buff {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cave-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.branch-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.garden-cell .art-sprite {
+  width: 48px;
+  height: 48px;
+}
+
+.visitor-emoji .pig-sprite {
+  height: 42px;
+}
+
 /* Jardín: cuadrícula de casillas */
 .garden-grid {
   display: grid;
