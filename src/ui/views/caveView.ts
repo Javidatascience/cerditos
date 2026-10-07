@@ -39,7 +39,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
   const nodeRows = ctx.content.cave.nodes.map((n) => {
     const stateText = document.createTextNode('');
     const costText = document.createTextNode('');
-    const button = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
+    const button = h('button', { className: 'buy-button' }, [costText, artSprite('ui', 'brasa', 'sm')]) as HTMLButtonElement;
     button.addEventListener('click', () => ctx.dispatch((s) => void buyCaveNode(s, ctx.content, n.id)));
     const el = h('li', { className: 'perk-row' }, [
       h('div', { className: 'perk-info' }, [h('span', { className: 'upgrade-name' }, [n.name]), h('span', { className: 'generator-flavor' }, [n.flavor]), h('span', { className: 'perk-locked' }, [stateText])]),
@@ -54,7 +54,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
 
   const lockText = document.createTextNode('');
   const body = h('div', {}, [
-    h('p', { className: 'settings-hint' }, [embersText, ' · ', rateText]),
+    h('p', { className: 'settings-hint' }, [artSprite('ui', 'brasa', 'sm'), embersText, ' · ', rateText]),
     blowButton,
     h('p', { className: 'settings-hint' }, [bonusText]),
     h('h3', { className: 'fly-heading' }, ['Hornos']),
@@ -69,8 +69,8 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     const notation = state.settings.notation;
     const view = caveView(state, ctx.content);
     setClass(body, 'hidden', !view.unlocked);
-    setText(lockText, view.unlocked ? '' : `La cueva se abre al conseguir ${view.unlockPlumas} plumas en total (llevas ${formatNumber(view.plumas, notation)}). Las plumas se consiguen ascendiendo.`);
-    setText(embersText, `🔥 ${formatNumber(view.embers, notation)} brasas`);
+    setText(lockText, view.unlocked ? '' : `La cueva se abre al conseguir ${view.unlockPlumas} esmeraldas en total (llevas ${formatNumber(view.plumas, notation)}). Las esmeraldas se consiguen ascendiendo.`);
+    setText(embersText, ` ${formatNumber(view.embers, notation)} brasas`);
     setText(rateText, `+${formatNumber(view.perSecond, notation)}/s`);
     setText(blowText, view.blowReady ? `Soplar (+${formatNumber(view.blowGain, notation)})` : 'Soplar…');
     setDisabled(blowButton, !view.blowReady);
@@ -85,7 +85,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     for (const row of nodeRows) {
       const node = view.branches.flatMap((b) => b.nodes).find((x) => x.id === row.id)!;
       setText(row.stateText, node.bought ? 'Conseguida' : node.lockedBy ? `Requiere: ${node.lockedBy}` : '');
-      setText(row.costText, `${formatNumber(node.cost, notation)} 🔥`);
+      setText(row.costText, `${formatNumber(node.cost, notation)} `);
       setDisabled(row.button, !node.canBuy);
       setClass(row.button, 'hidden', node.bought);
       setClass(row.el, 'perk-row-locked', node.lockedBy !== null);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { buyPerk, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
@@ -104,13 +104,13 @@ describe('mejoras globales', () => {
 });
 
 describe('bellotas, pieles, compañeros y reliquias', () => {
-  it('el cerdito viajero da siempre 1 bellota, sea cual sea la recompensa', () => {
+  it('el cerdito viajero da siempre 2 bellotas, sea cual sea la recompensa', () => {
     const state = fresh();
     claimVisitor(state, CONTENT, 'injection');
     claimVisitor(state, CONTENT, 'boost');
-    expect(state.acorns).toBe(2);
+    expect(state.acorns).toBe(2 * VISITOR_ACORNS);
     expect(state.stats.visitors).toBe(2);
-    expect(headerView(state, CONTENT).bellotas).toBe(2);
+    expect(headerView(state, CONTENT).bellotas).toBe(4);
   });
 
   it('las pieles se compran con bellotas, se equipan y las de logro se tienen al conseguirlo', () => {
@@ -295,7 +295,7 @@ describe('mejoras de compañeros', () => {
 });
 
 describe('cerdito viajero dorado', () => {
-  it('da ingresos grandes, un impulso mayor y 3 bellotas', () => {
+  it('da ingresos grandes, un impulso mayor y el doble de bellotas', () => {
     const state = fresh();
     const base = baseIncomePerSecond(state, CONTENT).toNumber();
     claimVisitor(state, CONTENT, 'golden');
@@ -370,6 +370,23 @@ describe('jardín', () => {
     const coins = state.coins.toNumber();
     harvestFlower(state, CONTENT, 0, 2 * 3600_000, 0.5);
     expect(state.coins.toNumber() - coins).toBeCloseTo(base * 300, 4);
+  });
+});
+
+describe('árbol de ventajas', () => {
+  it('cada nivel de Abono abre una rama y todas las ventajas tienen un tope de 5 niveles', () => {
+    const state = fresh();
+    state.plumas = D(1e6);
+    for (const perk of CONTENT.perks) expect(perk.maxLevel).toBeLessThanOrEqual(5);
+    expect(buyPerk(state, CONTENT, 'manos')).toBe(false); // pide Abono nivel 2
+    expect(buyPerk(state, CONTENT, 'comienzo')).toBe(false); // pide Abono nivel 1
+    expect(buyPerk(state, CONTENT, 'abono')).toBe(true);
+    expect(buyPerk(state, CONTENT, 'comienzo')).toBe(true);
+    expect(buyPerk(state, CONTENT, 'manos')).toBe(false);
+    buyPerk(state, CONTENT, 'abono');
+    expect(buyPerk(state, CONTENT, 'manos')).toBe(true);
+    for (let i = 0; i < 10; i++) buyPerk(state, CONTENT, 'abono');
+    expect(state.perks['abono']).toBe(5);
   });
 });
 

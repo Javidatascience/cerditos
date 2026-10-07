@@ -50,8 +50,20 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     ctx.dispatch((state) => {
       const gained = tap(state, ctx.content);
       floatText(`+${formatNumber(gained, state.settings.notation)}`);
+      dipPig();
     }),
   );
+
+  /** El cerdito se agacha un instante al picar (se reinicia la animación aunque piques muy seguido). */
+  function dipPig(): void {
+    if (!ctx.effectsOn()) return;
+    pigSlot.classList.remove('pig-dip');
+    void pigSlot.offsetWidth; // fuerza a reiniciar la animación
+    pigSlot.classList.add('pig-dip');
+  }
+  pigSlot.addEventListener('animationend', (e) => {
+    if ((e as AnimationEvent).animationName === 'pig-dip') pigSlot.classList.remove('pig-dip');
+  });
 
   // --- Inercia: cuanto más picas, más sube la producción ---
   const momentumText = document.createTextNode('');
@@ -185,6 +197,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   function update(state: GameState): void {
     const notation = state.settings.notation;
     const head = headerView(state, ctx.content);
+    setClass(container, 'no-effects', !ctx.effectsOn());
 
     const best = Math.max(-1, ...ctx.content.tools.map((t, i) => ((state.tools[t.id] ?? 0) > 0 ? i : -1)));
     const signature = state.activeSkin;

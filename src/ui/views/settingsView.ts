@@ -152,7 +152,7 @@ export function mountSettingsView(root: HTMLElement, ctx: UiContext): View {
 
   function summarize(state: GameState): string {
     const notation = state.settings.notation;
-    return `${formatNumber(state.lifetime, notation)} monedas ganadas, ${formatNumber(state.plumasTotal, notation)} plumas en total y ${state.ascensions} ascensiones. ¿Reemplazar la partida actual?`;
+    return `${formatNumber(state.lifetime, notation)} monedas ganadas, ${formatNumber(state.plumasTotal, notation)} esmeraldas en total y ${state.ascensions} ascensiones. ¿Reemplazar la partida actual?`;
   }
 
   function update(state: GameState): void {

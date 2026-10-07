@@ -3,7 +3,7 @@
 // mount/update/destroy. Ver docs/06-mina.md.
 
 import { VISITOR_INJECTION_SECONDS } from '../core/actions.ts';
-import { claimVisitor, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
+import { claimVisitor, VISITOR_ACORNS, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
 import { gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
@@ -129,7 +129,10 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
 
   const header = h('header', { className: 'app-header' }, [
     h('div', { className: 'header-text' }, [
-      h('div', { className: 'currency-row' }, [h('span', { className: 'currency-pill' }, [coinsText]), h('span', { className: 'currency-name' }, [acornsText])]),
+      h('div', { className: 'currency-row' }, [
+        h('span', { className: 'currency-pill' }, [artSprite('ui', 'moneda', 'md'), coinsText]),
+        h('span', { className: 'currency-name' }, [artSprite('ui', 'bellota', 'sm'), acornsText]),
+      ]),
       h('div', { className: 'per-second-row' }, [incomeText, flowerBuffs]),
     ]),
   ]);
@@ -147,10 +150,10 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       const notation = state.settings.notation;
       const text =
         kind === 'golden'
-          ? `¡Un cerdito viajero DORADO! Trae un saco de ${formatNumber(visitorInjectionValue(state, content).mul(VISITOR_GOLDEN.injectionSeconds / VISITOR_INJECTION_SECONDS), notation)} monedas, ×${VISITOR_GOLDEN.mult} de producción y de picos durante ${formatDuration(VISITOR_GOLDEN.seconds)} y ${VISITOR_GOLDEN.acorns} 🌰.`
+          ? `¡Un cerdito viajero DORADO! Trae un saco de ${formatNumber(visitorInjectionValue(state, content).mul(VISITOR_GOLDEN.injectionSeconds / VISITOR_INJECTION_SECONDS), notation)} monedas, ×${VISITOR_GOLDEN.mult} de producción y de picos durante ${formatDuration(VISITOR_GOLDEN.seconds)} y ${VISITOR_GOLDEN.acorns} bellotas.`
           : kind === 'injection'
-          ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas y 1 🌰.`
-          : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}, y 1 🌰.`;
+            ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas y ${VISITOR_ACORNS} bellotas.`
+            : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}, y ${VISITOR_ACORNS} bellotas.`;
       const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
       accept.addEventListener('click', () => {
         dispatch((s) => claimVisitor(s, content, kind));
@@ -185,8 +188,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     renderVisitor();
     const head = headerView(state, content);
     const notation = state.settings.notation;
-    setText(coinsText, `🪙 ${formatNumber(head.coins, notation)}`);
-    setText(acornsText, `🌰 ${head.bellotas}`);
+    setText(coinsText, ` ${formatNumber(head.coins, notation)}`);
+    setText(acornsText, ` ${head.bellotas}`);
     const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
     setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
     renderFlowerBuffs(gardenView(state, content, 0).active);

@@ -140,7 +140,7 @@ export function ascend(state: GameState, content: Content, now: number): number 
   state.basketSince = state.time;
   updateReveals(state, content);
 
-  addEntry(state, `Echas a volar y dejas ${pending} pluma${pending === 1 ? '' : 's'}. El cerdito vuelve a empezar, con más ganas.`, now);
+  addEntry(state, `Subes a la superficie con ${pending} esmeralda${pending === 1 ? '' : 's'}. El cerdito vuelve a empezar, con más ganas.`, now);
   return pending;
 }
 
@@ -163,14 +163,16 @@ export const VISITOR_INJECTION_SECONDS = 30;
 /** Multiplicador y duración del impulso de un visitante. */
 export const VISITOR_BOOST = { mult: 3, seconds: 15 };
 /** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 3 bellotas. */
-export const VISITOR_GOLDEN = { injectionSeconds: 180, mult: 5, seconds: 25, acorns: 3 };
+export const VISITOR_GOLDEN = { injectionSeconds: 180, mult: 5, seconds: 25, acorns: 6 };
+/** Bellotas que da siempre el cerdito viajero normal. */
+export const VISITOR_ACORNS = 2;
 
 /**
  * Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción
  * y picos durante 60 s. Además siempre da 1 bellota (la segunda moneda, para cosméticos).
  */
 export function claimVisitor(state: GameState, content: Content, kind: VisitorKind): void {
-  state.acorns += kind === 'golden' ? VISITOR_GOLDEN.acorns : 1;
+  state.acorns += kind === 'golden' ? VISITOR_GOLDEN.acorns : VISITOR_ACORNS;
   state.stats.visitors += 1;
   if (kind === 'golden') {
     state.buff = { mult: VISITOR_GOLDEN.mult, until: state.time + VISITOR_GOLDEN.seconds };

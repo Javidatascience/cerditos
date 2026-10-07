@@ -246,7 +246,7 @@ describe('ventajas permanentes', () => {
     const state = fresh();
     const base = tapGain(state, CONTENT).toNumber();
     state.perks['manos'] = 2;
-    expect(tapGain(state, CONTENT).toNumber()).toBeCloseTo(base * (1 + 1.5 * 2), 9);
+    expect(tapGain(state, CONTENT).toNumber()).toBeCloseTo(base * (1 + 3 * 2), 9);
     const cost = toolBulkCost(state, CONTENT, PICO, 0, 1).toNumber();
     state.perks['ahorro'] = 1;
     expect(toolBulkCost(state, CONTENT, PICO, 0, 1).toNumber()).toBeCloseTo(cost * 0.93, 9);

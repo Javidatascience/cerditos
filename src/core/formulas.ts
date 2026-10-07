@@ -21,7 +21,7 @@ export function perkLevelOf(state: GameState, id: PerkId): number {
   return state.perks[id] ?? 0;
 }
 
-/** coste(nivel L → L+1) = ceil(base · crecimiento^L), en plumas. */
+/** coste(nivel L → L+1) = ceil(base · crecimiento^L), en esmeraldas. */
 export function perkCost(perk: PerkDef, level: number): Decimal {
   return D(perk.baseCost).mul(Decimal.pow(perk.costGrowth, level)).ceil();
 }
@@ -29,7 +29,13 @@ export function perkCost(perk: PerkDef, level: number): Decimal {
 export function perkAvailable(state: GameState, perk: PerkDef): boolean {
   const level = perkLevelOf(state, perk.id);
   if (perk.maxLevel !== null && level >= perk.maxLevel) return false;
-  return perk.requires.every((id) => perkLevelOf(state, id) > 0);
+  return perkRequirementsMet(state, perk);
+}
+
+/** ¿Se cumplen los requisitos de otras ventajas (cada una al nivel pedido)? Ignora el tope propio. */
+export function perkRequirementsMet(state: GameState, perk: PerkDef): boolean {
+  const needed = perk.requiresLevel ?? 1;
+  return perk.requires.every((id) => perkLevelOf(state, id) >= needed);
 }
 
 function perksOfKind(state: GameState, content: Content, kind: PerkEffect['kind']): { perk: PerkDef; level: number }[] {

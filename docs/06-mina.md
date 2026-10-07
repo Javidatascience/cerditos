@@ -94,3 +94,11 @@ Todo el arte nuevo está dibujado por código, sin imágenes de IA: `tools/make-
 ### Estilo visual (tema pixel)
 
 Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixeladas y esta es la que distingue bien el 5 de la S y el 0 de la O). Paneles y botones con borde grueso oscuro y sombra dura sin difuminar; los botones se hunden con `transform` sin cambiar de tamaño (nada se mueve alrededor). Escena con cielo y hierba planos; barras en bloques. Todo el tema está en el último bloque de `src/ui/styles.css`. Las reliquias también tienen sprite (`public/art/relics/`). Mantener pulsado el botón de comprar herramienta repite la compra.
+
+### Esmeraldas y árbol de ventajas
+
+- Las **plumas** pasan a llamarse **esmeraldas** (solo en pantalla; en el código y el guardado siguen como `plumas`). Hay sprite de esmeralda, bellota y moneda.
+- El **cerdito viajero** da 2 bellotas (el dorado, 6).
+- **Ascender** muestra un árbol de ventajas (`src/ui/views/perkTreeView.ts`): cada nivel de cada ventaja es un círculo con el dibujo de la ventaja, unidos por líneas. Todas tienen tope de 5 niveles. El Abono es la raíz (horizontal) y cada uno de sus niveles abre una rama (`requiresLevel` en `content/perks.ts`: Buen comienzo con el nivel 1, Manos con el 2, Siesta con el 3, Regateo con el 4); Veta rica (antes Plumas al viento) y Raíces profundas cuelgan del Regateo y la Veta. Las posiciones están en `layout`. Tocar un círculo abre un cuadro con el efecto, el coste y el botón de comprar.
+- En la pestaña *Cerdito* van primero los compañeros y debajo las pieles.
+- El cerdito respira (dos fotogramas) y se agacha al picar; con *Efectos* desactivado o con `prefers-reduced-motion` no se anima. El icono de la app y el favicon son el cerdito sobre cielo y hierba (`python tools/make-app-icons.py`).

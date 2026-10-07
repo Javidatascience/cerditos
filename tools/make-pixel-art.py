@@ -702,6 +702,11 @@ UI = {
 }
 
 
+# Esmeralda, bellota, brasa y los iconos del árbol de ventajas: están en _gems.py y se cargan aquí para
+# usar las mismas funciones de dibujo (Canvas, flama, moneda…).
+exec(compile(Path(__file__).with_name('_gems.py').read_text(encoding='utf-8'), '_gems.py', 'exec'))
+UI['nav-ascender'] = esmeralda  # noqa: F821 (definida en _gems.py)
+
 # ---------------------------------------------------------------- reliquias
 
 
@@ -786,7 +791,7 @@ def r_corazon_agujero(c):
 
 
 RELICS = {
-    'callo-de-oro': r_callo, 'pico-ancestral': r_pico_ancestral, 'pluma-eterna': r_pluma_eterna, 'reloj-de-bolsillo': r_reloj,
+    'callo-de-oro': r_callo, 'pico-ancestral': r_pico_ancestral, 'pluma-eterna': esmeralda_eterna,  # noqa: F821 'reloj-de-bolsillo': r_reloj,
     'muelle-magico': r_muelle, 'monedero-sin-fondo': r_monedero, 'corazon-de-agujero': r_corazon_agujero,
 }
 
@@ -795,7 +800,7 @@ def main() -> None:
     args = sys.argv[1:]
     out = Path(args[args.index('--out') + 1]) if '--out' in args else ROOT / 'public' / 'art'
     sheets = []
-    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('relics', RELICS)):
+    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('ui', GEMS), ('relics', RELICS)):  # noqa: F821
         (out / folder).mkdir(parents=True, exist_ok=True)
         for sprite_id, fn in table.items():
             c = Canvas()

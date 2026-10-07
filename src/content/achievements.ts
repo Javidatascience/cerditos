@@ -22,8 +22,8 @@ const fmt = (n: number) => n.toLocaleString('es-ES');
 
 export const ACHIEVEMENTS: AchievementDef[] = [
   ...[100, 1000, 10000].map((n) => ({ id: `picar-${n}`, name: `Picar ×${fmt(n)}`, flavor: 'Tus manos ya tienen callo bueno.', requires: { kind: 'taps' as const, count: n } })),
-  ...[1, 3, 5, 10, 25].map((n) => ({ id: `ascender-${n}`, name: n === 1 ? 'Primera ascensión' : `Ascender ×${n}`, flavor: 'Las plumas no se las lleva el viento.', requires: { kind: 'ascensions' as const, count: n } })),
-  ...[10, 100, 1000].map((n) => ({ id: `plumas-${n}`, name: `${fmt(n)} plumas`, flavor: 'Un almohadón entero.', requires: { kind: 'plumasTotal' as const, count: n } })),
+  ...[1, 3, 5, 10, 25].map((n) => ({ id: `ascender-${n}`, name: n === 1 ? 'Primera ascensión' : `Ascender ×${n}`, flavor: 'Las esmeraldas no se las lleva nadie.', requires: { kind: 'ascensions' as const, count: n } })),
+  ...[10, 100, 1000].map((n) => ({ id: `plumas-${n}`, name: `${fmt(n)} esmeraldas`, flavor: 'Un cofre entero.', requires: { kind: 'plumasTotal' as const, count: n } })),
   ...[1e3, 1e6, 1e9, 1e12, 1e15, 1e18, 1e24].map((n) => ({ id: `monedas-${n}`, name: `${fmt(n)} monedas`, flavor: 'Más monedas que granos de arena en la mina.', requires: { kind: 'lifetime' as const, amount: n } })),
   ...[1, 3, 5].map((n) => ({ id: `companeros-${n}`, name: n === 1 ? 'Primer compañero' : `${n} compañeros`, flavor: 'Mejor acompañado que solo.', requires: { kind: 'companionsOwned' as const, count: n } })),
   ...[1, 5, 10, 15].map((n) => ({ id: `mejoras-companeros-${n}`, name: n === 1 ? 'Primera mejora de compañero' : `${n} niveles de compañeros`, flavor: 'Se les nota más contentos.', requires: { kind: 'companionLevels' as const, count: n } })),

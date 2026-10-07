@@ -48,7 +48,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
       ['Picos', formatNumber(stats.taps, notation)],
       ['Tiempo de juego', formatDuration(stats.playSeconds)],
       ['Ascensiones', String(stats.ascensions)],
-      ['Plumas en total', formatNumber(stats.plumasTotal, notation)],
+      ['Esmeraldas en total',formatNumber(stats.plumasTotal, notation)],
       ['Herramientas ahora', formatNumber(stats.toolsOwned, notation)],
       ['Mejoras compradas', String(stats.upgradesBought)],
       ['Cerditos viajeros', String(stats.visitors)],

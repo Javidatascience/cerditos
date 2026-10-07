@@ -80,7 +80,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     const view = gardenView(state, ctx.content, Date.now());
     setClass(playArea, 'hidden', !view.unlocked);
     if (!view.unlocked) {
-      setText(introText, `El jardín se abre al conseguir ${view.unlockPlumas} plumas en total (llevas ${formatNumber(view.plumas, notation)}). Las plumas se consiguen ascendiendo.`);
+      setText(introText, `El jardín se abre al conseguir ${view.unlockPlumas} esmeraldas en total (llevas ${formatNumber(view.plumas, notation)}). Las esmeraldas se consiguen ascendiendo.`);
     } else {
       const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.name} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
       setText(

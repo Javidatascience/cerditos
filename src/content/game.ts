@@ -128,7 +128,7 @@ export const COMPANIONS: CompanionDef[] = [
 export const RELICS: RelicDef[] = [
   { id: 'callo-de-oro', name: 'Callo de oro', emoji: '🖐️', flavor: 'De tanto picar, la mano se ha vuelto de oro.', achievement: 'picar-1000', effect: { kind: 'tapMult', perLevel: 1 } },
   { id: 'pico-ancestral', name: 'Pico ancestral', emoji: '🪓', flavor: 'Lo usaba la abuela del abuelo.', achievement: 'pico-de-madera-100', effect: { kind: 'prodMult', perLevel: 1.1 } },
-  { id: 'pluma-eterna', name: 'Pluma eterna', emoji: '🪶', flavor: 'No se cae nunca, ni con el viento.', achievement: 'ascender-3', effect: { kind: 'plumaMult', perLevel: 0.1 } },
+  { id: 'pluma-eterna', name: 'Esmeralda eterna', emoji: '💎', flavor: 'No se apaga nunca, ni en lo más hondo de la mina.', achievement: 'ascender-3', effect: { kind: 'plumaMult', perLevel: 0.1 } },
   { id: 'reloj-de-bolsillo', name: 'Reloj de bolsillo', emoji: '⏱️', flavor: 'Atrasa un poco, a favor del cerdito.', achievement: 'plumas-100', effect: { kind: 'offlineHours', perLevel: 1 } },
   { id: 'muelle-magico', name: 'Muelle mágico', emoji: '🌀', flavor: 'Quien lo toca, no quiere parar.', achievement: 'grua-perforadora-25', effect: { kind: 'momentumMax', perLevel: 0.25 } },
   { id: 'monedero-sin-fondo', name: 'Monedero sin fondo', emoji: '👛', flavor: 'Siempre cabe una moneda más.', achievement: 'monedas-1000000000000', effect: { kind: 'costMult', perLevel: 0.95 } },

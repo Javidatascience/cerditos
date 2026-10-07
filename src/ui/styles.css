@@ -1869,3 +1869,203 @@ button {
 .settings-hint {
   color: var(--color-text-muted);
 }
+
+/* Cerdito viajero: siempre legible, también en modo oscuro (la tarjeta dorada tiene sus propios colores) */
+.visitor-card {
+  background: var(--color-surface);
+  color: var(--color-text);
+  opacity: 1;
+}
+
+.visitor-card .visitor-text,
+.visitor-card .visitor-left {
+  color: inherit;
+}
+
+.visitor-card-golden {
+  background: #f6d24a;
+  color: #2d1a00;
+  border-color: var(--ink);
+}
+
+.visitor-card-golden .visitor-left {
+  color: #5a3a00;
+}
+
+.visitor-card-golden .visitor-timer {
+  background: rgba(45, 26, 0, 0.25);
+}
+
+/* El cerdito se apoya en la hierba en vez de flotar */
+.mine-stage {
+  margin-bottom: 14px;
+}
+
+.mine-pig {
+  position: relative;
+  top: 17px;
+  transform-origin: 50% 100%;
+}
+
+/* El cerdito respira (dos fotogramas, como en un sprite) y se agacha al picar */
+.mine-pig .pig-sprite {
+  transform-origin: 50% 100%;
+  animation: pig-breathe 1.6s steps(1, end) infinite;
+}
+
+.mine-pig.pig-dip {
+  animation: pig-dip 0.16s steps(2, end);
+}
+
+@keyframes pig-breathe {
+  0% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1, 1.05);
+  }
+}
+
+@keyframes pig-dip {
+  50% {
+    transform: translateY(5px) scale(1.06, 0.86);
+  }
+}
+
+.no-effects .pig-sprite,
+.no-effects .mine-pig {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mine-pig .pig-sprite,
+  .mine-pig.pig-dip {
+    animation: none;
+  }
+}
+
+.mine-companions {
+  bottom: 30px;
+}
+
+/* Iconos de monedas y bellotas */
+.currency-pill .art-sprite {
+  margin-right: 4px;
+}
+
+.currency-name .art-sprite,
+.acorn-line .art-sprite {
+  margin-right: 2px;
+}
+
+.buy-button .art-sprite,
+.amount-button .art-sprite {
+  vertical-align: -6px;
+}
+
+/* Árbol de ventajas */
+.perk-tree-wrap {
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.perk-tree {
+  position: relative;
+  margin: 8px auto 24px;
+}
+
+.perk-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.perk-line {
+  stroke: var(--color-disabled-bg);
+  stroke-width: 6;
+  stroke-linecap: square;
+}
+
+.perk-line-open {
+  stroke: var(--btn-orange);
+  stroke-dasharray: 3 6;
+}
+
+.perk-line-done {
+  stroke: #f2c94c;
+}
+
+.perk-node {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 3px 0 var(--ink);
+  touch-action: manipulation;
+}
+
+.perk-node .art-sprite {
+  width: 26px;
+  height: 26px;
+}
+
+.perk-node-level {
+  position: absolute;
+  right: -6px;
+  bottom: -8px;
+  min-width: 18px;
+  padding: 0 3px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--pill-bg);
+  color: var(--ink);
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+.perk-node-locked {
+  background: var(--color-disabled-bg);
+}
+
+.perk-node-locked .art-sprite {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.perk-node-next {
+  background: var(--color-surface);
+}
+
+.perk-node-affordable {
+  background: #fff3b0;
+  border-color: var(--ink);
+  box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #f2c94c;
+}
+
+.perk-node-bought {
+  background: #7ed36f;
+}
+
+.perk-node-selected {
+  transform: translateY(-2px) scale(1.12);
+  z-index: 3;
+}
+
+.perk-bubble {
+  position: absolute;
+  z-index: 5;
+  width: 230px;
+  padding: 10px;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  background: var(--color-surface);
+  box-shadow: 0 4px 0 var(--ink);
+  display: grid;
+  gap: 4px;
+}

@@ -59,7 +59,7 @@ describe('selectores', () => {
   it('las ventajas bloqueadas dicen qué requieren', () => {
     const state = createInitialState(CONTENT, 0);
     const comienzo = perkViews(state, CONTENT).find((p) => p.id === 'comienzo')!;
-    expect(comienzo.missingRequirements).toEqual(['Abono de calidad']);
+    expect(comienzo.missingRequirements).toEqual(['Abono de calidad (nivel 1)']);
     expect(comienzo.purchasable).toBe(false);
   });
 

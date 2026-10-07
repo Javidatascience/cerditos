@@ -64,7 +64,12 @@ export interface PerkDef {
   baseCost: number;
   costGrowth: number;
   requires: PerkId[];
+  /** Nivel que hay que tener en cada ventaja requerida (1 si no se indica). */
+  requiresLevel?: number;
   effect: PerkEffect;
+  /** Icono (sprite de `public/art/ui/`) y posición en el árbol: cada nivel es un nodo; `dir` dice hacia dónde crece la cadena. */
+  icon?: string;
+  layout?: { col: number; row: number; dir: 'right' | 'down' };
 }
 
 /** Mejora global: ×`mult` a toda la producción. Se desbloquea al ganar `unlockAt` monedas en total; se compra con `cost`. Se pierde al ascender. */

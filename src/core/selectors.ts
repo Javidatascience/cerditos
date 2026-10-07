@@ -187,6 +187,13 @@ export interface PerkView {
   purchasable: boolean;
   currentEffectText: string;
   nextEffectText: string | null;
+  /** Para el árbol: icono, posición, si se cumplen los requisitos de otras ventajas, y coste y efecto de cada nivel (índice = nivel − 1). */
+  icon: string;
+  layout: { col: number; row: number; dir: 'right' | 'down' } | null;
+  requirementsMet: boolean;
+  requires: { id: string; level: number }[];
+  costs: Decimal[];
+  effectTexts: string[];
 }
 
 function perkEffectValueText(effect: PerkEffect, level: number): string {
@@ -200,9 +207,9 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
     case 'tapMult':
       return `cada pico ×${(1 + effect.perLevel * level).toFixed(1)}`;
     case 'plumaMult':
-      return `+${Math.round(effect.perLevel * level * 100)} % plumas al ascender`;
+      return `+${Math.round(effect.perLevel * level * 100)} % esmeraldas al ascender`;
     case 'perPlumaBonus':
-      return `+${Math.round(effect.perLevel * level * 100)} % extra en el bono de plumas`;
+      return `+${Math.round(effect.perLevel * level * 100)} % extra en el bono de esmeraldas`;
     case 'offlineHours':
       return `+${effect.perLevel * level} h de producción mientras no estás`;
     case 'momentumMax':
@@ -215,8 +222,18 @@ export function perkViews(state: GameState, content: Content): PerkView[] {
     const level = perkLevelOf(state, perk.id);
     const maxed = perk.maxLevel !== null && level >= perk.maxLevel;
     const cost = perkCost(perk, level);
-    const missingRequirements = perk.requires.filter((id) => perkLevelOf(state, id) <= 0).map((id) => content.perks.find((p) => p.id === id)?.name ?? id);
+    const needed = perk.requiresLevel ?? 1;
+    const missingRequirements = perk.requires
+      .filter((id) => perkLevelOf(state, id) < needed)
+      .map((id) => `${content.perks.find((p) => p.id === id)?.name ?? id} (nivel ${needed})`);
+    const levels = perk.maxLevel ?? 1;
     return {
+      icon: perk.icon ?? 'esmeralda',
+      layout: perk.layout ?? null,
+      requirementsMet: missingRequirements.length === 0,
+      requires: perk.requires.map((id) => ({ id, level: needed })),
+      costs: Array.from({ length: levels }, (_, i) => perkCost(perk, i)),
+      effectTexts: Array.from({ length: levels }, (_, i) => perkEffectValueText(perk.effect, i + 1)),
       id: perk.id,
       name: perk.name,
       flavor: perk.flavor,
@@ -265,7 +282,7 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
     case 'ascensions':
       return (f) => `Asciende ${f(D(req.count))} ${req.count === 1 ? 'vez' : 'veces'}`;
     case 'plumasTotal':
-      return (f) => `Consigue ${f(D(req.count))} plumas en total`;
+      return (f) => `Consigue ${f(D(req.count))} ${req.count === 1 ? 'esmeralda' : 'esmeraldas'} en total`;
     case 'lifetime':
       return (f) => `Gana ${f(D(req.amount))} monedas en total`;
     case 'companionsOwned':

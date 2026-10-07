@@ -1,6 +1,6 @@
 # Cerditos — idle de un cerdito picador
 
-Juego idle/incremental web: un cerdito pica (empiezas ganando 0 por segundo), compras herramientas que producen cada vez más (al tener 5, 15, 25, 50, 75, 100, 150, 200, 250… unidades se desbloquea una mejora ×2 que se compra), al llegar a la herramienta 8 puedes ascender a cambio de plumas y compras ventajas permanentes. Pensado para móvil en vertical (PWA en iPhone) y escritorio. Se puede dejar en idle y hacer cosas de vez en cuando (picar, comprar, cesta, visitante).
+Juego idle/incremental web: un cerdito pica (empiezas ganando 0 por segundo), compras herramientas que producen cada vez más (al tener 5, 15, 25, 50, 75, 100, 150, 200, 250… unidades se desbloquea una mejora ×2 que se compra), al llegar a la herramienta 8 puedes ascender a cambio de esmeraldas (`plumas` en el código) y compras ventajas permanentes en un árbol. Pensado para móvil en vertical (PWA en iPhone) y escritorio. Se puede dejar en idle y hacer cosas de vez en cuando (picar, comprar, cesta, visitante).
 
 > Los juegos anteriores (granjas con mundos y una primera mina con zonas) se sustituyeron el 2026-10-06; sus documentos están en `docs/archivo-granjas/` solo como referencia histórica.
 
@@ -49,7 +49,7 @@ Por defecto el juego es tranquilo: sin cajas ni gacha, sin rachas ni recompensas
 1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un ×5 de producción y picos de 60 s, y se va a los 20 s.
 2. Picar da 1 s de producción (y también ×5 con el impulso): es la acción activa.
 3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*).
-4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 1) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
+4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 2; el dorado, 6) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
 5. Efectos y animaciones (números que suben) con interruptor en Ajustes; se apagan con `prefers-reduced-motion`.
 
 Si una tarea parece requerir romper otra regla, parar y preguntar.
