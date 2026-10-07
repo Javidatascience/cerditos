@@ -137,7 +137,7 @@ export function pigSprite(skinId: string, locked = false): HTMLImageElement {
 }
 
 /** Sprite en pixel art de una herramienta o un compañero (public/art/<tipo>/<id>.png, generado con tools/make-pixel-art.py). */
-export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui';
+export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui' | 'relics';
 
 export function artSprite(kind: ArtKind, id: string, size: 'sm' | 'md' | 'lg' = 'md'): HTMLImageElement {
   const img = document.createElement('img');

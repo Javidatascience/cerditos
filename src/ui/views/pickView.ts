@@ -8,7 +8,7 @@ import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolV
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { artSprite, emojiBadge, pigSprite, spriteBadge } from '../art.ts';
-import { createListSync, h, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
+import { createListSync, h, onHold, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
 const AMOUNTS: BuyAmount[] = [1, 10, 'max'];
@@ -119,7 +119,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       const milestoneText = document.createTextNode('');
       const costText = document.createTextNode('');
       const buyButton = h('button', { className: 'buy-button' }, [costText]) as HTMLButtonElement;
-      buyButton.addEventListener('click', () => ctx.dispatch((state) => void buyTool(state, ctx.content, tool.id, state.settings.buyAmount)));
+      onHold(buyButton, () => ctx.dispatch((state) => void buyTool(state, ctx.content, tool.id, state.settings.buyAmount)));
       const needText = document.createTextNode('');
       const upgradeText = document.createTextNode('');
       const upgradeButton = h('button', { className: 'buy-button upgrade-button hidden' }, [upgradeText]) as HTMLButtonElement;

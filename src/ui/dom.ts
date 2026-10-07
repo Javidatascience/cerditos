@@ -87,3 +87,31 @@ export function createListSync<T>(parent: HTMLElement, key: (item: T) => string,
     }
   };
 }
+
+/**
+ * Botón que se repite mientras se mantiene pulsado: ejecuta la acción al pulsar y, tras una pausa,
+ * la repite cada pocos milisegundos hasta soltar. El clic con teclado (detail 0) también funciona.
+ */
+export function onHold(button: HTMLElement, action: () => void, delay = 400, interval = 80): void {
+  let waiting: number | undefined;
+  let repeating: number | undefined;
+  function stop(): void {
+    window.clearTimeout(waiting);
+    window.clearInterval(repeating);
+    window.removeEventListener('pointerup', stop);
+    window.removeEventListener('pointercancel', stop);
+  }
+  button.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || (button as HTMLButtonElement).disabled) return;
+    action();
+    waiting = window.setTimeout(() => {
+      repeating = window.setInterval(action, interval);
+    }, delay);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+  });
+  button.addEventListener('click', (e) => {
+    if (e.detail === 0) action();
+  });
+  button.addEventListener('contextmenu', (e) => e.preventDefault());
+}

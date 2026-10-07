@@ -96,7 +96,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
       ...views.relics.map((r) =>
         h('li', { className: r.owned ? 'cosmetic-row' : 'cosmetic-row cosmetic-row-locked' }, [
           h('div', { className: 'row-art' }, [
-            emojiBadge(r.emoji, !r.owned),
+            spriteBadge('relics', r.id, !r.owned),
             h('div', { className: 'upgrade-info' }, [
               h('span', { className: 'upgrade-name' }, [r.owned ? r.name : '???']),
               h('span', { className: 'generator-flavor' }, [r.owned ? r.flavor : `Se consigue con el logro: ${r.achievementName}`]),

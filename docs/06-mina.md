@@ -90,3 +90,7 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 ### Arte (pixel art)
 
 Todo el arte nuevo está dibujado por código, sin imágenes de IA: `tools/make-pig-pixel.py` (el cerdito y sus pieles, `public/pig/`) y `tools/make-pixel-art.py` (18 herramientas y 6 compañeros en 16×16, `public/art/`). Se regeneran con `python tools/make-pig-pixel.py` y `python tools/make-pixel-art.py`. También están dibujadas las flores, los brotes, los hornos y ramas de la cueva, el dragón, el menú, los logros y las mejoras (carpetas de `public/art/`). Quedan con emoji las reliquias y algunos textos sueltos. El cerdito viajero usa la piel dorada. `tools/make-pig-sprites.py` limpia imágenes generadas con IA, por si se vuelve a usar.
+
+### Estilo visual (tema pixel)
+
+Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixeladas y esta es la que distingue bien el 5 de la S y el 0 de la O). Paneles y botones con borde grueso oscuro y sombra dura sin difuminar; los botones se hunden con `transform` sin cambiar de tamaño (nada se mueve alrededor). Escena con cielo y hierba planos; barras en bloques. Todo el tema está en el último bloque de `src/ui/styles.css`. Las reliquias también tienen sprite (`public/art/relics/`). Mantener pulsado el botón de comprar herramienta repite la compra.

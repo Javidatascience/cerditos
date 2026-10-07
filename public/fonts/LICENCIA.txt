@@ -1,0 +1,2 @@
+Jersey 10 — Copyright The Jersey 10 Project Authors (https://github.com/scfried/soft-type-jersey)
+Licencia: SIL Open Font License 1.1 (https://openfontlicense.org)

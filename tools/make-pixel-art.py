@@ -702,11 +702,100 @@ UI = {
 }
 
 
+# ---------------------------------------------------------------- reliquias
+
+
+def r_callo(c):
+    c.rect(3, 6, 10, 12, 'y')
+    for x in (3, 5, 7, 9):
+        c.rect(x, 2 if x != 3 else 3, x + 1, 6, 'y')
+    c.rect(1, 7, 2, 10, 'y')
+    c.pts('Y', (4, 11), (6, 11), (8, 11), (3, 12), (10, 12), (5, 5), (7, 4))
+    c.pts('w', (4, 7), (4, 3), (12, 2), (12, 11), (0, 12))
+
+
+def r_pico_ancestral(c):
+    c.rect(6, 3, 7, 13, 'B')
+    c.rect(6, 5, 6, 12, 'b')
+    c.rect(4, 2, 9, 3, 'o')
+    c.rect(2, 3, 3, 4, 'o')
+    c.rect(10, 3, 11, 4, 'o')
+    c.rect(1, 4, 2, 6, 'b')
+    c.rect(11, 4, 12, 6, 'b')
+    c.pts('y', (4, 2), (5, 2), (10, 3))
+    c.pts('n', (6, 7), (7, 9), (6, 11), (5, 2))
+    c.pts('w', (0, 1), (13, 2), (3, 0))
+
+
+def r_pluma_eterna(c):
+    r = 2 ** 0.5
+    for y in range(N):
+        for x in range(N):
+            u = ((x - 7.5) + (6.5 - y)) / r
+            v = ((x - 7.5) - (6.5 - y)) / r
+            if (u / 6.2) ** 2 + (v / 2.9) ** 2 <= 1:
+                c.p(x, y, 'O' if abs(v) < 0.55 else ('y' if v > 0 else 'Y'))
+    c.line(1, 13, 4, 10, 'B')
+    c.pts('w', (10, 3), (11, 2), (7, 5), (12, 0), (1, 5), (11, 11))
+
+
+def r_reloj(c):
+    c.rect(6, 0, 7, 1, 'Y')
+    c.ell(6.5, 7.5, 5.6, 5.6, 'y')
+    c.ell(6.5, 7.5, 4.2, 4.2, 'w')
+    c.line(6, 7, 6, 4, 'k')
+    c.line(7, 8, 9, 9, 'k')
+    c.pts('Y', (3, 7), (10, 7), (6, 11), (6, 4))
+    c.pts('r', (6, 7))
+    c.pts('Y', (11, 3), (12, 2), (12, 4))
+
+
+def r_muelle(c):
+    for y in range(2, 13, 3):
+        c.rect(3, y, 10, y, 'm')
+        c.rect(3, y + 1, 4, y + 1, 'M')
+        c.rect(9, y + 1, 10, y + 1, 'm')
+    c.rect(2, 1, 11, 1, 'M')
+    c.rect(2, 13, 11, 13, 'M')
+    c.pts('w', (4, 2), (4, 5), (4, 8), (4, 11))
+    c.pts('y', (0, 0), (13, 4), (12, 10), (1, 7))
+
+
+def r_monedero(c):
+    c.ell(7, 9, 5.4, 4.2, 'C')
+    c.ell(7, 9, 4, 3, 'c')
+    c.rect(4, 3, 10, 5, 'C')
+    c.rect(5, 2, 9, 2, 'D')
+    c.rect(6, 5, 7, 5, 'y')
+    c.ell(7, 9, 2, 1.6, 'D')
+    c.pts('y', (7, 13), (6, 12), (7, 12), (8, 12))
+    c.pts('w', (4, 8), (3, 9))
+
+
+def r_corazon_agujero(c):
+    c.ell(4.5, 5, 3.2, 3.2, 'k')
+    c.ell(9.5, 5, 3.2, 3.2, 'k')
+    for y, hw in zip(range(6, 13), [6, 5, 4, 3, 2, 1, 0]):
+        c.rect(7 - hw, y, 6 + hw, y, 'k')
+    c.line(2, 4, 4, 2, 'm')
+    c.line(9, 2, 11, 4, 'm')
+    c.line(1, 6, 7, 12, 'M')
+    c.line(12, 6, 7, 12, 'M')
+    c.pts('w', (5, 4), (9, 5), (7, 8), (6, 6))
+    c.pts('m', (7, 10), (6, 9), (8, 9))
+
+
+RELICS = {
+    'callo-de-oro': r_callo, 'pico-ancestral': r_pico_ancestral, 'pluma-eterna': r_pluma_eterna, 'reloj-de-bolsillo': r_reloj,
+    'muelle-magico': r_muelle, 'monedero-sin-fondo': r_monedero, 'corazon-de-agujero': r_corazon_agujero,
+}
+
+
 def main() -> None:
     args = sys.argv[1:]
     out = Path(args[args.index('--out') + 1]) if '--out' in args else ROOT / 'public' / 'art'
     sheets = []
-    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI)):
+    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('relics', RELICS)):
         (out / folder).mkdir(parents=True, exist_ok=True)
         for sprite_id, fn in table.items():
             c = Canvas()

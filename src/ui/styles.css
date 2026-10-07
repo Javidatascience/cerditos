@@ -1609,3 +1609,263 @@ body {
   border-color: #c9962a;
   animation: visitor-glow 1.4s ease-in-out infinite;
 }
+
+/* ==========================================================================
+   Tema pixel: tipografía pixelada, bordes duros con sombra "de píxel", colores planos y sin
+   degradados suaves. Va al final para ganar a las reglas anteriores. Los botones no cambian de
+   tamaño al pulsarse (solo se desplazan con transform), así que nada se mueve alrededor.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Jersey 10';
+  src: url('/fonts/jersey-10-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --ink: #38211a;
+  --color-bg: #efe1bf;
+  --color-surface: #fbf3dc;
+  --color-text: #38211a;
+  --color-text-muted: #7b5a45;
+  --color-border: #38211a;
+  --color-shadow: #38211a;
+  --color-disabled-bg: #cdbf9f;
+  --color-disabled-text: #6a5846;
+  --pill-bg: #fbe8a8;
+  --pill-border: #38211a;
+  --btn-green: #58a448;
+  --btn-green-dark: #38211a;
+  --btn-green-text: #ffffff;
+  --btn-orange: #e0782c;
+  --btn-orange-dark: #38211a;
+  --btn-orange-text: #ffffff;
+  --sky: #a9dcef;
+  --grass: #78c25e;
+  --nav-bg: #6b442e;
+  --nav-text: #f6e9cf;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #120a08;
+    --color-bg: #2b1d17;
+    --color-surface: #3d2b21;
+    --color-text: #f6e9cf;
+    --color-text-muted: #c9b296;
+    --color-border: #120a08;
+    --color-shadow: #120a08;
+    --color-disabled-bg: #4b3a2e;
+    --color-disabled-text: #b4a28c;
+    --pill-bg: #5b4423;
+    --pill-border: #120a08;
+    --btn-green: #5fb04f;
+    --btn-green-dark: #120a08;
+    --btn-green-text: #ffffff;
+    --btn-orange: #e0782c;
+    --btn-orange-dark: #120a08;
+    --btn-orange-text: #ffffff;
+    --sky: #2c3b63;
+    --grass: #2f6a45;
+    --nav-bg: #3a261b;
+    --nav-text: #f6e9cf;
+  }
+}
+
+html,
+body {
+  font-family: 'Jersey 10', ui-monospace, 'Courier New', monospace;
+  font-size: 21px;
+  font-synthesis: none; /* una sola grosor: sin negritas falsas que emborronan los píxeles */
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Paneles: borde duro, esquinas casi rectas y sombra desplazada sin difuminar */
+.generator-row,
+.upgrade-row,
+.perk-row,
+.basket-block,
+.visitor-card,
+.album-card,
+.settings-confirm,
+.cosmetic-row,
+.garden-plot,
+.mine-scene {
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 4px 0 var(--ink);
+  background: var(--color-surface);
+}
+
+.mine-scene {
+  background: linear-gradient(var(--sky) 0 72%, var(--grass) 72% 100%);
+}
+
+.mine-stats,
+.tool-chip {
+  color: var(--ink);
+}
+
+/* Botones: borde, sombra dura y pulsación que NO cambia el tamaño */
+.buy-button,
+.tap-button,
+.amount-button {
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 4px 0 var(--ink);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.buy-button,
+.tap-button {
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.buy-button:disabled {
+  border-color: var(--ink);
+  text-shadow: none;
+  opacity: 0.85;
+}
+
+.buy-button:active:not(:disabled),
+.tap-button:active,
+.amount-button:active {
+  border-bottom-width: 3px;
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.tap-button {
+  border-radius: 8px;
+  box-shadow: 0 6px 0 var(--ink);
+  margin-bottom: 18px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tap-button:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.amount-button {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-width: 3px;
+  margin-bottom: 4px;
+}
+
+.amount-button.active {
+  background: var(--btn-orange);
+  color: var(--btn-orange-text);
+  border-color: var(--ink);
+}
+
+/* Cabecera y navegación */
+.app-header {
+  border-bottom: 4px solid var(--ink);
+}
+
+.currency-pill {
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  background: var(--pill-bg);
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+.bottom-nav {
+  background: var(--nav-bg);
+  border-top: 4px solid var(--ink);
+}
+
+.nav-button {
+  color: var(--nav-text);
+  font-weight: 600;
+}
+
+.nav-button.active,
+.nav-button[aria-current='page'] {
+  color: #fff3b0;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: inset 0 4px 0 #f2c94c;
+}
+
+/* Títulos de sección */
+.fly-heading,
+.album-set > h3 {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 4px;
+}
+
+/* Barras: bloques en vez de una línea redondeada */
+.progress-bar {
+  height: 12px;
+  border: 2px solid var(--ink);
+  border-radius: 2px;
+  background: var(--color-disabled-bg);
+  margin-bottom: 6px;
+}
+
+.progress-bar-inner {
+  background-color: var(--btn-orange);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 2px, transparent 2px 6px);
+  transition: none;
+}
+
+.momentum-block .progress-bar-inner {
+  background-color: #f2c94c;
+}
+
+/* Etiquetas e insignias */
+.chip,
+.tool-chip {
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--color-surface);
+}
+
+.chip-done {
+  background: var(--btn-green);
+  color: #fff;
+}
+
+.emoji-badge {
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--pill-bg);
+}
+
+.garden-cell {
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 0 3px 0 var(--ink);
+  background: #b98a55;
+}
+
+.garden-cell-growing {
+  background: #8fbf6a;
+}
+
+.generator-name,
+.upgrade-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.generator-flavor,
+.settings-hint {
+  color: var(--color-text-muted);
+}
