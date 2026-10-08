@@ -1,10 +1,10 @@
 // La Cueva del Dragón: mini mundo aparte con su propia moneda (brasas), hornos y un árbol de
-// ventajas por ramas. Se abre al conseguir 10 plumas en total y es permanente (no se reinicia al ascender).
+// ventajas por ramas. Se abre al conseguir 3 esmeraldas en total y es permanente (no se reinicia al ascender).
 
 import type { CaveDef } from './types.ts';
 
 export const CAVE: CaveDef = {
-  unlockPlumas: 10,
+  unlockPlumas: 3,
   dragon: [
     { id: 'huevo', name: 'Huevo', flavor: 'Late despacio, calentito entre las brasas.', cost: 0, prodMult: 1, embersMult: 1 },
     { id: 'cria', name: 'Cría de dragón', flavor: 'Acaba de romper el cascarón y ya tiene hambre.', cost: 200, prodMult: 1.05, embersMult: 1.2 },

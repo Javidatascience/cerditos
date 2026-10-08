@@ -168,12 +168,15 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const kind = visitor?.current() ?? null;
     if (kind && kind !== shownVisitor) {
       const notation = state.settings.notation;
+      // Mensaje corto: la recompensa y, al final, las bellotas con su símbolo.
+      const coins = (seconds: number) => `+${formatNumber(visitorInjectionValue(state, content).mul(seconds / VISITOR_INJECTION_SECONDS), notation)} monedas`;
       const text =
         kind === 'golden'
-          ? `¡Un cerdito viajero DORADO! Trae un saco de ${formatNumber(visitorInjectionValue(state, content).mul(VISITOR_GOLDEN.injectionSeconds / VISITOR_INJECTION_SECONDS), notation)} monedas, ×${VISITOR_GOLDEN.mult} de producción y de picos durante ${formatDuration(VISITOR_GOLDEN.seconds)} y ${VISITOR_GOLDEN.acorns} bellotas.`
+          ? `¡Dorado! ${coins(VISITOR_GOLDEN.injectionSeconds)} y ×${VISITOR_GOLDEN.mult} durante ${formatDuration(VISITOR_GOLDEN.seconds)}`
           : kind === 'injection'
-            ? `Un cerdito viajero trae un saco de ${formatNumber(visitorInjectionValue(state, content), notation)} monedas y ${VISITOR_ACORNS} bellotas.`
-            : `Un cerdito viajero viene con ganas de ayudar: ×${VISITOR_BOOST.mult} de producción y de picos durante ${formatDuration(VISITOR_BOOST.seconds)}, y ${VISITOR_ACORNS} bellotas.`;
+            ? coins(VISITOR_INJECTION_SECONDS)
+            : `×${VISITOR_BOOST.mult} durante ${formatDuration(VISITOR_BOOST.seconds)}`;
+      const acorns = kind === 'golden' ? VISITOR_GOLDEN.acorns : VISITOR_ACORNS;
       const accept = h('button', { className: 'buy-button' }, ['Aceptar']) as HTMLButtonElement;
       accept.addEventListener('click', () => {
         dispatch((s) => claimVisitor(s, content, kind));
@@ -186,7 +189,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       visitorSlot.replaceChildren(
         h('div', { className: kind === 'golden' ? 'visitor-card visitor-card-golden' : 'visitor-card', role: 'alert' }, [
           h('span', { className: 'visitor-emoji', 'aria-hidden': 'true' }, [pigSprite('dorado')]),
-          h('span', { className: 'visitor-text' }, [text, h('span', { className: 'visitor-left' }, [visitorLeft])]),
+          h('span', { className: 'visitor-text' }, [h('b', {}, [text]), ` · +${acorns} `, artSprite('ui', 'bellota', 'sm'), h('span', { className: 'visitor-left' }, [visitorLeft])]),
           accept,
           h('div', { className: 'visitor-timer', 'aria-hidden': 'true' }, [visitorBar]),
         ]),
@@ -197,7 +200,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
       visitorSlot.replaceChildren();
       shownVisitor = null;
     }
-    if (kind && visitorLeft) setText(visitorLeft, ` Se va en ${Math.ceil(visitor?.secondsLeft() ?? 0)} s.`);
+    if (kind && visitorLeft) setText(visitorLeft, `  (${Math.ceil(visitor?.secondsLeft() ?? 0)} s)`);
     if (kind && visitorBar) visitorBar.style.width = `${Math.min(100, ((visitor?.secondsLeft() ?? 0) / visitorTotal) * 100).toFixed(1)}%`;
   }
 

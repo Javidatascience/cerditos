@@ -13,7 +13,7 @@ export const GARDEN: GardenDef = {
   cols: 5,
   rows: 5,
   shinyChance: 0.1,
-  unlockPlumas: 5,
+  unlockPlumas: 1,
   mutationSeconds: 30,
   mutationChance: 0.25,
   flowers: [

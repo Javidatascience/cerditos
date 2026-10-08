@@ -14,6 +14,7 @@ import {
   companionAbility,
   companionLevel,
   companionOwned,
+  currentIncomePerSecond,
   globalUpgradeCost,
   globalUpgradeUnlocked,
   incomePerSecond,
@@ -356,7 +357,7 @@ export function basketView(state: GameState, content: Content): BasketView {
 
 /** Lo que daría una inyección de visitante ahora mismo (monedas). */
 export function visitorInjectionValue(state: GameState, content: Content): Decimal {
-  return baseIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS);
+  return currentIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS);
 }
 
 /** Entradas del diario, de la más reciente a la más antigua. */

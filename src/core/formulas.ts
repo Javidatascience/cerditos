@@ -213,6 +213,11 @@ export function incomePerSecond(state: GameState, content: Content): Decimal {
   return baseIncomePerSecond(state, content).mul(momentumMult(state, content));
 }
 
+/** Ingresos por segundo "de ahora" para las recompensas del cerdito viajero: con la inercia y con el impulso activo. */
+export function currentIncomePerSecond(state: GameState, content: Content): Decimal {
+  return incomePerSecond(state, content).mul(state.buff?.mult ?? 1);
+}
+
 /** Lo que da un toque: `tapSeconds` de producción (mínimo 1 moneda) × Manos de acero × impulso del visitante. */
 export function tapGain(state: GameState, content: Content): Decimal {
   const base = Decimal.max(1, incomePerSecond(state, content).mul(content.game.tapSeconds));

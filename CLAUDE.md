@@ -46,7 +46,7 @@ npm run calibrate      # simula a un jugador y muestra la curva de progreso (too
 
 Por defecto el juego es tranquilo: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones push ni badges, sin pantallazos de recompensa (los logros van al Diario), sin monetización ni publicidad, sin comparación social, y toda condición de progreso es visible. **Excepciones decididas por el usuario:**
 
-1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un ×5 de producción y picos de 60 s, y se va a los 20 s.
+1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un impulso de producción y picos, y se va a los 20 s.
 2. Picar da 1 s de producción (y también ×5 con el impulso): es la acción activa.
 3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*).
 4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 2; el dorado, 6) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.

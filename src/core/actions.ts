@@ -10,6 +10,7 @@ import {
   companionAbility,
   companionLevel,
   companionOwned,
+  currentIncomePerSecond,
   getPerk,
   globalUpgradeCost,
   globalUpgradeUnlocked,
@@ -168,31 +169,32 @@ export function collectBasket(state: GameState, content: Content): Decimal {
 export type VisitorKind = 'injection' | 'boost' | 'golden';
 
 /** Segundos de ingresos que da la inyección de un visitante. */
-export const VISITOR_INJECTION_SECONDS = 30;
+export const VISITOR_INJECTION_SECONDS = 45;
 /** Multiplicador y duración del impulso de un visitante. */
-export const VISITOR_BOOST = { mult: 3, seconds: 15 };
-/** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 3 bellotas. */
-export const VISITOR_GOLDEN = { injectionSeconds: 180, mult: 5, seconds: 25, acorns: 6 };
+export const VISITOR_BOOST = { mult: 4, seconds: 20 };
+/** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 6 bellotas. */
+export const VISITOR_GOLDEN = { injectionSeconds: 300, mult: 6, seconds: 30, acorns: 6 };
 /** Bellotas que da siempre el cerdito viajero normal. */
 export const VISITOR_ACORNS = 2;
 
 /**
- * Recompensa de un cerdito viajero: `injection` = 10 min de ingresos de golpe; `boost` = ×5 de producción
- * y picos durante 60 s. Además siempre da 1 bellota (la segunda moneda, para cosméticos).
+ * Recompensa de un cerdito viajero: `injection` = unos segundos de ingresos de golpe; `boost` = producción y
+ * picos multiplicados un rato; `golden` = las dos cosas, más grandes. Las monedas se calculan con los ingresos
+ * "de ahora": incluyen la inercia y cualquier impulso activo. Además da siempre bellotas (cosméticos y mejoras).
  */
 export function claimVisitor(state: GameState, content: Content, kind: VisitorKind): void {
   state.acorns += kind === 'golden' ? VISITOR_GOLDEN.acorns : VISITOR_ACORNS;
   state.stats.visitors += 1;
   if (kind === 'golden') {
+    gain(state, content, currentIncomePerSecond(state, content).mul(VISITOR_GOLDEN.injectionSeconds)); // antes del impulso nuevo
     state.buff = { mult: VISITOR_GOLDEN.mult, until: state.time + VISITOR_GOLDEN.seconds };
-    gain(state, content, baseIncomePerSecond(state, content).mul(VISITOR_GOLDEN.injectionSeconds));
     return;
   }
   if (kind === 'boost') {
     state.buff = { mult: VISITOR_BOOST.mult, until: state.time + VISITOR_BOOST.seconds };
     return;
   }
-  gain(state, content, baseIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS));
+  gain(state, content, currentIncomePerSecond(state, content).mul(VISITOR_INJECTION_SECONDS));
 }
 
 export { D };

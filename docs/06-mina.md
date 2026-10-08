@@ -116,3 +116,8 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 - **Aspecto del cerdito** (pestaña Cerdito): cuatro secciones, Color (pieles), Gorro, Ropa y Cola. Las prendas (`content/accessories.ts`) son capas PNG del mismo lienzo que el cerdito (36×30, `public/pig/acc/`, `tools/make-pig-accessories.py`), apiladas sobre el sprite (`pigStack` en `ui/art.ts`). Se compran con bellotas o las da un logro. Para añadir una prenda: dibujarla en el script, añadirla a `ACCESSORIES` y regenerar.
 - **Pantalla principal:** ingresos junto a las bellotas, gema de ascender flotando arriba a la derecha (abre el menú de ascender y se mece cuando hay esmeraldas que cobrar), se pica tocando al cerdito (sin botón), los números salen por delante y la compra ×1/×10/Máx se queda pegada bajo la cabecera.
 - **Logros:** las reliquias van aquí (donde estaba la gráfica de ingresos, que se ha quitado).
+
+### Ajustes de ritmo (cerdito viajero y desbloqueos)
+
+- **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
+- **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).

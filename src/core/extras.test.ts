@@ -296,6 +296,18 @@ describe('mejoras de compañeros', () => {
   });
 });
 
+describe('recompensas de monedas del cerdito viajero', () => {
+  it('incluyen la inercia y el impulso activo', () => {
+    const plain = fresh();
+    const loaded = fresh();
+    loaded.momentum = 1;
+    loaded.buff = { mult: 4, until: 1000 };
+    claimVisitor(plain, CONTENT, 'injection');
+    claimVisitor(loaded, CONTENT, 'injection');
+    expect(loaded.coins.toNumber() / plain.coins.toNumber()).toBeCloseTo(CONTENT.game.momentumMax * 4, 9);
+  });
+});
+
 describe('cerdito viajero dorado', () => {
   it('da ingresos grandes, un impulso mayor y el doble de bellotas', () => {
     const state = fresh();
