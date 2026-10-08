@@ -205,7 +205,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   }
   const modeRow = h('div', { className: 'amount-row' }, modeButtons.map(([, b]) => b));
   applyMode();
-  const container = h('div', { className: 'mine-view' }, [scene, tapHint, momentumBlock, companionBlock, basketBlock, modeRow, toolsPane, upgradesPane]);
+  const container = h('div', { className: 'mine-view' }, [momentumBlock, companionBlock, basketBlock, scene, tapHint, modeRow, toolsPane, upgradesPane]);
   root.appendChild(container);
 
   function update(state: GameState): void {
