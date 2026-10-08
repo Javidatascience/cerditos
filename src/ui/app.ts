@@ -203,7 +203,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     setText(incomeText, `+${formatNumber(head.income, notation)}/s`);
     setClass(gemButton, 'gem-ready', ascendView(state, content).canAscend);
     setClass(gemButton, 'gem-open', activeTab === 'fly');
-    root.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    root.style.setProperty('--header-h', `${Math.ceil(header.getBoundingClientRect().height)}px`);
     renderFlowerBuffs(gardenView(state, content, 0).active);
     setClass(header, 'boosted', state.buff !== null);
     activeView?.update(state);

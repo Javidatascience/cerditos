@@ -2354,11 +2354,20 @@ button {
 /* La compra x1 / x10 / máx. se queda pegada bajo la cabecera mientras se baja por la lista */
 .mine-view > div > .amount-row:first-child {
   position: sticky;
-  top: var(--header-h, 78px);
+  top: calc(var(--header-h, 78px) - 2px); /* se mete 2 px bajo la cabecera para que nunca asome un hueco ni se solape */
   z-index: 4;
   margin: 0 0 8px;
-  padding: 6px 0 4px;
+  padding: 8px 0 4px;
   background: var(--color-bg);
+}
+
+/* La cabecera y la barra de abajo van siempre por encima de lo que se desliza entre ellas */
+.app-header {
+  z-index: 6;
+}
+
+.bottom-nav {
+  z-index: 7;
 }
 
 .perk-bubble {
