@@ -104,10 +104,14 @@ export function mountPerkTreeView(root: HTMLElement, ctx: UiContext): View {
       ctx.dispatch((s) => void buyPerk(s, ctx.content, id));
     }
   });
+  // El coste se ve siempre (también si aún está bloqueada), para poder planear cuándo ascender.
+  const priceText = document.createTextNode('');
+  const priceRow = h('div', { className: 'perk-price' }, [priceText, artSprite('ui', 'esmeralda', 'sm')]);
   const bubble = h('div', { className: 'perk-bubble hidden' }, [
     h('div', { className: 'upgrade-name' }, [bubbleName]),
     h('div', { className: 'generator-owned' }, [bubbleLevel]),
     h('div', { className: 'upgrade-effect' }, [bubbleEffect]),
+    priceRow,
     h('div', { className: 'generator-flavor' }, [bubbleFlavor]),
     h('div', { className: 'perk-locked' }, [bubbleNote]),
     buyButton,
@@ -175,6 +179,9 @@ export function mountPerkTreeView(root: HTMLElement, ctx: UiContext): View {
     setText(bubbleFlavor, v.flavor);
     const cost = v.costs[selected.level - 1] ?? v.cost;
     setText(costText, `${formatNumber(cost, notation)} `);
+    setClass(priceRow, 'hidden', bought);
+    const missing = cost.sub(state.plumas);
+    setText(priceText, `Cuesta ${formatNumber(cost, notation)}${missing.gt(0) ? ` (te faltan ${formatNumber(missing, notation)})` : ''} `);
     const blockedBy = !v.requirementsMet ? `Requiere: ${v.missingRequirements.join(', ')}` : '';
     setText(bubbleNote, bought ? 'Conseguido' : next ? blockedBy : `Primero consigue el nivel ${selected.level - 1}.`);
     const canBuy = next && v.requirementsMet;

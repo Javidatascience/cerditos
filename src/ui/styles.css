@@ -2370,6 +2370,13 @@ button {
   z-index: 7;
 }
 
+.perk-price {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+}
+
 .perk-bubble {
   position: absolute;
   z-index: 5;
