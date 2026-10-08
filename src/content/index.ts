@@ -1,5 +1,6 @@
 // Contenido completo del juego. Ver docs/06-mina.md.
 
+import { ACCESSORIES } from './accessories.ts';
 import { ACHIEVEMENTS } from './achievements.ts';
 import { CAVE } from './cave.ts';
 import { GARDEN } from './garden.ts';
@@ -9,6 +10,7 @@ import type { Content } from './types.ts';
 
 export const CONTENT: Content = {
   game: GAME,
+  accessories: ACCESSORIES,
   cave: CAVE,
   garden: GARDEN,
   tools: TOOLS,

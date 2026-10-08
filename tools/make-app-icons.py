@@ -50,6 +50,7 @@ def favicon_svg(pig: Image.Image) -> str:
 
 def main() -> None:
     pig = Image.open(ROOT / 'public' / 'pig' / 'rosa.png').convert('RGBA')
+    pig = pig.crop(pig.getbbox())  # el sprite lleva holgura para las prendas: para el icono se recorta
     out = ROOT / 'public' / 'icons'
     out.mkdir(parents=True, exist_ok=True)
     icon(192, pig, 0.66).save(out / 'icon-192.png')

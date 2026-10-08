@@ -122,6 +122,33 @@ export const COMPANIONS: CompanionDef[] = [
       { cost: 16, ability: { kind: 'freeTool', cooldownHours: 3 } },
     ],
   },
+  {
+    id: 'pato', name: 'Pato jardinero', emoji: '🦆', flavor: 'Pisotea la tierra y las flores crecen más deprisa.', cost: 8, achievement: null,
+    ability: { kind: 'gardenSpeed', factor: 0.85 },
+    upgrades: [
+      { cost: 4, ability: { kind: 'gardenSpeed', factor: 0.8 } },
+      { cost: 8, ability: { kind: 'gardenSpeed', factor: 0.72 } },
+      { cost: 14, ability: { kind: 'gardenSpeed', factor: 0.6 } },
+    ],
+  },
+  {
+    id: 'mariposa', name: 'Mariposa', emoji: '🦋', flavor: 'Lleva polen de flor en flor: más cruces y más flores brillantes.', cost: 12, achievement: null,
+    ability: { kind: 'gardenLuck', mutation: 0.05, shiny: 0.02 },
+    upgrades: [
+      { cost: 5, ability: { kind: 'gardenLuck', mutation: 0.08, shiny: 0.03 } },
+      { cost: 10, ability: { kind: 'gardenLuck', mutation: 0.12, shiny: 0.05 } },
+      { cost: 16, ability: { kind: 'gardenLuck', mutation: 0.18, shiny: 0.08 } },
+    ],
+  },
+  {
+    id: 'lagarto', name: 'Lagarto de fuego', emoji: '🦎', flavor: 'Se tumba junto a los hornos y calienta toda la cueva.', cost: 12, achievement: null,
+    ability: { kind: 'embersMult', mult: 1.25 },
+    upgrades: [
+      { cost: 5, ability: { kind: 'embersMult', mult: 1.4 } },
+      { cost: 10, ability: { kind: 'embersMult', mult: 1.6 } },
+      { cost: 16, ability: { kind: 'embersMult', mult: 2 } },
+    ],
+  },
 ];
 
 /** Reliquias: bonos permanentes que dan algunos logros. */

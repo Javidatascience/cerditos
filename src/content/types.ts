@@ -118,6 +118,19 @@ export interface SkinDef {
   achievement: string | null;
 }
 
+/** Dónde se pone una prenda del cerdito: cabeza (gorro), cuerpo (ropa) o cola. El color es otra cosa (las pieles). */
+export type AccessorySlot = 'head' | 'body' | 'tail';
+
+/** Prenda cosmética del cerdito: se compra con bellotas (`cost`) o la regala un logro (`achievement`). */
+export interface AccessoryDef {
+  id: string;
+  slot: AccessorySlot;
+  name: string;
+  flavor: string;
+  cost: number | null;
+  achievement: string | null;
+}
+
 /** Lo que hace un compañero mientras se lleva puesto. */
 export type CompanionAbility =
   /** Cada `every` picos encuentra 1 bellota. */
@@ -129,7 +142,13 @@ export type CompanionAbility =
   /** El cerdito viajero llega `speed` veces más rápido. */
   | { kind: 'visitorSpeed'; speed: number }
   /** Permite comprar gratis 1 unidad de una herramienta disponible, con enfriamiento en horas reales. */
-  | { kind: 'freeTool'; cooldownHours: number };
+  | { kind: 'freeTool'; cooldownHours: number }
+  /** Las flores del jardín tardan `factor` veces el tiempo en crecer (menor que 1 = más rápido). */
+  | { kind: 'gardenSpeed'; factor: number }
+  /** Suma probabilidad de cruce y de flor brillante en el jardín. */
+  | { kind: 'gardenLuck'; mutation: number; shiny: number }
+  /** Multiplica las brasas por segundo de la cueva. */
+  | { kind: 'embersMult'; mult: number };
 
 /** Compañero que acompaña al cerdito en la escena y hace algo útil en el fondo. */
 export interface CompanionDef {
@@ -256,6 +275,7 @@ export interface GardenDef {
 }
 
 export interface Content {
+  accessories: AccessoryDef[];
   cave: CaveDef;
   garden: GardenDef;
   game: GameDef;

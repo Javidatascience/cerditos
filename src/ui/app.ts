@@ -4,7 +4,7 @@
 
 import { VISITOR_INJECTION_SECONDS } from '../core/actions.ts';
 import { claimVisitor, VISITOR_ACORNS, VISITOR_BOOST, VISITOR_GOLDEN } from '../core/actions.ts';
-import { gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
+import { ascendView, gardenView, headerView, visitorInjectionValue } from '../core/selectors.ts';
 import type { GameState } from '../core/state.ts';
 import type { Content } from '../content/types.ts';
 import { artSprite, pigSprite } from './art.ts';
@@ -41,11 +41,13 @@ interface TabDef {
   label: string;
   icon: string;
   mount: (root: HTMLElement, ctx: UiContext) => View;
+  /** false = no sale en la barra de abajo (se abre desde otro sitio, como la gema de ascender). */
+  inNav?: boolean;
 }
 
 const TABS: TabDef[] = [
   { id: 'pick', label: 'Picar', icon: 'nav-picar', mount: mountPickView },
-  { id: 'fly', label: 'Ascender', icon: 'nav-ascender', mount: mountFlyView },
+  { id: 'fly', label: 'Ascender', icon: 'nav-ascender', mount: mountFlyView, inNav: false },
   { id: 'cosmetics', label: 'Cerdito', icon: 'nav-cerdito', mount: mountCosmeticsView },
   { id: 'garden', label: 'Jardín', icon: 'nav-jardin', mount: mountGardenView },
   { id: 'cave', label: 'Cueva', icon: 'nav-cueva', mount: mountCaveView },
@@ -83,6 +85,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     activeTab = tabId;
     activeView?.destroy();
     activeView = def.mount(viewContainer, ctx);
+    gemButton.classList.toggle('gem-open', tabId === 'fly');
     for (const [id, btn] of navButtons) {
       btn.classList.toggle('active', id === tabId);
       if (id === tabId) btn.setAttribute('aria-current', 'page');
@@ -94,7 +97,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   const nav = h(
     'nav',
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
-    TABS.map((t) => {
+    TABS.filter((t) => t.inNav !== false).map((t) => {
       const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [
         h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [artSprite('ui', t.icon)]),
         h('span', { className: 'nav-label' }, [t.label]),
@@ -127,14 +130,20 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     }
   }
 
+  // La gema de ascender, flotando arriba a la derecha: abre el menú de ascender (que ya no está en la barra de abajo).
+  const gemButton = h('button', { className: 'gem-button', 'aria-label': 'Ascender: esmeraldas y ventajas', title: 'Ascender', onclick: () => switchTab('fly') }, [artSprite('ui', 'esmeralda', 'md')]) as HTMLButtonElement;
+  const boostText = document.createTextNode('');
+
   const header = h('header', { className: 'app-header' }, [
     h('div', { className: 'header-text' }, [
       h('div', { className: 'currency-row' }, [
         h('span', { className: 'currency-pill' }, [artSprite('ui', 'moneda', 'md'), coinsText]),
         h('span', { className: 'currency-name' }, [artSprite('ui', 'bellota', 'sm'), acornsText]),
+        h('span', { className: 'income-text' }, [incomeText]),
       ]),
-      h('div', { className: 'per-second-row' }, [incomeText, flowerBuffs]),
+      h('div', { className: 'per-second-row' }, [boostText, flowerBuffs]),
     ]),
+    gemButton,
   ]);
 
   // Cerdito viajero: una tarjeta fija bajo la cabecera (nada de ventanas emergentes).
@@ -190,8 +199,11 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     const notation = state.settings.notation;
     setText(coinsText, ` ${formatNumber(head.coins, notation)}`);
     setText(acornsText, ` ${head.bellotas}`);
-    const buff = state.buff ? ` · ×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '';
-    setText(incomeText, `+${formatNumber(head.income, notation)}/s${buff}`);
+    setText(boostText, state.buff ? `×${state.buff.mult} durante ${formatDuration(Math.max(0, state.buff.until - state.time))}` : '');
+    setText(incomeText, `+${formatNumber(head.income, notation)}/s`);
+    setClass(gemButton, 'gem-ready', ascendView(state, content).canAscend);
+    setClass(gemButton, 'gem-open', activeTab === 'fly');
+    root.style.setProperty('--header-h', `${header.offsetHeight}px`);
     renderFlowerBuffs(gardenView(state, content, 0).active);
     setClass(header, 'boosted', state.buff !== null);
     activeView?.update(state);

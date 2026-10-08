@@ -1,9 +1,10 @@
 // Únicas funciones (junto con tick.ts y offline.ts) que mutan el GameState.
 // Ver CLAUDE.md "Reglas de código" y docs/06-mina.md.
 
-import type { Content } from '../content/types.ts';
+import type { AccessorySlot, Content } from '../content/types.ts';
 import { basketValue } from './basket.ts';
 import {
+  accessoryOwned,
   ascendUnlocked,
   baseIncomePerSecond,
   companionAbility,
@@ -227,6 +228,27 @@ export function buyCompanion(state: GameState, content: Content, id: string): bo
 }
 
 /** Máximo de compañeros a la vez en la escena. */
+/** Compra una prenda con bellotas (las de logro no se compran: se tienen al conseguir el logro). */
+export function buyAccessory(state: GameState, content: Content, id: string): boolean {
+  const accessory = content.accessories.find((a) => a.id === id);
+  if (!accessory || accessory.cost === null || accessoryOwned(state, accessory) || state.acorns < accessory.cost) return false;
+  state.acorns -= accessory.cost;
+  state.wardrobe.owned[id] = true;
+  return true;
+}
+
+/** Pone una prenda (o la quita con `null`) en su hueco: gorro, ropa o cola. Solo si es de ese hueco y se tiene. */
+export function wearAccessory(state: GameState, content: Content, slot: AccessorySlot, id: string | null): boolean {
+  if (id === null) {
+    state.wardrobe.worn[slot] = null;
+    return true;
+  }
+  const accessory = content.accessories.find((a) => a.id === id);
+  if (!accessory || accessory.slot !== slot || !accessoryOwned(state, accessory)) return false;
+  state.wardrobe.worn[slot] = id;
+  return true;
+}
+
 /** Mejora un compañero con bellotas (un nivel). */
 export function upgradeCompanion(state: GameState, content: Content, id: string): boolean {
   const companion = content.companions.find((c) => c.id === id);

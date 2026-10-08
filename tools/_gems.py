@@ -178,6 +178,50 @@ def dragon_anciano(c):
 CAVE.update({'dragon-0': dragon_huevo, 'dragon-1': dragon_cria, 'dragon-2': dragon, 'dragon-3': dragon_adulto, 'dragon-4': dragon_anciano})  # noqa: F821
 
 
+# ---------------------------------------------------------------- compañeros nuevos: pato, mariposa y lagarto
+
+
+def pato(c):
+    c.ell(6.5, 9, 5.2, 3.8, 'y')                  # cuerpo
+    c.ell(9.5, 4.5, 3, 3, 'y')                    # cabeza
+    c.rect(11, 4, 13, 5, 'O')                     # pico
+    c.pts('k', (9, 3))
+    c.pts('Y', (2, 9), (3, 10), (4, 10), (5, 11))  # ala
+    c.rect(1, 6, 2, 7, 'y')                       # cola
+    c.rect(5, 12, 5, 13, 'O')
+    c.rect(8, 12, 8, 13, 'O')
+    c.pts('w', (7, 2), (4, 8))
+
+
+def mariposa(c):
+    c.ell(3.5, 4.5, 3.4, 3.4, 'm')                # alas de arriba
+    c.ell(10.5, 4.5, 3.4, 3.4, 'm')
+    c.ell(4, 9.5, 2.6, 2.6, 'p')                  # alas de abajo
+    c.ell(10, 9.5, 2.6, 2.6, 'p')
+    c.rect(6, 3, 7, 11, 'k')                      # cuerpo
+    c.pts('w', (3, 3), (11, 3), (4, 9), (10, 9))
+    c.pts('M', (2, 5), (12, 5), (1, 4), (13, 4))
+    c.line(6, 3, 4, 0, 'k')
+    c.line(7, 3, 9, 0, 'k')
+
+
+def lagarto(c):
+    c.ell(8, 8, 4.4, 2.8, 'n')                    # cuerpo
+    c.ell(11.5, 7, 2.4, 2.2, 'n')                 # cabeza
+    c.pts('k', (12, 6))
+    c.pts('r', (13, 8), (13, 9))                  # lengua
+    c.line(4, 8, 1, 11, 'N')                      # cola
+    c.line(1, 11, 3, 13, 'N')
+    c.pts('N', (4, 9), (3, 10), (2, 12))
+    c.rect(5, 10, 6, 12, 'n')                     # patas
+    c.rect(10, 10, 11, 12, 'n')
+    c.pts('l', (6, 7), (8, 6), (10, 7), (7, 8))
+    c.pts('y', (9, 5))
+
+
+COMPANIONS.update({'pato': pato, 'mariposa': mariposa, 'lagarto': lagarto})  # noqa: F821
+
+
 def perk_compania(c):
     c.ell(6, 9, 3.4, 3, 'p')
     for x, y in [(2, 5), (4, 2), (8, 2), (10, 5)]:

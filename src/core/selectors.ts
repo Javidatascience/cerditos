@@ -8,6 +8,7 @@ import { basketCap, basketSeconds, basketValue } from './basket.ts';
 import { durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
 import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost } from './cave.ts';
 import {
+  accessoryOwned,
   ascendUnlocked,
   baseIncomePerSecond,
   companionAbility,
@@ -433,8 +434,38 @@ function achievementName(content: Content, id: string | null): string | null {
   return id === null ? null : (content.achievements.find((a) => a.id === id)?.name ?? id);
 }
 
-export function cosmeticViews(state: GameState, content: Content): { acorns: number; maxActive: number; skins: CosmeticView[]; companions: CosmeticView[]; relics: RelicView[] } {
+export interface AccessoryView {
+  id: string;
+  slot: 'head' | 'body' | 'tail';
+  name: string;
+  flavor: string;
+  owned: boolean;
+  worn: boolean;
+  cost: number | null;
+  canBuy: boolean;
+  achievementName: string | null;
+}
+
+export function cosmeticViews(
+  state: GameState,
+  content: Content,
+): { acorns: number; maxActive: number; skins: CosmeticView[]; companions: CosmeticView[]; relics: RelicView[]; accessories: AccessoryView[]; look: { skin: string; head: string | null; body: string | null; tail: string | null } } {
   return {
+    look: { skin: state.activeSkin, head: state.wardrobe.worn.head, body: state.wardrobe.worn.body, tail: state.wardrobe.worn.tail },
+    accessories: content.accessories.map((a) => {
+      const owned = accessoryOwned(state, a);
+      return {
+        id: a.id,
+        slot: a.slot,
+        name: a.name,
+        flavor: a.flavor,
+        owned,
+        worn: state.wardrobe.worn[a.slot] === a.id,
+        cost: a.cost,
+        canBuy: !owned && a.cost !== null && state.acorns >= a.cost,
+        achievementName: achievementName(content, a.achievement),
+      };
+    }),
     acorns: state.acorns,
     maxActive: maxActiveCompanions(state, content),
     skins: content.skins.map((s) => {
@@ -536,10 +567,16 @@ export function abilityText(a: CompanionAbility): string {
       return `el cerdito viajero llega ×${a.speed} más rápido`;
     case 'freeTool':
       return `herramienta gratis cada ${a.cooldownHours} h`;
+    case 'gardenSpeed':
+      return `las flores crecen en ×${a.factor} del tiempo`;
+    case 'gardenLuck':
+      return `+${Math.round(a.mutation * 100)} % de cruce y +${Math.round(a.shiny * 100)} % de flor brillante`;
+    case 'embersMult':
+      return `brasas ×${a.mult}`;
   }
 }
 
-export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'bestToolMult' | 'visitorSpeed' | 'freeTool';
+export type CompanionAbilityKind = 'tapAcorn' | 'coinGift' | 'bestToolMult' | 'visitorSpeed' | 'freeTool' | 'gardenSpeed' | 'gardenLuck' | 'embersMult';
 
 export interface CompanionStatusView {
   id: string;
@@ -634,24 +671,6 @@ export function caveView(state: GameState, content: Content): CaveView {
         }),
     })),
   };
-}
-
-export interface IncomeHistoryView {
-  /** Muestras (tiempo de juego en segundos, log10 de las monedas por segundo base). */
-  points: { t: number; v: number }[];
-  /** Escala vertical: de 0 al mayor log10 visto (redondeado hacia arriba). */
-  maxV: number;
-  /** Segundos de juego que abarca la gráfica. */
-  spanSeconds: number;
-}
-
-/** Datos de la gráfica de ingresos: crece con el tiempo y abarca toda la partida (se submuestrea al llenarse). */
-export function incomeHistory(state: GameState): IncomeHistoryView {
-  const points = state.stats.history;
-  const maxV = Math.max(1, Math.ceil(Math.max(0, ...points.map((p) => p.v))));
-  const first = points[0];
-  const last = points[points.length - 1];
-  return { points: points.map((p) => ({ ...p })), maxV, spanSeconds: first && last ? last.t - first.t : 0 };
 }
 
 /** ¿Está abierta la Cueva (plumas en total suficientes)? */

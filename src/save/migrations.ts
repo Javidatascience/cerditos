@@ -93,6 +93,16 @@ function v12ToV13(old: RawSave): RawSave {
   return { ...old, version: 13, state: { ...state, version: 13, cave: { ...cave, dragonStage: 0 }, stats: { ...stats, history: [], historyEvery: 300 } } };
 }
 
+/** v13 → v14: prendas del cerdito (guardarropa vacío); se quita el historial de ingresos de la gráfica, que ya no existe. */
+function v13ToV14(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 14 };
+  const state = old['state'];
+  const stats = isPlainObject(state['stats']) ? { ...state['stats'] } : {};
+  delete stats['history'];
+  delete stats['historyEvery'];
+  return { ...old, version: 14, state: { ...state, version: 14, stats, wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -103,6 +113,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   10: v10ToV11,
   11: v11ToV12,
   12: v12ToV13,
+  13: v13ToV14,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

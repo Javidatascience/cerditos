@@ -2,7 +2,7 @@
 
 import type { CaveDef, CaveEffect, CaveFurnaceDef, Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
-import { perkProductOf, perkSumOf } from './perkEffects.ts';
+import { activeAbilities, perkProductOf, perkSumOf } from './perkEffects.ts';
 import type { GameState } from './state.ts';
 
 /** Coste del siguiente horno; `discount` es el factor de las ventajas del árbol (Hornos de saldo). */
@@ -51,7 +51,9 @@ export function embersPerSecond(state: GameState, content: Content): Decimal {
 
 /** Multiplicador de las brasas: ventajas de la cueva, del árbol y etapa del dragón. */
 export function embersFactor(state: GameState, content: Content): number {
-  return caveProduct(state, content, 'embers') * (1 + perkSumOf(state, content, 'caveEmbers')) * dragonBonus(state, content).embers;
+  let lizard = 1;
+  for (const a of activeAbilities(state, content)) if (a.kind === 'embersMult') lizard *= a.mult; // Lagarto de fuego
+  return caveProduct(state, content, 'embers') * (1 + perkSumOf(state, content, 'caveEmbers')) * dragonBonus(state, content).embers * lizard;
 }
 
 export function blowGain(state: GameState, content: Content): Decimal {

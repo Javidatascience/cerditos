@@ -49,7 +49,8 @@ export function validateContent(content: Content): string[] {
   for (const u of content.globalUpgrades) {
     if (u.cost <= 0 || u.unlockAt <= 0 || u.mult < 1) errors.push(`${u.id}: cost y unlockAt > 0 y mult ≥ 1`);
   }
-  for (const item of [...content.skins, ...content.companions]) {
+  errors.push(...duplicates(content.accessories.map((x) => x.id), 'Prenda'));
+  for (const item of [...content.skins, ...content.companions, ...content.accessories]) {
     if (item.cost === null && item.achievement === null) errors.push(`${item.id}: debe poder conseguirse (cost o achievement)`);
     if (item.achievement !== null && !achievementIds.has(item.achievement)) errors.push(`${item.id}: logro desconocido (${item.achievement})`);
   }

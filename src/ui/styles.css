@@ -1119,7 +1119,7 @@ body {
 
 .pig-sprite {
   image-rendering: pixelated;
-  height: 42px;
+  height: 60px;
   width: auto;
 }
 
@@ -2218,6 +2218,147 @@ button {
 .perk-node-selected {
   transform: translateY(-2px) scale(1.12);
   z-index: 3;
+}
+
+/* Cabecera compacta: monedas, bellotas e ingresos en una fila, y la gema de ascender flotando a la derecha */
+.app-header {
+  padding-right: 70px;
+}
+
+.currency-row {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.income-text {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.per-second-row {
+  min-height: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.gem-button {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--pill-bg);
+  box-shadow: 0 3px 0 var(--ink);
+  touch-action: manipulation;
+}
+
+.gem-button .art-sprite {
+  width: 32px;
+  height: 32px;
+}
+
+.gem-open {
+  background: #7ed36f;
+}
+
+/* Cuando se puede ascender y hay esmeraldas que cobrar, la gema se mece y brilla */
+.gem-ready {
+  box-shadow: 0 3px 0 var(--ink), 0 0 0 4px #5fd18a;
+  animation: gem-bob 1.2s steps(2, end) infinite;
+}
+
+@keyframes gem-bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem-ready {
+    animation: none;
+  }
+}
+
+/* Picar tocando al cerdito */
+.mine-stage {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mine-stage:focus-visible {
+  outline: 3px solid #f2c94c;
+  outline-offset: 2px;
+}
+
+.tap-hint {
+  margin: 6px 0 12px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Los números al picar van por delante del cerdito y de los compañeros */
+.float-layer {
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* El cerdito vestido: el sprite base y una capa por prenda, todas del mismo tamaño */
+.pig-stack {
+  position: relative;
+  display: block;
+}
+
+.pig-stack-lg {
+  width: 144px;
+  height: 120px;
+}
+
+.pig-stack-sm {
+  width: 72px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.pig-stack .pig-sprite {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.look-preview {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 10px;
+}
+
+.look-tabs {
+  margin-bottom: 10px;
+}
+
+.visitor-emoji .pig-sprite {
+  height: 56px;
+}
+
+/* La compra x1 / x10 / máx. se queda pegada bajo la cabecera mientras se baja por la lista */
+.mine-view > div > .amount-row:first-child {
+  position: sticky;
+  top: var(--header-h, 78px);
+  z-index: 4;
+  margin: 0 0 8px;
+  padding: 6px 0 4px;
+  background: var(--color-bg);
 }
 
 .perk-bubble {

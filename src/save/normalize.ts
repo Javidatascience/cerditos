@@ -5,7 +5,6 @@
 import type { Content } from '../content/types.ts';
 import { gardenRows } from '../core/garden.ts';
 import { perkSumOf } from '../core/perkEffects.ts';
-import { HISTORY_MAX } from '../core/tick.ts';
 import type { GameState } from '../core/state.ts';
 
 function clampInt(value: number, min: number, max: number): number {
@@ -70,8 +69,12 @@ export function normalize(state: GameState, content: Content): GameState {
   if (!state.cave.embers.gte(0)) state.cave.embers = state.cave.embers.sub(state.cave.embers);
   state.cave.dragonStage = clampInt(state.cave.dragonStage, 0, content.cave.dragon.length - 1);
   state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
-  state.stats.historyEvery = Number.isFinite(state.stats.historyEvery) && state.stats.historyEvery > 0 ? state.stats.historyEvery : 300;
-  state.stats.history = state.stats.history.filter((p) => Number.isFinite(p.t) && Number.isFinite(p.v)).slice(-HISTORY_MAX);
+  const accessoryById = new Map(content.accessories.map((a) => [a.id, a]));
+  for (const id of Object.keys(state.wardrobe.owned)) if (!accessoryById.has(id)) delete state.wardrobe.owned[id];
+  for (const slot of ['head', 'body', 'tail'] as const) {
+    const worn = state.wardrobe.worn[slot];
+    if (worn !== null && accessoryById.get(worn)?.slot !== slot) state.wardrobe.worn[slot] = null;
+  }
 
   const perkById = new Map(content.perks.map((p) => [p.id, p]));
   for (const id of Object.keys(state.perks)) {

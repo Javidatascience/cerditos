@@ -7,7 +7,7 @@ import { buyGlobalUpgrade, buyTool, useRabbit, buyUpgrade, collectBasket, setBuy
 import { basketView, companionStatusViews, globalUpgradeViews, headerView, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
-import { artSprite, emojiBadge, pigSprite, spriteBadge } from '../art.ts';
+import { artSprite, pigStack, spriteBadge } from '../art.ts';
 import { createListSync, h, onHold, setClass, setDisabled, setStyleProp, setText } from '../dom.ts';
 import { formatDuration, formatNumber } from '../format.ts';
 
@@ -27,8 +27,10 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const handTool = h('div', { className: 'mine-block', 'aria-hidden': 'true' }, ['⛏️']);
   const companionsRow = h('div', { className: 'mine-companions', 'aria-hidden': 'true' });
   const ownedTools = h('div', { className: 'mine-tools', 'aria-label': 'Herramientas del cerdito' });
+  // El escenario entero es el botón de picar: se toca al cerdito (también con teclado: Intro o espacio).
+  const stage = h('div', { className: 'mine-stage', role: 'button', tabindex: 0, 'aria-label': 'Picar: toca al cerdito' }, [pigSlot, companionsRow]);
   const scene = h('div', { className: 'mine-scene' }, [
-    h('div', { className: 'mine-stage' }, [pigSlot, companionsRow]),
+    stage,
     ownedTools,
     statsLine,
     floats,
@@ -45,14 +47,26 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
 
   // --- Picar ---
   const tapText = document.createTextNode('');
-  const tapButton = h('button', { className: 'tap-button' }, [tapText]) as HTMLButtonElement;
-  tapButton.addEventListener('click', () =>
+  const tapHint = h('p', { className: 'tap-hint' }, [tapText]);
+  function doTap(): void {
     ctx.dispatch((state) => {
       const gained = tap(state, ctx.content);
       floatText(`+${formatNumber(gained, state.settings.notation)}`);
       dipPig();
-    }),
-  );
+    });
+  }
+  // pointerdown (y no click) para que cada toque cuente al instante, también picando rápido con varios dedos.
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    doTap();
+  });
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      doTap();
+    }
+  });
 
   /** El cerdito se agacha un instante al picar (se reinicia la animación aunque piques muy seguido). */
   function dipPig(): void {
@@ -191,7 +205,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   }
   const modeRow = h('div', { className: 'amount-row' }, modeButtons.map(([, b]) => b));
   applyMode();
-  const container = h('div', { className: 'mine-view' }, [scene, tapButton, momentumBlock, companionBlock, basketBlock, modeRow, toolsPane, upgradesPane]);
+  const container = h('div', { className: 'mine-view' }, [scene, tapHint, momentumBlock, companionBlock, basketBlock, modeRow, toolsPane, upgradesPane]);
   root.appendChild(container);
 
   function update(state: GameState): void {
@@ -200,10 +214,11 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     setClass(container, 'no-effects', !ctx.effectsOn());
 
     const best = Math.max(-1, ...ctx.content.tools.map((t, i) => ((state.tools[t.id] ?? 0) > 0 ? i : -1)));
-    const signature = state.activeSkin;
+    const worn = state.wardrobe.worn;
+    const signature = `${state.activeSkin}|${worn.head}|${worn.body}|${worn.tail}`;
     if (signature !== pigSignature) {
       pigSignature = signature;
-      pigSlot.replaceChildren(pigSprite(state.activeSkin));
+      pigSlot.replaceChildren(pigStack({ skin: state.activeSkin, head: worn.head, body: worn.body, tail: worn.tail }, 'lg'));
     }
     const statuses = companionStatusViews(state, ctx.content, Date.now());
     const statusKey = `${statuses.map((c) => c.id).join(',')}:${state.revealed}`;
@@ -236,7 +251,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
           ? `desentierra una bellota en ${Math.ceil(c.target - c.progress)} picos`
           : c.kind === 'coinGift'
             ? `te trae monedas en ${formatDuration(c.secondsLeft ?? 0)}`
-            : c.kind === 'bestToolMult' || c.kind === 'visitorSpeed'
+            : c.kind === 'bestToolMult' || c.kind === 'visitorSpeed' || c.kind === 'gardenSpeed' || c.kind === 'gardenLuck' || c.kind === 'embersMult'
               ? c.describe
               : (c.secondsLeft ?? 0) > 0
                 ? `te dejará una herramienta gratis en ${formatDuration(c.secondsLeft ?? 0)}`
@@ -265,7 +280,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     }
     setText(incomeText, 'Pica para ganar tus primeras monedas y compra un pico.');
     setClass(statsLine, 'hidden', head.income.gt(0) || state.taps > 0);
-    setText(tapText, `Picar (+${formatNumber(head.tapGain, notation)})`);
+    setText(tapText, `Toca al cerdito para picar (+${formatNumber(head.tapGain, notation)})`);
     setText(momentumText, `Inercia ×${head.momentum.mult.toFixed(2)} (máx. ×${head.momentum.max.toFixed(2)})`);
     setStyleProp(momentumFill, 'width', `${(head.momentum.fraction * 100).toFixed(1)}%`);
 

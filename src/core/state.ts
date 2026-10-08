@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 13;
+export const STATE_VERSION = 14;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -92,15 +92,9 @@ export interface GameState {
   /** La Cueva del Dragón: brasas, hornos y ventajas. Permanente (no se reinicia al ascender). */
   cave: { embers: Decimal; furnaces: Record<string, number>; nodes: Record<string, true>; /** `time` del último soplido. */ blowAt: number; /** Etapa del dragón (0 = huevo). */ dragonStage: number };
   /** Estadísticas sueltas. */
-  stats: {
-    visitors: number;
-    /** Mejor ingreso por segundo alcanzado. */
-    bestIncome: Decimal;
-    /** Historial de ingresos para la gráfica: `t` en segundos de juego, `v` = log10 de las monedas por segundo base. */
-    history: { t: number; v: number }[];
-    /** Segundos de juego entre muestras del historial (se duplica cuando se llena, para abarcar toda la partida). */
-    historyEvery: number;
-  };
+  stats: { visitors: number; /** Mejor ingreso por segundo alcanzado. */ bestIncome: Decimal };
+  /** Prendas del cerdito: las compradas y la que lleva puesta en cada hueco (el color son las pieles). */
+  wardrobe: { owned: Record<string, true>; worn: { head: string | null; body: string | null; tail: string | null } };
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
   basketSince: number;
   achievements: Record<string, { at: number }>;
@@ -139,7 +133,8 @@ export function createInitialState(content: Content, now: number): GameState {
     companionLevels: {},
     garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, mutateAt: 0, harvests: 0 },
     cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000, dragonStage: 0 },
-    stats: { visitors: 0, bestIncome: D(0), history: [], historyEvery: 300 },
+    stats: { visitors: 0, bestIncome: D(0) },
+    wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },
     basketSince: 0,
     achievements: {},
     buff: null,

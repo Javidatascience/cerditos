@@ -1,7 +1,7 @@
 // Fórmulas del juego. Ver docs/06-mina.md. Todo número sale de `content.game` y de los datos de
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
-import type { CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
+import type { AccessoryDef, CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
 import { caveProduct, caveSum, dragonBonus } from './cave.ts';
 import { gardenProduct, gardenSum } from './garden.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
@@ -285,6 +285,10 @@ export function globalUpgradeCost(state: GameState, content: Content, def: Globa
 /** ¿Tienes la piel? (gratis, comprada, o regalada por su logro). */
 export function skinOwned(state: GameState, skin: SkinDef): boolean {
   return skin.cost === 0 || state.skins[skin.id] === true || (skin.achievement !== null && state.achievements[skin.achievement] !== undefined);
+}
+
+export function accessoryOwned(state: GameState, accessory: AccessoryDef): boolean {
+  return state.wardrobe.owned[accessory.id] === true || (accessory.achievement !== null && state.achievements[accessory.achievement] !== undefined);
 }
 
 export function companionOwned(state: GameState, companion: CompanionDef): boolean {

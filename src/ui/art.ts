@@ -136,6 +136,35 @@ export function pigSprite(skinId: string, locked = false): HTMLImageElement {
   return img;
 }
 
+/** Cómo va vestido el cerdito: piel (color) y la prenda de cada hueco (o null). */
+export interface PigLook {
+  skin: string;
+  head: string | null;
+  body: string | null;
+  tail: string | null;
+}
+
+/**
+ * El cerdito con su piel y sus prendas: el sprite base y, encima, una capa transparente por prenda (todas
+ * con el mismo lienzo, así que encajan solas). Orden: cola, ropa y gorro. `size`: 'lg' (escena) o 'sm' (listas).
+ */
+export function pigStack(look: PigLook, size: 'sm' | 'lg' = 'lg'): HTMLDivElement {
+  const box = document.createElement('div');
+  box.className = `pig-stack pig-stack-${size}`;
+  box.setAttribute('aria-hidden', 'true');
+  box.appendChild(pigSprite(look.skin));
+  for (const id of [look.tail, look.body, look.head]) {
+    if (!id) continue;
+    const img = document.createElement('img');
+    img.className = 'pig-sprite pig-acc';
+    img.src = `${import.meta.env.BASE_URL}pig/acc/${id}.png`;
+    img.alt = '';
+    img.draggable = false;
+    box.appendChild(img);
+  }
+  return box;
+}
+
 /** Sprite en pixel art de una herramienta o un compañero (public/art/<tipo>/<id>.png, generado con tools/make-pixel-art.py). */
 export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui' | 'relics';
 

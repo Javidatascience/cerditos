@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { HISTORY_MAX } from './tick.ts';
-import { buyPerk, feedDragon, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
-import { growMs, mutationChance } from './garden.ts';
+import { growMs, mutationChance, shinyChance } from './garden.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
 import { createInitialState, type GameState } from './state.ts';
 import { advance } from './tick.ts';
@@ -430,7 +429,30 @@ describe('árbol de ventajas', () => {
   });
 });
 
-describe('dragón y gráfica de ingresos', () => {
+describe('pato, mariposa y lagarto', () => {
+  it('el pato acelera las flores, la mariposa sube cruces y brillantes y el lagarto multiplica las brasas', () => {
+    const state = fresh();
+    state.plumasTotal = D(10);
+    state.cave.furnaces['brasero'] = 1;
+    const flower = CONTENT.garden.flowers[0]!;
+    const growBase = growMs(state, CONTENT, flower);
+    const mutBase = mutationChance(state, CONTENT);
+    const shinyBase = shinyChance(state, CONTENT);
+    const embersBase = embersPerSecond(state, CONTENT).toNumber();
+    state.activeCompanions = ['pato', 'mariposa'];
+    expect(growMs(state, CONTENT, flower)).toBeCloseTo(growBase * 0.85, 6);
+    expect(mutationChance(state, CONTENT)).toBeCloseTo(mutBase + 0.05, 9);
+    expect(shinyChance(state, CONTENT)).toBeCloseTo(shinyBase + 0.02, 9);
+    state.activeCompanions = ['lagarto'];
+    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(embersBase * 1.25, 9);
+    state.acorns = 100;
+    buyCompanion(state, CONTENT, 'lagarto');
+    upgradeCompanion(state, CONTENT, 'lagarto');
+    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(embersBase * 1.4, 9);
+  });
+});
+
+describe('dragón y guardarropa', () => {
   it('el dragón crece alimentándolo con brasas, en orden, y cada etapa da bonos acumulados', () => {
     const state = fresh();
     expect(feedDragon(state, CONTENT)).toBe(false); // cueva cerrada
@@ -450,19 +472,22 @@ describe('dragón y gráfica de ingresos', () => {
     expect(feedDragon(state, CONTENT)).toBe(false); // ya es anciano
   });
 
-  it('el historial anota una muestra cada intervalo y, al llenarse, descarta la mitad y duplica el intervalo', () => {
+  it('las prendas se compran con bellotas, se llevan una por hueco y se quitan; las de logro se tienen al conseguirlo', () => {
     const state = fresh();
-    advance(state, CONTENT, 1);
-    expect(state.stats.history.length).toBe(1);
-    advance(state, CONTENT, 10);
-    expect(state.stats.history.length).toBe(1); // aún no ha pasado el intervalo
-    advance(state, CONTENT, state.stats.historyEvery);
-    expect(state.stats.history.length).toBe(2);
-    expect(state.stats.history[0]!.v).toBeGreaterThan(0); // 20 picos → ingresos > 1/s
-    const every = state.stats.historyEvery;
-    for (let i = 0; i < HISTORY_MAX + 5; i++) advance(state, CONTENT, state.stats.historyEvery);
-    expect(state.stats.history.length).toBeLessThanOrEqual(HISTORY_MAX);
-    expect(state.stats.historyEvery).toBeGreaterThan(every);
+    state.acorns = 20;
+    expect(wearAccessory(state, CONTENT, 'head', 'hechicero')).toBe(false); // sin comprar
+    expect(buyAccessory(state, CONTENT, 'hechicero')).toBe(true);
+    expect(state.acorns).toBe(14);
+    expect(buyAccessory(state, CONTENT, 'hechicero')).toBe(false); // ya la tengo
+    expect(wearAccessory(state, CONTENT, 'body', 'hechicero')).toBe(false); // hueco equivocado
+    expect(wearAccessory(state, CONTENT, 'head', 'hechicero')).toBe(true);
+    expect(state.wardrobe.worn.head).toBe('hechicero');
+    expect(buyAccessory(state, CONTENT, 'corona')).toBe(false); // solo por logro
+    state.achievements['ascender-5'] = { at: 0 };
+    expect(wearAccessory(state, CONTENT, 'head', 'corona')).toBe(true);
+    expect(state.wardrobe.worn.head).toBe('corona');
+    expect(wearAccessory(state, CONTENT, 'head', null)).toBe(true);
+    expect(state.wardrobe.worn.head).toBeNull();
   });
 });
 

@@ -4,7 +4,7 @@
 // o 15 s offline), así que el borde del bono puede desviarse unos segundos como mucho.
 
 import type { Content, GardenEffect } from '../content/types.ts';
-import { perkProductOf, perkSumMax, perkSumOf } from './perkEffects.ts';
+import { activeAbilities, perkProductOf, perkSumMax, perkSumOf } from './perkEffects.ts';
 import type { GameState } from './state.ts';
 
 export function flowerActive(state: GameState, id: string): boolean {
@@ -38,7 +38,22 @@ export function flowerAvailable(state: GameState, content: Content, index: numbe
 
 /** Tiempo de crecimiento de una flor en ms, con las ventajas del árbol (Tierra buena). */
 export function growMs(state: GameState, content: Content, flower: { growSeconds: number }): number {
-  return flower.growSeconds * 1000 * perkProductOf(state, content, 'gardenGrowth');
+  let factor = perkProductOf(state, content, 'gardenGrowth');
+  for (const a of activeAbilities(state, content)) if (a.kind === 'gardenSpeed') factor *= a.factor; // Pato jardinero
+  return flower.growSeconds * 1000 * factor;
+}
+
+/** Suma de lo que aportan los compañeros de suerte del jardín (Mariposa). */
+function luck(state: GameState, content: Content): { mutation: number; shiny: number } {
+  let mutation = 0;
+  let shiny = 0;
+  for (const a of activeAbilities(state, content)) {
+    if (a.kind === 'gardenLuck') {
+      mutation += a.mutation;
+      shiny += a.shiny;
+    }
+  }
+  return { mutation, shiny };
 }
 
 /** Filas de casillas del jardín: las de base más las que dé Más tierra. */
@@ -53,11 +68,11 @@ export function gardenMaxRows(content: Content): number {
 
 /** Probabilidad de cruce por casilla vacía y de flor brillante, y factor de duración de los bonos (con las ventajas). */
 export function mutationChance(state: GameState, content: Content): number {
-  return content.garden.mutationChance + perkSumOf(state, content, 'gardenMutation');
+  return content.garden.mutationChance + perkSumOf(state, content, 'gardenMutation') + luck(state, content).mutation;
 }
 
 export function shinyChance(state: GameState, content: Content): number {
-  return content.garden.shinyChance + perkSumOf(state, content, 'gardenShiny');
+  return content.garden.shinyChance + perkSumOf(state, content, 'gardenShiny') + luck(state, content).shiny;
 }
 
 export function durationFactor(state: GameState, content: Content): number {

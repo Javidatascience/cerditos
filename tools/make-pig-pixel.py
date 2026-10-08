@@ -16,6 +16,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 W, H = 34, 23
+CW, CH = 36, 30  # lienzo final y posición del cerdito dentro de él
+OX, OY = 2, 7
 OUTLINE = (52, 24, 38, 255)
 
 
@@ -123,7 +125,11 @@ def render(g, skin):
                 img.putpixel((x, y), OUTLINE)
             elif ch != '.':
                 img.putpixel((x, y), pal[ch] + (255,))
-    return img.crop(img.getbbox())
+    # Lienzo fijo con holgura arriba y a los lados: las prendas (tools/make-pig-accessories.py) se dibujan
+    # sobre este mismo lienzo y encajan sin más que apilar las imágenes.
+    canvas = Image.new('RGBA', (CW, CH), (0, 0, 0, 0))
+    canvas.paste(img, (OX, OY))
+    return canvas
 
 
 def main() -> None:
