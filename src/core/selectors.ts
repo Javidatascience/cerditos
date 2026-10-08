@@ -329,7 +329,7 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
     case 'harvests':
       return (f) => `Recoge ${f(D(req.count))} flores`;
     case 'creatureAdult':
-      return () => `Cría un ${content.nest.creatures.find((c) => c.id === req.creature)?.name ?? req.creature} hasta que sea adulto`;
+      return () => `Llega a la fase final del ${content.nest.creatures.find((c) => c.id === req.creature)?.stages[0]?.name.toLowerCase() ?? req.creature}`;
     case 'adultCount':
       return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'criatura adulta' : 'criaturas adultas'} (se anotan para siempre)`;
     case 'dragonStage':
@@ -600,7 +600,7 @@ export function cosmeticViews(
       flavor: r.flavor,
       owned: relicOwned(state, r),
       effectText: perkEffectValueText(r.effect, 1),
-      achievementName: achievementName(content, r.achievement) ?? r.achievement,
+      achievementName: content.achievements.find((a) => a.id === r.achievement)?.requires.kind === 'creatureAdult' && state.achievements[r.achievement] === undefined ? '???' : (achievementName(content, r.achievement) ?? r.achievement),
     })),
   };
 }

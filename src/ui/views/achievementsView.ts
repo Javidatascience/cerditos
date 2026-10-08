@@ -78,7 +78,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
             spriteBadge('relics', r.id, !r.owned),
             h('div', { className: 'upgrade-info' }, [
               h('span', { className: 'upgrade-name' }, [r.owned ? r.name : '???']),
-              h('span', { className: 'generator-flavor' }, [r.owned ? r.flavor : `Se consigue con el logro: ${r.achievementName}`]),
+              h('span', { className: 'generator-flavor' }, [r.owned ? r.flavor : r.achievementName === '???' ? 'Se consigue criando un huevo hasta su fase final (pestaña Nido).' : `Se consigue con el logro: ${r.achievementName}`]),
               h('span', { className: 'upgrade-effect' }, [r.effectText]),
             ]),
           ]),
@@ -92,7 +92,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
     const card = (a: AchievementView) =>
       h('li', { className: a.owned ? 'album-card' : 'album-card album-card-locked' }, [
         spriteBadge('ui', ACHIEVEMENT_ICONS[a.kind] ?? 'logro', !a.owned),
-        h('span', { className: 'upgrade-name' }, [a.name]),
+        h('span', { className: 'upgrade-name' }, [a.owned || a.kind !== 'creatureAdult' ? a.name : '???']),
         h('span', { className: 'generator-flavor' }, [a.owned ? a.flavor : '???']),
         reqLine(a.requirement, format),
       ]);
