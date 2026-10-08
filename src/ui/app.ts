@@ -94,6 +94,17 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     activeView.update(state);
   }
 
+  // La gema abre el menú de ascender y, si se vuelve a tocar, regresa a la pestaña en la que se estaba.
+  let tabBeforeAscend = TABS[0]!.id;
+  function toggleAscend(): void {
+    if (activeTab === 'fly') {
+      switchTab(tabBeforeAscend);
+    } else {
+      tabBeforeAscend = activeTab;
+      switchTab('fly');
+    }
+  }
+
   const nav = h(
     'nav',
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
@@ -131,7 +142,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   }
 
   // La gema de ascender, flotando arriba a la derecha: abre el menú de ascender (que ya no está en la barra de abajo).
-  const gemButton = h('button', { className: 'gem-button', 'aria-label': 'Ascender: esmeraldas y ventajas', title: 'Ascender', onclick: () => switchTab('fly') }, [artSprite('ui', 'esmeralda', 'md')]) as HTMLButtonElement;
+  const gemButton = h('button', { className: 'gem-button', 'aria-label': 'Ascender: esmeraldas y ventajas', title: 'Ascender', onclick: toggleAscend }, [artSprite('ui', 'esmeralda', 'md')]) as HTMLButtonElement;
   const boostText = document.createTextNode('');
 
   const header = h('header', { className: 'app-header' }, [
