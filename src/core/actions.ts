@@ -476,7 +476,7 @@ export function harvestFlower(state: GameState, content: Content, cell: number, 
   state.garden.harvests += 1;
   const seconds = flower.effect.seconds * (shiny ? 2 : 1) * durationFactor(state, content); // la brillante dura (o da) el doble
   if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
-  else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time + seconds);
+  else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time) + seconds; // si ya hay una igual activa, la nueva empieza cuando acabe la anterior
   if (before === undefined) addEntry(state, `Has descubierto la flor ${flower.name}.`, gameClockMs(state));
   else if (shiny && !before.shiny) addEntry(state, `¡Ha salido una ${flower.name} brillante!`, gameClockMs(state));
   return { shiny, isNew: before === undefined };

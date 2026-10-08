@@ -70,7 +70,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
 
   const lockText = document.createTextNode('');
   const body = h('div', {}, [
-    h('p', { className: 'settings-hint' }, [artSprite('ui', 'brasa', 'sm'), embersText, ' · ', rateText]),
+    h('p', { className: 'ascend-plumas sticky-currency' }, [artSprite('ui', 'brasa', 'md'), embersText, h('span', { className: 'currency-rate' }, [rateText])]),
     dragonCard,
     blowButton,
     h('p', { className: 'settings-hint' }, [bonusText]),
@@ -100,7 +100,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
       setText(feedCost, `${formatNumber(view.dragon.next.cost, notation)} `);
     }
     setDisabled(feedButton, !view.dragon.canFeed);
-    setText(embersText,` ${formatNumber(view.embers, notation)} brasas`);
+    setText(embersText, ` Brasas: ${formatNumber(view.embers, notation)}`);
     setText(rateText, `+${formatNumber(view.perSecond, notation)}/s`);
     setText(blowText, view.blowReady ? `Soplar (+${formatNumber(view.blowGain, notation)})` : 'Soplar…');
     setDisabled(blowButton, !view.blowReady);

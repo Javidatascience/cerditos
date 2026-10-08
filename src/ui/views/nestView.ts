@@ -87,7 +87,7 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
     albumRow.replaceChildren(
       ...ctx.content.nest.creatures.map((c) => {
         const done = view.adults.includes(c.id);
-        const el = h('div', { className: done ? 'nest-album-item' : 'nest-album-item nest-album-locked' }, [artSprite('creatures', `${c.id}-3`, 'md'), h('span', {}, [done ? c.stages[3]!.name : '???'])]);
+        const el = h('div', { className: done ? 'nest-album-item' : 'nest-album-item nest-album-locked' }, [done ? artSprite('creatures', `${c.id}-3`, 'md') : h('span', { className: 'nest-album-mark' }, ['?']), h('span', {}, [done ? c.stages[3]!.name : '???'])]);
         return el;
       }),
     );

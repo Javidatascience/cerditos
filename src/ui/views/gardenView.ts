@@ -87,7 +87,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
       const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.name} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
       setText(
         introText,
-        `Elige una semilla y toca las casillas vacías; toca una flor madura para recogerla. Plantar es gratis. Dos flores vecinas maduras pueden cruzarse en una casilla vacía y dar una flor nueva. Al recogerlas dan un bono temporal; hay un ${view.shinyPercent} % de que salgan brillantes (el bono dura el doble).${activeNow}`,
+        `Elige una semilla y toca las casillas vacías; toca una flor madura para recogerla. Plantar es gratis. Dos flores vecinas maduras pueden cruzarse en una casilla vacía y dar una flor nueva. Al recogerlas dan un bono temporal (si recoges varias iguales, sus efectos van uno detrás de otro); hay un ${view.shinyPercent} % de que salgan brillantes (el bono dura el doble).${activeNow}`,
       );
     }
 

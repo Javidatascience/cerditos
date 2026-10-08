@@ -2440,3 +2440,38 @@ button {
   display: grid;
   gap: 4px;
 }
+
+/* Moneda fija (brasas, esmeraldas): se queda visible bajo la cabecera al hacer scroll */
+.sticky-currency {
+  position: sticky;
+  top: calc(var(--header-h, 78px) - 2px);
+  z-index: 4;
+  margin: 0 0 8px;
+  padding: 6px 0;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.currency-rate {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.fly-ascend,
+.ascend-view {
+  display: contents;
+}
+
+.nest-album-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 2px dashed var(--color-border);
+  font-size: 1.8rem;
+  color: var(--color-text-muted);
+}

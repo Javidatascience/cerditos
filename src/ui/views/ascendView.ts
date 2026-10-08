@@ -36,7 +36,7 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
   });
 
   const container = h('div', { className: 'ascend-view' }, [
-    h('p', { className: 'ascend-plumas' }, [artSprite('ui', 'esmeralda', 'md'), plumasText]),
+    h('p', { className: 'ascend-plumas sticky-currency' }, [artSprite('ui', 'esmeralda', 'md'), plumasText]),
     h('p', { className: 'settings-hint' }, [pendingText]),
     h('p', { className: 'settings-hint' }, [multiplierText]),
     h('p', { className: 'settings-hint' }, [nextText]),

@@ -14,7 +14,7 @@ export const CAVE: CaveDef = {
   ],
   furnaceGrowth: 1.15,
   /** Segundos entre soplidos. */
-  blowCooldown: 4,
+  blowCooldown: 3,
   /** Un soplido da esto en segundos de producción de brasas (mínimo 1 brasa). */
   blowSeconds: 5,
   furnaces: [
