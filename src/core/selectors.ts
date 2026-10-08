@@ -6,6 +6,8 @@ import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
 import { durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
+import { gameClockMs } from './journal.ts';
+import { basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost } from './cave.ts';
 import {
   accessoryOwned,
@@ -240,6 +242,10 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
       return `+${Math.round(effect.perLevel * level * 100)} % de brasas por soplido`;
     case 'caveCost':
       return `hornos ×${(effect.perLevel ** level).toFixed(2)} de coste`;
+    case 'nestSlots':
+      return `+${effect.perLevel * level} nido${effect.perLevel * level === 1 ? '' : 's'}`;
+    case 'basketAcorns':
+      return `el topo deja 1 bellota en la cesta cada ${effect.perLevel} h`;
   }
 }
 
@@ -322,6 +328,10 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
       return (f) => `Consigue ${f(D(req.count))} ${req.count === 1 ? 'flor brillante' : 'flores brillantes'} distintas`;
     case 'harvests':
       return (f) => `Recoge ${f(D(req.count))} flores`;
+    case 'creatureAdult':
+      return () => `Cría un ${content.nest.creatures.find((c) => c.id === req.creature)?.name ?? req.creature} hasta que sea adulto`;
+    case 'adultCount':
+      return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'criatura adulta' : 'criaturas adultas'} (se anotan para siempre)`;
     case 'dragonStage':
       return (f) => `Haz crecer al dragón hasta la etapa ${f(D(req.count))} (${content.cave.dragon[req.count]?.name ?? '?'})`;
     case 'furnaces':
@@ -353,12 +363,80 @@ export interface BasketView {
   capSeconds: number;
   /** 0..1 */
   fill: number;
+  /** Bellotas que el topo ha dejado en la cesta (solo con Topo excavador). */
+  acorns: number;
 }
 
-export function basketView(state: GameState, content: Content): BasketView {
+export function basketView(state: GameState, content: Content, now: number = gameClockMs(state)): BasketView {
   const cap = basketCap(state, content);
   const seconds = basketSeconds(state, cap);
-  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap };
+  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap, acorns: basketAcornsReady(state, content, now) };
+}
+
+export interface NestSlotView {
+  index: number;
+  /** ¿Está disponible esta casilla (nidos conseguidos)? */
+  usable: boolean;
+  creatureId: string | null;
+  name: string;
+  stage: number;
+  stageName: string;
+  flavor: string;
+  spriteId: string | null;
+  /** Segundos que le quedan al huevo para poder eclosionar. */
+  hatchLeftSeconds: number;
+  canHatch: boolean;
+  /** Coste de alimentarla para evolucionar (null si es huevo o ya es adulta). */
+  feedCost: number | null;
+  canFeed: boolean;
+  canRemove: boolean;
+}
+
+export interface NestView {
+  unlocked: boolean;
+  unlockPlumas: number;
+  plumas: Decimal;
+  slots: NestSlotView[];
+  /** Huevos que se pueden comprar y si hay sitio y bellotas. */
+  eggs: { id: string; name: string; stageName: string; cost: number; canBuy: boolean }[];
+  /** Criaturas que ya han llegado a adultas alguna vez. */
+  adults: string[];
+  freeSlot: number | null;
+}
+
+export function nestView(state: GameState, content: Content, now: number): NestView {
+  const count = nestSlotCount(state, content);
+  const slots: NestSlotView[] = state.nest.slots.map((s, index) => {
+    const creature = s ? creatureOf(content, s.creature) : undefined;
+    const base = { index, usable: index < count };
+    if (!s || !creature) return { ...base, creatureId: null, name: '', stage: 0, stageName: '', flavor: '', spriteId: null, hatchLeftSeconds: 0, canHatch: false, feedCost: null, canFeed: false, canRemove: false };
+    const left = hatchLeftMs(content, s, now);
+    const feedCost = s.stage >= 1 && s.stage <= 2 ? creature.feedCosts[s.stage - 1]! : null;
+    return {
+      ...base,
+      creatureId: creature.id,
+      name: creature.name,
+      stage: s.stage,
+      stageName: creature.stages[s.stage]!.name,
+      flavor: creature.stages[s.stage]!.flavor,
+      spriteId: `${creature.id}-${s.stage}`,
+      hatchLeftSeconds: left / 1000,
+      canHatch: s.stage === 0 && left <= 0,
+      feedCost,
+      canFeed: feedCost !== null && state.acorns >= feedCost,
+      canRemove: s.stage === 3,
+    };
+  });
+  const freeSlot = slots.findIndex((s) => s.usable && s.creatureId === null);
+  return {
+    unlocked: nestUnlocked(state, content),
+    unlockPlumas: content.nest.unlockPlumas,
+    plumas: state.plumasTotal,
+    slots,
+    eggs: content.nest.creatures.map((c) => ({ id: c.id, name: c.name, stageName: c.stages[0]!.name, cost: c.eggCost, canBuy: freeSlot >= 0 && state.acorns >= c.eggCost })),
+    adults: Object.keys(state.nest.adults),
+    freeSlot: freeSlot >= 0 ? freeSlot : null,
+  };
 }
 
 /** Lo que daría una inyección de visitante ahora mismo (monedas). */

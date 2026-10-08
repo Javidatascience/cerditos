@@ -63,7 +63,8 @@ export function validateContent(content: Content): string[] {
   for (const a of content.achievements) {
     const r = a.requires;
     if (r.kind === 'toolCount' && !toolIds.has(r.tool)) errors.push(`${a.id}: herramienta desconocida (${r.tool})`);
-    const amount = r.kind === 'lifetime' ? r.amount : r.count;
+    if (r.kind === 'creatureAdult' && !content.nest.creatures.some((c) => c.id === r.creature)) errors.push(`${a.id}: criatura desconocida (${r.creature})`);
+    const amount = r.kind === 'lifetime' ? r.amount : r.kind === 'creatureAdult' ? 1 : r.count;
     if (amount <= 0) errors.push(`${a.id}: el requisito debe ser > 0`);
   }
   return errors;

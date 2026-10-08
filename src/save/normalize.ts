@@ -69,6 +69,14 @@ export function normalize(state: GameState, content: Content): GameState {
   if (!state.cave.embers.gte(0)) state.cave.embers = state.cave.embers.sub(state.cave.embers);
   state.cave.dragonStage = clampInt(state.cave.dragonStage, 0, content.cave.dragon.length - 1);
   state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
+  const creatureById = new Map(content.nest.creatures.map((c) => [c.id, c]));
+  state.nest.slots = Array.from({ length: content.nest.maxSlots }, (_, i) => {
+    const s = state.nest.slots[i];
+    if (!s || !creatureById.has(s.creature) || !Number.isFinite(s.since)) return null;
+    return { creature: s.creature, stage: clampInt(s.stage, 0, 3), since: s.since };
+  });
+  for (const id of Object.keys(state.nest.adults)) if (!creatureById.has(id)) delete state.nest.adults[id];
+  if (!Number.isFinite(state.basketAcornsAt) || state.basketAcornsAt < 0) state.basketAcornsAt = 0;
   const accessoryById = new Map(content.accessories.map((a) => [a.id, a]));
   for (const id of Object.keys(state.wardrobe.owned)) if (!accessoryById.has(id)) delete state.wardrobe.owned[id];
   for (const slot of ['head', 'body', 'tail'] as const) {

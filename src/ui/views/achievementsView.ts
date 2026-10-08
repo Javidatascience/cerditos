@@ -25,6 +25,8 @@ const ACHIEVEMENT_ICONS: Record<string, string> = {
   furnaces: 'logro-horno',
   caveNodes: 'nav-cueva',
   dragonStage: 'nav-cueva',
+  creatureAdult: 'nav-nido',
+  adultCount: 'nav-nido',
 };
 
 export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {

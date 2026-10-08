@@ -794,13 +794,14 @@ RELICS = {
     'callo-de-oro': r_callo, 'pico-ancestral': r_pico_ancestral, 'pluma-eterna': esmeralda_eterna,  # noqa: F821 'reloj-de-bolsillo': r_reloj,
     'muelle-magico': r_muelle, 'monedero-sin-fondo': r_monedero, 'corazon-de-agujero': r_corazon_agujero,
 }
+RELICS.update(NEW_RELICS)  # noqa: F821 (reliquias de las criaturas, definidas en _gems.py)
 
 
 def main() -> None:
     args = sys.argv[1:]
     out = Path(args[args.index('--out') + 1]) if '--out' in args else ROOT / 'public' / 'art'
     sheets = []
-    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('ui', GEMS), ('relics', RELICS)):  # noqa: F821
+    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('ui', GEMS), ('relics', RELICS), ('creatures', CREATURES)):  # noqa: F821
         (out / folder).mkdir(parents=True, exist_ok=True)
         for sprite_id, fn in table.items():
             c = Canvas()

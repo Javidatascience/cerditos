@@ -222,6 +222,190 @@ def lagarto(c):
 COMPANIONS.update({'pato': pato, 'mariposa': mariposa, 'lagarto': lagarto})  # noqa: F821
 
 
+# ---------------------------------------------------------------- criaturas del Nido (huevo, cría, joven, adulta)
+
+
+def huevo(c, base, spot, shade, light):
+    c.ell(7, 7.5, 4.4, 5.6, base)
+    for y in range(N):
+        for x in range(N):
+            if c.g[y][x] == base and x >= 10:
+                c.g[y][x] = shade
+    c.pts(spot, (5, 5), (8, 9), (9, 4), (6, 10), (7, 7))
+    c.pts(light, (5, 3), (5, 4), (6, 3))
+
+
+def fenix_0(c):
+    huevo(c, 'r', 'O', 'R', 'p')
+
+
+def fenix_1(c):
+    c.ell(7, 9, 4.4, 3.8, 'r')
+    c.ell(7, 5, 3.2, 3, 'r')
+    c.ell(7, 10.5, 2, 1.5, 'O')
+    c.pts('k', (5, 4), (9, 4))
+    c.rect(6, 6, 8, 6, 'y')
+    c.pts('O', (7, 1), (6, 2), (8, 2))
+    c.pts('R', (2, 9), (3, 10), (12, 9), (11, 10))
+    c.pts('y', (5, 13), (9, 13), (4, 13), (10, 13))
+
+
+def fenix_2(c):
+    c.ell(7, 9, 5.4, 4.2, 'r')
+    c.ell(7, 4.5, 3, 2.8, 'r')
+    c.pts('y', (7, 0), (7, 1))
+    c.pts('O', (6, 1), (8, 1), (6, 2), (8, 2))
+    c.pts('k', (5, 4), (9, 4))
+    c.pts('y', (7, 5), (7, 6))
+    c.rect(1, 7, 3, 11, 'R')
+    c.rect(11, 7, 13, 11, 'R')
+    c.pts('O', (13, 5), (13, 6), (12, 6))
+    c.pts('y', (13, 4), (12, 5))
+    c.pts('O', (7, 10), (6, 11), (8, 11))
+    c.pts('y', (5, 13), (9, 13), (4, 13), (10, 13))
+
+
+def fenix_3(c):
+    for y, x0, x1 in [(2, 0, 3), (3, 0, 4), (4, 0, 5), (5, 0, 5), (6, 1, 5), (7, 2, 5), (8, 3, 5)]:
+        c.rect(x0, y, x1, y, 'O')
+        c.rect(13 - x1, y, 13 - x0, y, 'O')
+    c.pts('y', (0, 2), (0, 3), (13, 2), (13, 3), (1, 4), (12, 4))
+    c.ell(7, 8, 3.2, 4.4, 'r')
+    c.ell(7, 4, 2.4, 2.4, 'r')
+    c.pts('y', (6, 0), (7, 0), (8, 0), (7, 1))
+    c.pts('O', (6, 1), (8, 1))
+    c.pts('k', (6, 4), (8, 4))
+    c.pts('y', (7, 5), (7, 6))
+    c.pts('O', (6, 11), (7, 12), (8, 11), (7, 13))
+    c.pts('y', (7, 11), (6, 12), (8, 12))
+
+
+def tiburon_0(c):
+    huevo(c, 'C', 'c', 'D', 'w')
+    c.pts('c', (5, 7), (6, 8), (7, 7), (8, 8), (9, 7))
+
+
+def tiburon_1(c):
+    c.ell(7, 7.5, 4.6, 3, 'C')
+    c.rect(0, 5, 2, 10, 'D')
+    c.pts('D', (6, 3), (7, 4), (8, 4))
+    c.pts('c', (6, 9), (7, 9), (8, 9))
+    c.pts('w', (9, 6))
+    c.pts('k', (10, 6), (12, 8))
+
+
+def tiburon_2(c):
+    c.ell(7.5, 7.5, 5.4, 4.4, 'C')
+    c.ell(7.5, 10, 4.2, 1.8, 'O')
+    c.rect(0, 4, 2, 11, 'D')
+    c.rect(5, 2, 8, 3, 'D')
+    c.pts('k', (11, 7), (12, 8), (11, 9), (12, 9))
+    c.pts('w', (11, 6), (12, 7), (10, 8), (11, 10), (12, 10), (13, 9))
+    c.pts('y', (9, 5))
+    c.pts('k', (9, 5))
+    c.pts('D', (8, 4), (9, 4), (10, 4))
+
+
+def tiburon_3(c):
+    c.ell(7, 8, 6.5, 3.4, 'g')
+    c.ell(7, 9.4, 5.2, 1.6, 'w')
+    c.pts('G', (7, 1), (6, 2), (7, 2), (5, 3), (6, 3), (7, 3), (7, 4), (6, 4))
+    c.rect(0, 3, 2, 5, 'G')
+    c.rect(0, 9, 2, 11, 'G')
+    c.rect(9, 9, 13, 9, 'k')
+    c.pts('w', (9, 8), (11, 8), (13, 8), (10, 10), (12, 10))
+    c.pts('r', (10, 6))
+    c.pts('G', (6, 7), (6, 8), (6, 9), (3, 7))
+
+
+def ornitorrinco_0(c):
+    huevo(c, 'b', 'B', 'B', 'o')
+
+
+def ornitorrinco_1(c):
+    c.ell(7, 9, 5, 3.8, 'o')
+    c.ell(5, 5.5, 2.6, 2.6, 'b')
+    c.ell(9.5, 6.5, 2.2, 2.4, 'o')
+    c.pts('p', (3, 10), (11, 10), (8, 12))
+    c.pts('w', (5, 5))
+    c.pts('k', (6, 5), (10, 8))
+    c.pts('B', (4, 11), (7, 10), (9, 11), (10, 5), (3, 6))
+
+
+def ornitorrinco_2(c):
+    c.ell(6.5, 9, 4.6, 3, 'b')
+    c.ell(10, 7, 2.6, 2.4, 'b')
+    c.rect(11, 8, 13, 9, 'O')
+    c.pts('Y', (12, 9), (13, 9))
+    c.pts('k', (10, 6))
+    c.rect(0, 9, 2, 11, 'B')
+    c.rect(3, 12, 5, 12, 'O')
+    c.rect(7, 12, 9, 12, 'O')
+    c.ell(6.5, 10, 2.6, 1.4, 'o')
+
+
+def ornitorrinco_3(c):
+    c.ell(6.5, 8, 5.4, 4.2, 'b')
+    c.ell(10.5, 5.5, 3, 2.8, 'b')
+    c.rect(11, 6, 13, 8, 'O')
+    c.rect(11, 8, 13, 8, 'Y')
+    c.rect(9, 4, 12, 5, 'k')
+    c.pts('w', (10, 4))
+    c.rect(0, 8, 2, 11, 'B')
+    c.rect(2, 12, 5, 13, 'O')
+    c.rect(7, 12, 10, 13, 'O')
+    c.ell(6.5, 9.5, 3, 2, 'o')
+    c.pts('y', (3, 11))
+
+
+CREATURES = {
+    'fenix-0': fenix_0, 'fenix-1': fenix_1, 'fenix-2': fenix_2, 'fenix-3': fenix_3,
+    'tiburon-0': tiburon_0, 'tiburon-1': tiburon_1, 'tiburon-2': tiburon_2, 'tiburon-3': tiburon_3,
+    'ornitorrinco-0': ornitorrinco_0, 'ornitorrinco-1': ornitorrinco_1, 'ornitorrinco-2': ornitorrinco_2, 'ornitorrinco-3': ornitorrinco_3,
+}
+
+
+def nido(c):
+    c.ell(7, 6.5, 3.8, 5, 'w')
+    c.pts('W', (9, 4), (10, 6), (9, 8), (8, 9))
+    c.pts('p', (6, 4), (8, 6), (5, 7), (7, 9))
+    c.ell(7, 11, 6, 2.4, 'b')
+    c.pts('B', (3, 11), (5, 12), (8, 12), (10, 11), (7, 10), (11, 12))
+    c.pts('o', (2, 10), (12, 10), (4, 13), (9, 13))
+
+
+def r_fenix(c):
+    r = 2 ** 0.5
+    for y in range(N):
+        for x in range(N):
+            u = ((x - 7.5) + (6.5 - y)) / r
+            v = ((x - 7.5) - (6.5 - y)) / r
+            if (u / 6.2) ** 2 + (v / 2.9) ** 2 <= 1:
+                c.p(x, y, 'y' if abs(v) < 0.55 else ('O' if v > 0 else 'r'))
+    c.line(1, 13, 4, 10, 'B')
+    c.pts('w', (10, 3), (11, 2), (7, 5), (12, 0), (1, 5))
+
+
+def r_diente(c):
+    for y, x0, x1 in [(2, 5, 8), (3, 4, 9), (4, 4, 9), (5, 4, 9), (6, 4, 9), (7, 5, 8), (8, 5, 8), (9, 6, 8), (10, 6, 7), (11, 7, 7)]:
+        c.rect(x0, y, x1, y, 'w')
+    c.rect(3, 1, 10, 2, 'p')
+    c.rect(8, 3, 9, 7, 'W')
+    c.pts('s', (5, 4), (5, 5))
+    c.pts('y', (12, 4), (1, 8), (11, 11))
+
+
+def r_pico_ornit(c):
+    for y, x0, x1, col in [(5, 4, 10, 'O'), (6, 2, 12, 'O'), (7, 1, 13, 'O'), (8, 1, 13, 'Y'), (9, 2, 12, 'Y'), (10, 4, 10, 'Y')]:
+        c.rect(x0, y, x1, y, col)
+    c.pts('k', (4, 6), (9, 6))
+    c.pts('y', (3, 7), (5, 6), (7, 6))
+    c.pts('w', (12, 2), (1, 3), (7, 2))
+
+
+NEW_RELICS = {'pluma-de-fenix': r_fenix, 'diente-de-tiburon': r_diente, 'pico-de-ornitorrinco': r_pico_ornit}
+
+
 def perk_compania(c):
     c.ell(6, 9, 3.4, 3, 'p')
     for x, y in [(2, 5), (4, 2), (8, 2), (10, 5)]:
@@ -278,6 +462,7 @@ def perk_soplido(c):
 
 
 GEMS = {
+    'nav-nido': nido, 'perk-nidos': nido, 'perk-topo': topo,
     'perk-compania': perk_compania, 'perk-parcelas': perk_parcelas, 'perk-crecimiento': perk_crecimiento, 'perk-polen': perk_polen,
     'perk-rocio': perk_rocio, 'perk-soplido': perk_soplido, 'perk-brillo': destello, 'perk-brasas': brasa, 'perk-hornos': horno,
     'perk-calor': dragon,

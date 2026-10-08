@@ -166,7 +166,7 @@ export function pigStack(look: PigLook, size: 'sm' | 'lg' = 'lg'): HTMLDivElemen
 }
 
 /** Sprite en pixel art de una herramienta o un compañero (public/art/<tipo>/<id>.png, generado con tools/make-pixel-art.py). */
-export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui' | 'relics';
+export type ArtKind = 'tools' | 'companions' | 'cave' | 'flowers' | 'furnaces' | 'ui' | 'relics' | 'creatures';
 
 export function artSprite(kind: ArtKind, id: string, size: 'sm' | 'md' | 'lg' = 'md'): HTMLImageElement {
   const img = document.createElement('img');

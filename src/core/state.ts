@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 14;
+export const STATE_VERSION = 15;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -95,6 +95,10 @@ export interface GameState {
   stats: { visitors: number; /** Mejor ingreso por segundo alcanzado. */ bestIncome: Decimal };
   /** Prendas del cerdito: las compradas y la que lleva puesta en cada hueco (el color son las pieles). */
   wardrobe: { owned: Record<string, true>; worn: { head: string | null; body: string | null; tail: string | null } };
+  /** El Nido: hasta 3 casillas con una criatura (etapa 0 = huevo; `since` = epoch ms en que se puso a incubar) y las que ya fueron adultas. */
+  nest: { slots: ({ creature: string; stage: number; since: number } | null)[]; adults: Record<string, true> };
+  /** Epoch ms desde el que se acumulan las bellotas de la cesta (Topo excavador); 0 = aún no cuenta. */
+  basketAcornsAt: number;
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
   basketSince: number;
   achievements: Record<string, { at: number }>;
@@ -135,6 +139,8 @@ export function createInitialState(content: Content, now: number): GameState {
     cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000, dragonStage: 0 },
     stats: { visitors: 0, bestIncome: D(0) },
     wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },
+    nest: { slots: [null, null, null], adults: {} },
+    basketAcornsAt: 0,
     basketSince: 0,
     achievements: {},
     buff: null,

@@ -38,6 +38,10 @@ export function achievementProgress(state: GameState, req: AchievementReq): Requ
       return progress(Object.values(state.garden.found).filter((f) => f.shiny).length, req.count);
     case 'harvests':
       return progress(state.garden.harvests, req.count);
+    case 'creatureAdult':
+      return progress(state.nest.adults[req.creature] ? 1 : 0, 1);
+    case 'adultCount':
+      return progress(Object.keys(state.nest.adults).length, req.count);
     case 'dragonStage':
       return progress(state.cave.dragonStage, req.count);
     case 'furnaces':

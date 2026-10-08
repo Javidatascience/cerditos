@@ -121,3 +121,10 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 
 - **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
 - **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).
+
+### El Nido (guardado v15)
+
+- Pestaña **Nido** (icono: huevo), se abre con 5 esmeraldas en total. Tres criaturas, cada una con 4 dibujos (`public/art/creatures/<id>-0..3.png`): **Fénix** (huevo rojo, pollito rojo, gallina de fuego, fénix), **Tiburón** (huevo azul, pececito, piraña, tiburón) y **Ornitorrinco** (huevo marrón, plastilina, ornitorrinco pequeño, grande con gafas). Datos en `content/nest.ts`.
+- Un huevo cuesta 10 bellotas y tarda 1 h de reloj real en poder eclosionar (también con el juego cerrado). Las crías evolucionan alimentándolas: 15 bellotas (cría a joven) y 40 (joven a adulta).
+- Hay 1 nido; la zona **Nido** del árbol de ventajas (5 esmeraldas en total) da hasta 3 (*Más nidos*, 3 y 6 esmeraldas) y *Topo excavador* (4): el topo deja 1 bellota en la cesta cada 6 h (hasta 4) y la cesta las recoge junto a las monedas.
+- Al llegar a adulta se anota (`nest.adults`), da un logro y una reliquia nueva (Pluma de fénix ×1,25 producción, Diente de tiburón ×0,9 costes, Pico de ornitorrinco +2 h offline) y se puede **retirar** para liberar el nido; queda anotada para siempre. Con los 3 nidos se pueden tener las 3 adultas a la vez para verlas.

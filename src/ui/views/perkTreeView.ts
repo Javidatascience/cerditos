@@ -101,7 +101,7 @@ export function mountPerkTreeView(root: HTMLElement, ctx: UiContext): View {
     e.stopPropagation();
     if (selected) {
       const id = selected.perkId;
-      ctx.dispatch((s) => void buyPerk(s, ctx.content, id));
+      ctx.dispatch((s) => void buyPerk(s, ctx.content, id, Date.now()));
     }
   });
   // El coste se ve siempre (también si aún está bloqueada), para poder planear cuándo ascender.

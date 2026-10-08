@@ -2,6 +2,7 @@
 // progreso. Uno por herramienta y cantidad, más los generales; los generales se anotan en el Diario.
 
 import { TOOLS } from './game.ts';
+import { NEST } from './nest.ts';
 import type { AchievementDef } from './types.ts';
 
 /** Cantidades de cada herramienta que dan logro (y su frase). */
@@ -32,6 +33,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ...[1, 3, 5, 10].map((n) => ({ id: `brillantes-${n}`, name: n === 1 ? 'Primera flor brillante' : `${n} flores brillantes`, flavor: 'Reluce más que una moneda.', requires: { kind: 'shinyFound' as const, count: n } })),
   ...[1, 10, 25, 50, 100].map((n) => ({ id: `hornos-${n}`, name: n === 1 ? 'Primer horno' : `${n} hornos`, flavor: 'La cueva ya no se enfría.', requires: { kind: 'furnaces' as const, count: n } })),
   ...[1, 2, 3, 4].map((n) => ({ id: `dragon-etapa-${n}`, name: ['Cría de dragón', 'Dragón joven', 'Dragón adulto', 'Dragón anciano'][n - 1]!, flavor: 'Crece bien alimentado.', requires: { kind: 'dragonStage' as const, count: n } })),
+  ...NEST.creatures.map((c) => ({ id: `${c.id}-adulto`, name: c.stages[3]!.name, flavor: 'Ha crecido del todo y se queda de recuerdo.', requires: { kind: 'creatureAdult' as const, creature: c.id } })),
+  ...[1, 2, 3].map((n) => ({ id: `criaturas-adultas-${n}`, name: n === 1 ? 'Primera criatura adulta' : `${n} criaturas adultas`, flavor: 'El nido está lleno de vida.', requires: { kind: 'adultCount' as const, count: n } })),
   ...[1, 5, 10].map((n) => ({ id: `ventajas-dragon-${n}`, name: n === 1 ? 'Primera ventaja del dragón' : `${n} ventajas del dragón`, flavor: 'El dragón sonríe, que ya es mucho.', requires: { kind: 'caveNodes' as const, count: n } })),
   ...TOOLS.flatMap((tool) => TOOL_MILESTONES.map((m) => ({ id: `${tool.id}-${m.count}`, name: `${tool.name} ×${m.count}`, flavor: m.flavor, requires: { kind: 'toolCount' as const, tool: tool.id, count: m.count } }))),
 ];

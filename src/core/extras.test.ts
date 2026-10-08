@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
-import { buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { basketAcornsReady } from './nest.ts';
+import { buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
@@ -293,6 +294,68 @@ describe('mejoras de compañeros', () => {
     const acorns = state.acorns;
     for (let i = 0; i < 30; i++) tap(state, CONTENT);
     expect(state.acorns).toBe(acorns + 1);
+  });
+});
+
+describe('nido y bellotas de la cesta', () => {
+  const HOUR = 3600_000;
+
+  it('se abre con 5 esmeraldas, hay 1 nido y las ventajas dan hasta 3', () => {
+    const state = fresh();
+    state.acorns = 500;
+    state.plumas = D(1e6);
+    expect(buyEgg(state, CONTENT, 'fenix', 0, 0)).toBe(false); // cerrado
+    state.plumasTotal = D(5);
+    expect(buyEgg(state, CONTENT, 'fenix', 1, 0)).toBe(false); // solo hay un nido
+    expect(buyEgg(state, CONTENT, 'fenix', 0, 0)).toBe(true);
+    expect(buyEgg(state, CONTENT, 'tiburon', 0, 0)).toBe(false); // ocupado
+    expect(buyPerk(state, CONTENT, 'nidos')).toBe(true);
+    expect(buyEgg(state, CONTENT, 'tiburon', 1, 0)).toBe(true);
+    expect(buyPerk(state, CONTENT, 'nidos')).toBe(true);
+    expect(buyPerk(state, CONTENT, 'nidos')).toBe(false); // tope de 3 nidos
+    expect(buyEgg(state, CONTENT, 'ornitorrinco', 2, 0)).toBe(true);
+  });
+
+  it('el huevo eclosiona con el tiempo, las crías evolucionan con bellotas y la adulta da logro y reliquia', () => {
+    const state = fresh();
+    state.plumasTotal = D(5);
+    state.acorns = 100;
+    buyEgg(state, CONTENT, 'fenix', 0, 1000);
+    expect(state.acorns).toBe(90);
+    expect(hatchEgg(state, CONTENT, 0, 1000 + HOUR - 1)).toBe(false);
+    expect(feedCreature(state, CONTENT, 0)).toBe(false); // un huevo no come
+    expect(hatchEgg(state, CONTENT, 0, 1000 + HOUR)).toBe(true);
+    expect(state.nest.slots[0]?.stage).toBe(1);
+    expect(feedCreature(state, CONTENT, 0)).toBe(true);
+    expect(state.acorns).toBe(75);
+    expect(removeCreature(state, CONTENT, 0)).toBe(false); // aún no es adulta
+    expect(feedCreature(state, CONTENT, 0)).toBe(true);
+    expect(state.nest.slots[0]?.stage).toBe(3);
+    expect(state.nest.adults['fenix']).toBe(true);
+    advance(state, CONTENT, 1);
+    expect(state.achievements['fenix-adulto']).toBeDefined();
+    const relic = CONTENT.relics.find((r) => r.id === 'pluma-de-fenix')!;
+    expect(relicOwned(state, relic)).toBe(true);
+    expect(removeCreature(state, CONTENT, 0)).toBe(true);
+    expect(state.nest.slots[0]).toBeNull();
+    expect(state.nest.adults['fenix']).toBe(true); // queda anotada
+  });
+
+  it('el topo excavador deja una bellota en la cesta cada 6 h (con tope) y la cesta las recoge', () => {
+    const state = fresh();
+    state.plumas = D(100);
+    state.plumasTotal = D(5);
+    expect(basketAcornsReady(state, CONTENT, 100 * HOUR)).toBe(0); // sin la ventaja
+    buyPerk(state, CONTENT, 'nidos');
+    expect(buyPerk(state, CONTENT, 'topo-solo', 1)).toBe(true); // el topo empieza a cavar en el instante 1 (0 significa "sin empezar")
+    expect(basketAcornsReady(state, CONTENT, 5 * HOUR)).toBe(0);
+    expect(basketAcornsReady(state, CONTENT, 13 * HOUR)).toBe(2);
+    expect(basketAcornsReady(state, CONTENT, 1000 * HOUR)).toBe(CONTENT.nest.basketAcornCap);
+    collectBasket(state, CONTENT, 13 * HOUR);
+    expect(state.acorns).toBe(2);
+    expect(basketAcornsReady(state, CONTENT, 13 * HOUR)).toBe(0);
+    expect(basketAcornsReady(state, CONTENT, 18 * HOUR)).toBe(0);
+    expect(basketAcornsReady(state, CONTENT, 19 * HOUR)).toBe(1); // conserva lo que sobraba
   });
 });
 

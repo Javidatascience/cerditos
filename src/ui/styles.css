@@ -2370,6 +2370,57 @@ button {
   z-index: 7;
 }
 
+/* El Nido */
+.nest-slots {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 14px;
+}
+
+.nest-slot {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 0 4px 0 var(--ink);
+  background: var(--color-surface);
+}
+
+.nest-slot .upgrade-info {
+  display: grid;
+  gap: 4px;
+}
+
+.nest-slot-locked {
+  opacity: 0.6;
+}
+
+.nest-slot-locked .art-sprite {
+  filter: grayscale(1);
+}
+
+.nest-album {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0 14px;
+}
+
+.nest-album-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.nest-album-locked .art-sprite {
+  filter: grayscale(1) brightness(0.3);
+}
+
 .perk-price {
   display: flex;
   align-items: center;

@@ -159,5 +159,8 @@ export const RELICS: RelicDef[] = [
   { id: 'reloj-de-bolsillo', name: 'Reloj de bolsillo', emoji: '⏱️', flavor: 'Atrasa un poco, a favor del cerdito.', achievement: 'plumas-100', effect: { kind: 'offlineHours', perLevel: 1 } },
   { id: 'muelle-magico', name: 'Muelle mágico', emoji: '🌀', flavor: 'Quien lo toca, no quiere parar.', achievement: 'grua-perforadora-25', effect: { kind: 'momentumMax', perLevel: 0.25 } },
   { id: 'monedero-sin-fondo', name: 'Monedero sin fondo', emoji: '👛', flavor: 'Siempre cabe una moneda más.', achievement: 'monedas-1000000000000', effect: { kind: 'costMult', perLevel: 0.95 } },
+  { id: 'pluma-de-fenix', name: 'Pluma de fénix', emoji: '🔥', flavor: 'No se quema, pero calienta todo lo que toca.', achievement: 'fenix-adulto', effect: { kind: 'prodMult', perLevel: 1.25 } },
+  { id: 'diente-de-tiburon', name: 'Diente de tiburón', emoji: '🦷', flavor: 'Afilado como el mejor pico: todo sale más barato.', achievement: 'tiburon-adulto', effect: { kind: 'costMult', perLevel: 0.9 } },
+  { id: 'pico-de-ornitorrinco', name: 'Pico de ornitorrinco', emoji: '🦆', flavor: 'Rastrea el fondo del estanque mientras no estás.', achievement: 'ornitorrinco-adulto', effect: { kind: 'offlineHours', perLevel: 2 } },
   { id: 'corazon-de-agujero', name: 'Corazón de agujero negro', emoji: '🕳️', flavor: 'Late muy despacio y lo atrae todo.', achievement: 'agujero-negro-1', effect: { kind: 'prodMult', perLevel: 1.5 } },
 ];

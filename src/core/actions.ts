@@ -29,6 +29,7 @@ import {
 } from './formulas.ts';
 import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
 import { durationFactor, flowerAvailable, gardenRows, gardenUnlocked, growMs, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
+import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
 import { addEntry, gameClockMs } from './journal.ts';
 import { D, Decimal } from './num.ts';
@@ -111,7 +112,7 @@ export function setEffects(state: GameState, enabled: boolean): void {
 }
 
 /** Compra un nivel de una ventaja permanente con plumas. Devuelve `true` si se compró. */
-export function buyPerk(state: GameState, content: Content, perkId: PerkId): boolean {
+export function buyPerk(state: GameState, content: Content, perkId: PerkId, now: number = gameClockMs(state)): boolean {
   const perk = getPerk(content, perkId);
   if (!perkAvailable(state, perk)) return false;
   const level = state.perks[perkId] ?? 0;
@@ -120,6 +121,7 @@ export function buyPerk(state: GameState, content: Content, perkId: PerkId): boo
   state.plumas = state.plumas.sub(cost);
   state.perks[perkId] = level + 1;
   syncGardenCells(state, content); // Más tierra añade filas de casillas
+  if (perk.effect.kind === 'basketAcorns' && state.basketAcornsAt <= 0) state.basketAcornsAt = now; // el topo empieza a cavar ahora
   return true;
 }
 
@@ -159,10 +161,17 @@ export function ascend(state: GameState, content: Content, now: number): number 
 // ---------------------------------------------------------------------------
 
 /** Recoge la cesta: suma su valor a las monedas y la vacía. Devuelve lo recogido. */
-export function collectBasket(state: GameState, content: Content): Decimal {
+export function collectBasket(state: GameState, content: Content, now: number = gameClockMs(state)): Decimal {
   const amount = basketValue(state, content);
   gain(state, content, amount);
   state.basketSince = state.time;
+  // Bellotas que ha ido dejando el topo (Topo excavador): se cobran y se conserva lo que sobre de la última.
+  const acorns = basketAcornsReady(state, content, now);
+  const hours = basketAcornHours(state, content);
+  if (acorns > 0 && hours !== null) {
+    state.acorns += acorns;
+    state.basketAcornsAt = acorns >= content.nest.basketAcornCap ? now : state.basketAcornsAt + acorns * hours * 3600_000;
+  }
   return amount;
 }
 
@@ -230,6 +239,52 @@ export function buyCompanion(state: GameState, content: Content, id: string): bo
 }
 
 /** Máximo de compañeros a la vez en la escena. */
+// ---------------------------------------------------------------------------
+// Nido (tiempo real: `now` en epoch ms)
+// ---------------------------------------------------------------------------
+
+/** Compra un huevo con bellotas y lo pone a incubar en una casilla libre (de las disponibles). */
+export function buyEgg(state: GameState, content: Content, creatureId: string, slot: number, now: number): boolean {
+  const creature = creatureOf(content, creatureId);
+  if (!creature || !nestUnlocked(state, content) || slot < 0 || slot >= nestSlotCount(state, content) || state.nest.slots[slot] || state.acorns < creature.eggCost) return false;
+  state.acorns -= creature.eggCost;
+  state.nest.slots[slot] = { creature: creatureId, stage: 0, since: now };
+  return true;
+}
+
+/** El huevo, cuando ya ha pasado su tiempo de incubación, eclosiona y sale la cría. */
+export function hatchEgg(state: GameState, content: Content, slot: number, now: number): boolean {
+  const s = state.nest.slots[slot];
+  if (!s || s.stage !== 0 || hatchLeftMs(content, s, now) > 0) return false;
+  s.stage = 1;
+  addEntry(state, `Ha eclosionado un huevo: ${creatureOf(content, s.creature)?.stages[1]?.name.toLowerCase()}.`, gameClockMs(state));
+  return true;
+}
+
+/** Alimenta con bellotas a una cría o a una joven para que evolucione. Al llegar a adulta queda anotada (logro y reliquia). */
+export function feedCreature(state: GameState, content: Content, slot: number): boolean {
+  const s = state.nest.slots[slot];
+  const creature = s ? creatureOf(content, s.creature) : undefined;
+  if (!s || !creature || s.stage < 1 || s.stage > 2) return false;
+  const cost = creature.feedCosts[s.stage - 1]!;
+  if (state.acorns < cost) return false;
+  state.acorns -= cost;
+  s.stage += 1;
+  if (s.stage === 3) {
+    state.nest.adults[creature.id] = true;
+    addEntry(state, `${creature.stages[3]!.name}: la criatura ha crecido del todo.`, gameClockMs(state));
+  }
+  return true;
+}
+
+/** Retira una criatura adulta del nido para dejar la casilla libre (queda anotada para siempre). */
+export function removeCreature(state: GameState, content: Content, slot: number): boolean {
+  const s = state.nest.slots[slot];
+  if (!s || s.stage !== 3) return false;
+  state.nest.slots[slot] = null;
+  return true;
+}
+
 /** Compra una prenda con bellotas (las de logro no se compran: se tienen al conseguir el logro). */
 export function buyAccessory(state: GameState, content: Content, id: string): boolean {
   const accessory = content.accessories.find((a) => a.id === id);

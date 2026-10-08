@@ -115,9 +115,12 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   const basketText = document.createTextNode('');
   const basketFill = h('div', { className: 'progress-bar-inner' });
   const basketButton = h('button', { className: 'buy-button' }, ['Recoger']) as HTMLButtonElement;
-  basketButton.addEventListener('click', () => ctx.dispatch((state) => void collectBasket(state, ctx.content)));
+  basketButton.addEventListener('click', () => ctx.dispatch((state) => void collectBasket(state, ctx.content, Date.now())));
+  // Bellotas que el topo deja en la cesta (solo con la ventaja Topo excavador)
+  const basketAcornText = document.createTextNode('');
+  const basketAcorns = h('span', { className: 'basket-text hidden' }, [' · ', artSprite('ui', 'bellota', 'sm'), basketAcornText]);
   const basketBlock = h('div', { className: 'basket-block' }, [
-    h('div', { className: 'basket-info' }, [h('span', { className: 'basket-text' }, [basketText]), h('div', { className: 'progress-bar', role: 'presentation' }, [basketFill])]),
+    h('div', { className: 'basket-info' }, [h('span', { className: 'basket-text' }, [basketText]), basketAcorns, h('div', { className: 'progress-bar', role: 'presentation' }, [basketFill])]),
     basketButton,
   ]);
 
@@ -290,11 +293,13 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     setClass(globalNote, 'hidden', globals.nextUnlockAt === null && globals.available.length > 0);
     setText(globalNote, globals.nextUnlockAt !== null ? `Siguiente mejora al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.` : 'No quedan más mejoras por ahora.');
 
-    const basket = basketView(state, ctx.content);
+    const basket = basketView(state, ctx.content, Date.now());
     setText(basketText, `Cesta: ${formatNumber(basket.value, notation)}${basket.fill >= 1 ? ' (llena)' : ''}`);
+    setText(basketAcornText, ` +${basket.acorns}`);
+    setClass(basketAcorns, 'hidden', basket.acorns <= 0);
     setStyleProp(basketFill, 'width', `${(basket.fill * 100).toFixed(1)}%`);
-    setDisabled(basketButton, basket.value.lte(0));
-    setClass(basketBlock, 'hidden', head.income.lte(0));
+    setDisabled(basketButton, basket.value.lte(0) && basket.acorns <= 0);
+    setClass(basketBlock, 'hidden', head.income.lte(0) && basket.acorns <= 0);
 
     for (const [id, btn] of amountButtons) setClass(btn, 'active', id === state.settings.buyAmount);
     const views = toolViews(state, ctx.content);

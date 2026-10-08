@@ -26,5 +26,9 @@ export const PERKS: PerkDef[] = [
   { id: 'brasas', name: 'Más brasas', flavor: 'Los hornos dan más calor.', maxLevel: 5, baseCost: 10, costGrowth: 2, requires: [], requiresPlumasTotal: 3, section: 'Cueva del Dragón', effect: { kind: 'caveEmbers', perLevel: 0.25 }, icon: 'perk-brasas', layout: { col: 1, row: 17, dir: 'right' } },
   { id: 'soplido', name: 'Soplido potente', flavor: 'Cada soplido da más brasas.', maxLevel: 5, baseCost: 8, costGrowth: 2, requires: ['brasas'], effect: { kind: 'caveBlow', perLevel: 0.5 }, icon: 'perk-soplido', layout: { col: 1, row: 18, dir: 'right' } },
   { id: 'hornos-baratos', name: 'Hornos de saldo', flavor: 'Construir hornos cuesta menos.', maxLevel: 5, baseCost: 12, costGrowth: 2.2, requires: ['soplido'], effect: { kind: 'caveCost', perLevel: 0.92 }, icon: 'perk-hornos', layout: { col: 1, row: 19, dir: 'right' } },
+  // --- Nido (se abre con 5 esmeraldas en total): baratas y rápidas de conseguir ---
+  { id: 'nidos', name: 'Más nidos', flavor: 'Un nido más para criar otra criatura.', maxLevel: 2, baseCost: 3, costGrowth: 2, requires: [], requiresPlumasTotal: 5, section: 'Nido', effect: { kind: 'nestSlots', perLevel: 1 }, icon: 'perk-nidos', layout: { col: 1, row: 23, dir: 'right' } },
+  { id: 'topo-solo', name: 'Topo excavador', flavor: 'El topo cava solo: deja una bellota en la cesta cada 6 horas.', maxLevel: 1, baseCost: 4, costGrowth: 1, requires: ['nidos'], effect: { kind: 'basketAcorns', perLevel: 6 }, icon: 'perk-topo', layout: { col: 1, row: 24, dir: 'right' } },
+
   { id: 'calor-del-dragon', name: 'Calor del dragón', flavor: 'El calor de la cueva sube hasta la mina.', maxLevel: 5, baseCost: 30, costGrowth: 2.8, requires: ['hornos-baratos'], effect: { kind: 'prodMult', perLevel: 1.05 }, icon: 'perk-calor', layout: { col: 1, row: 20, dir: 'right' } },
 ];

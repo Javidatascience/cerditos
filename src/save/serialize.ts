@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 14;
+export const CURRENT_VERSION = 15;
 
 export interface SerializedGameState {
   version: number;
@@ -35,6 +35,8 @@ export interface SerializedGameState {
   cave: { embers: string; furnaces: Record<string, number>; nodes: Record<string, true>; blowAt: number; dragonStage: number };
   stats: { visitors: number; bestIncome: string };
   wardrobe: GameState['wardrobe'];
+  nest: GameState['nest'];
+  basketAcornsAt: number;
   basketSince: number;
   achievements: Record<string, { at: number }>;
   buff: Buff | null;
@@ -84,6 +86,8 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       cave: { embers: state.cave.embers.toString(), furnaces: { ...state.cave.furnaces }, nodes: { ...state.cave.nodes }, blowAt: state.cave.blowAt, dragonStage: state.cave.dragonStage },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       wardrobe: { owned: { ...state.wardrobe.owned }, worn: { ...state.wardrobe.worn } },
+      nest: { slots: state.nest.slots.map((s) => (s ? { ...s } : null)), adults: { ...state.nest.adults } },
+      basketAcornsAt: state.basketAcornsAt,
       basketSince: state.basketSince,
       achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
       buff: state.buff ? { ...state.buff } : null,
@@ -124,6 +128,8 @@ export function deserialize(data: SaveData): GameState {
     cave: { embers: new Decimal(s.cave.embers), furnaces: { ...s.cave.furnaces }, nodes: { ...s.cave.nodes }, blowAt: s.cave.blowAt, dragonStage: s.cave.dragonStage },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     wardrobe: { owned: { ...s.wardrobe.owned }, worn: { ...s.wardrobe.worn } },
+    nest: { slots: s.nest.slots.map((slot) => (slot ? { ...slot } : null)), adults: { ...s.nest.adults } },
+    basketAcornsAt: s.basketAcornsAt,
     basketSince: s.basketSince,
     achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),
     buff: s.buff ? { ...s.buff } : null,

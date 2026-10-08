@@ -5,11 +5,13 @@ import { ACHIEVEMENTS } from './achievements.ts';
 import { CAVE } from './cave.ts';
 import { GARDEN } from './garden.ts';
 import { COMPANIONS, GAME, GLOBAL_UPGRADES, RELICS, SKINS, TOOLS } from './game.ts';
+import { NEST } from './nest.ts';
 import { PERKS } from './perks.ts';
 import type { Content } from './types.ts';
 
 export const CONTENT: Content = {
   game: GAME,
+  nest: NEST,
   accessories: ACCESSORIES,
   cave: CAVE,
   garden: GARDEN,

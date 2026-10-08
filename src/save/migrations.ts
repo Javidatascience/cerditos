@@ -103,6 +103,12 @@ function v13ToV14(old: RawSave): RawSave {
   return { ...old, version: 14, state: { ...state, version: 14, stats, wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } } } };
 }
 
+/** v14 → v15: el Nido (vacío) y las bellotas de la cesta (sin empezar). */
+function v14ToV15(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 15 };
+  return { ...old, version: 15, state: { ...old['state'], version: 15, nest: { slots: [null, null, null], adults: {} }, basketAcornsAt: 0 } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -114,6 +120,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   11: v11ToV12,
   12: v12ToV13,
   13: v13ToV14,
+  14: v14ToV15,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

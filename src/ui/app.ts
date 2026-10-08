@@ -16,6 +16,7 @@ import { mountGardenView } from './views/gardenView.ts';
 import { mountCosmeticsView } from './views/cosmeticsView.ts';
 import { mountFlyView } from './views/flyView.ts';
 import { mountLogbookView } from './views/logbookView.ts';
+import { mountNestView } from './views/nestView.ts';
 import { mountPickView } from './views/pickView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 
@@ -51,6 +52,7 @@ const TABS: TabDef[] = [
   { id: 'cosmetics', label: 'Cerdito', icon: 'nav-cerdito', mount: mountCosmeticsView },
   { id: 'garden', label: 'Jardín', icon: 'nav-jardin', mount: mountGardenView },
   { id: 'cave', label: 'Cueva', icon: 'nav-cueva', mount: mountCaveView },
+  { id: 'nest', label: 'Nido', icon: 'nav-nido', mount: mountNestView },
   { id: 'achievements', label: 'Logros', icon: 'nav-logros', mount: mountLogbookView },
   { id: 'settings', label: 'Ajustes', icon: 'nav-ajustes', mount: mountSettingsView },
 ];

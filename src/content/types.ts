@@ -72,7 +72,11 @@ export type PerkEffect =
   /** Cueva: +perLevel (fracción) a lo que da cada soplido por nivel. */
   | { kind: 'caveBlow'; perLevel: number }
   /** Cueva: coste de los hornos ×perLevel^nivel. */
-  | { kind: 'caveCost'; perLevel: number };
+  | { kind: 'caveCost'; perLevel: number }
+  /** Nido: nidos extra (+perLevel por nivel). */
+  | { kind: 'nestSlots'; perLevel: number }
+  /** Cesta: el topo cava solo y deja 1 bellota en la cesta cada `perLevel` horas (reloj real). */
+  | { kind: 'basketAcorns'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;
@@ -185,6 +189,8 @@ export type AchievementReq =
   | { kind: 'shinyFound'; count: number }
   | { kind: 'harvests'; count: number }
   | { kind: 'dragonStage'; count: number }
+  | { kind: 'creatureAdult'; creature: string }
+  | { kind: 'adultCount'; count: number }
   | { kind: 'furnaces'; count: number }
   | { kind: 'caveNodes'; count: number };
 
@@ -274,7 +280,33 @@ export interface GardenDef {
   flowers: GardenFlowerDef[];
 }
 
+/** Criatura del Nido: sale de un huevo (se compra con bellotas), eclosiona con el tiempo y evoluciona alimentándola. */
+export interface CreatureDef {
+  id: string;
+  name: string;
+  flavor: string;
+  /** Bellotas que cuesta el huevo. */
+  eggCost: number;
+  /** Segundos de reloj real hasta que el huevo puede eclosionar. */
+  hatchSeconds: number;
+  /** Bellotas que cuesta alimentarla para pasar de cría a joven y de joven a adulta. */
+  feedCosts: [number, number];
+  /** Las cuatro etapas: huevo, cría, joven y adulta. */
+  stages: { name: string; flavor: string }[];
+}
+
+export interface NestDef {
+  /** Esmeraldas en total necesarias para abrir el nido. */
+  unlockPlumas: number;
+  /** Nidos que se pueden llegar a tener (1 de base y el resto con ventajas). */
+  maxSlots: number;
+  /** Bellotas que puede acumular la cesta (Topo excavador) antes de parar. */
+  basketAcornCap: number;
+  creatures: CreatureDef[];
+}
+
 export interface Content {
+  nest: NestDef;
   accessories: AccessoryDef[];
   cave: CaveDef;
   garden: GardenDef;
