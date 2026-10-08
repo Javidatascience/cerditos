@@ -18,6 +18,7 @@ import {
   globalUpgradeCost,
   globalUpgradeUnlocked,
   incomePerSecond,
+  lifetimeForNextPluma,
   momentumMaxMult,
   momentumMult,
   relicOwned,
@@ -157,6 +158,9 @@ export interface AscendView {
   /** Herramienta que hay que tener (nombre y emoji) y cuántas se llevan de ella como máximo. */
   requiredTool: { name: string; emoji: string; index: number };
   canAscend: boolean;
+  /** Monedas ganadas en total que harán falta para la siguiente esmeralda, y las que faltan aún (0 si ya se llegó). */
+  nextPlumaAt: Decimal;
+  nextPlumaMissing: Decimal;
 }
 
 export function ascendView(state: GameState, content: Content): AscendView {
@@ -174,6 +178,8 @@ export function ascendView(state: GameState, content: Content): AscendView {
     unlocked,
     requiredTool: { name: tool.name, emoji: tool.emoji, index: content.game.ascendTool },
     canAscend: unlocked && pendingGain > 0,
+    nextPlumaAt: lifetimeForNextPluma(state, content),
+    nextPlumaMissing: Decimal.max(0, lifetimeForNextPluma(state, content).sub(state.lifetime)),
   };
 }
 

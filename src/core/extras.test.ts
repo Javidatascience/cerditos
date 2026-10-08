@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
 import { buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
-import { visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
+import { lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
 import { growMs, mutationChance, shinyChance } from './garden.ts';
@@ -293,6 +293,22 @@ describe('mejoras de compañeros', () => {
     const acorns = state.acorns;
     for (let i = 0; i < 30; i++) tap(state, CONTENT);
     expect(state.acorns).toBe(acorns + 1);
+  });
+});
+
+describe('monedas que faltan para la siguiente esmeralda', () => {
+  it('coincide con el momento en que te corresponde una esmeralda más', () => {
+    const state = fresh();
+    for (const lifetime of [0, 3e8, 5e9, 2e12]) {
+      state.lifetime = D(lifetime);
+      const entitled = plumasEntitled(state, CONTENT);
+      const needed = lifetimeForNextPluma(state, CONTENT);
+      expect(needed.toNumber()).toBeGreaterThan(lifetime);
+      state.lifetime = needed.mul(0.9999);
+      expect(plumasEntitled(state, CONTENT)).toBe(entitled);
+      state.lifetime = needed.mul(1.0001);
+      expect(plumasEntitled(state, CONTENT)).toBe(entitled + 1);
+    }
   });
 });
 

@@ -237,6 +237,14 @@ export function plumasEntitled(state: GameState, content: Content): number {
   return Math.floor(ratio.pow(g.plumaExponent).toNumber() * mult);
 }
 
+/** Monedas ganadas en total (en la vida) con las que te corresponderá una esmeralda más de las que te corresponden ahora. */
+export function lifetimeForNextPluma(state: GameState, content: Content): Decimal {
+  const g = content.game;
+  const mult = 1 + perkSum(state, content, 'plumaMult');
+  const target = plumasEntitled(state, content) + 1;
+  return D(g.plumaE0).mul(Decimal.pow(target / mult, 1 / g.plumaExponent));
+}
+
 /** Plumas que se ganarían ascendiendo ahora (lo que te corresponde menos lo ya cobrado). */
 export function plumasPending(state: GameState, content: Content): number {
   return Math.max(0, plumasEntitled(state, content) - state.plumasTotal.toNumber());

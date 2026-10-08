@@ -15,6 +15,7 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
   const plumasText = document.createTextNode('');
   const pendingText = document.createTextNode('');
   const multiplierText = document.createTextNode('');
+  const nextText = document.createTextNode('');
 
   const ascendButton = h('button', { className: 'tap-button' }, ['Subir a la superficie']) as HTMLButtonElement;
   const confirmText = document.createTextNode('');
@@ -38,6 +39,7 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
     h('p', { className: 'ascend-plumas' }, [artSprite('ui', 'esmeralda', 'md'), plumasText]),
     h('p', { className: 'settings-hint' }, [pendingText]),
     h('p', { className: 'settings-hint' }, [multiplierText]),
+    h('p', { className: 'settings-hint' }, [nextText]),
     ascendButton,
     confirmBlock,
   ]);
@@ -59,6 +61,10 @@ export function mountAscendView(root: HTMLElement, ctx: UiContext): View {
       );
       setText(multiplierText, view.pendingGain > 0 ? `Tu producción pasaría de ×${view.currentBonusMultiplier.toFixed(2)} a ×${view.nextBonusMultiplier.toFixed(2)} solo por el bono de esmeraldas.` : '');
     }
+    setText(
+      nextText,
+      `Para la siguiente esmeralda te faltan ${formatNumber(view.nextPlumaMissing, notation)} monedas más ganadas (llevas ${formatNumber(state.lifetime, notation)} de ${formatNumber(view.nextPlumaAt, notation)} en total).`,
+    );
     setDisabled(ascendButton, !view.canAscend);
     setText(confirmText, 'Vas a reiniciar la ronda: pierdes las monedas y las herramientas. Conservas las esmeraldas, las ventajas y los logros.');
   }
