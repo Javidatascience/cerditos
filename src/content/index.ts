@@ -7,6 +7,7 @@ import { GARDEN } from './garden.ts';
 import { COMPANIONS, GAME, GLOBAL_UPGRADES, RELICS, SKINS, TOOLS } from './game.ts';
 import { NEST } from './nest.ts';
 import { PERKS } from './perks.ts';
+import { SYNERGIES } from './synergies.ts';
 import type { Content } from './types.ts';
 
 export const CONTENT: Content = {
@@ -18,6 +19,7 @@ export const CONTENT: Content = {
   tools: TOOLS,
   perks: PERKS,
   globalUpgrades: GLOBAL_UPGRADES,
+  synergies: SYNERGIES,
   skins: SKINS,
   companions: COMPANIONS,
   relics: RELICS,

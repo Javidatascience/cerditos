@@ -3,8 +3,8 @@
 // sincronizan por clave (dom.ts > createListSync) para que los botones no se recreen cada 250 ms y un
 // clic nunca se pierda. Ver docs/06-mina.md.
 
-import { buyGlobalUpgrade, buyTool, buyUpgrade, setBuyAmount, type BuyAmount } from '../../core/actions.ts';
-import { globalUpgradeViews, toolViews, type GlobalUpgradeView, type ToolView } from '../../core/selectors.ts';
+import { buyGlobalUpgrade, buySynergy, buyTool, buyUpgrade, setBuyAmount, type BuyAmount } from '../../core/actions.ts';
+import { globalUpgradeViews, synergyViews, toolViews, type GlobalUpgradeView, type SynergyView, type ToolView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { spriteBadge } from '../art.ts';
@@ -105,7 +105,28 @@ export function mountToolsView(root: HTMLElement, ctx: UiContext): View {
 
   // Dos secciones para no alargar la pantalla: herramientas y mejoras (globales y de inercia).
   const toolsPane = h('div', {}, [amountRow, toolList, moreHint]);
-  const upgradesPane = h('div', { className: 'hidden' }, [globalBlock]);
+  // Sinergias: ligan dos herramientas vecinas (aparecen al tener las unidades pedidas de las dos).
+  const synergyList = h('ul', { className: 'upgrade-list' });
+  const synergyHeading = h('h3', { className: 'fly-heading hidden' }, ['Sinergias']);
+  const synergyNote = h('p', { className: 'settings-hint hidden' });
+  const syncSynergies = createListSync<SynergyView & { costText: string }>(
+    synergyList,
+    (u) => u.id,
+    (def) => {
+      const costText = document.createTextNode('');
+      const buy = h('button', { className: 'buy-button upgrade-button' }, [costText]) as HTMLButtonElement;
+      buy.addEventListener('click', () => ctx.dispatch((state) => void buySynergy(state, ctx.content, def.id)));
+      const el = h('li', { className: 'upgrade-row' }, [
+        h('div', { className: 'row-art' }, [
+          spriteBadge('ui', 'mejora-global'),
+          h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [def.name]), h('span', { className: 'upgrade-effect' }, [def.effectText]), h('span', { className: 'generator-flavor' }, [def.flavor])]),
+        ]),
+        buy,
+      ]);
+      return { el, update: (u) => { setText(costText, u.costText); setDisabled(buy, !u.canAfford); } };
+    },
+  );
+  const upgradesPane = h('div', { className: 'hidden' }, [globalBlock, synergyHeading, synergyList, synergyNote]);
   const modeLabels = new Map<'tools' | 'upgrades', Text>([
     ['tools', document.createTextNode('Herramientas')],
     ['upgrades', document.createTextNode('Mejoras')],
@@ -131,7 +152,14 @@ export function mountToolsView(root: HTMLElement, ctx: UiContext): View {
 
     const globals = globalUpgradeViews(state, ctx.content);
     syncGlobals(globals.available.map((u) => ({ ...u, costText: `Comprar (${formatNumber(u.cost, notation)})` })));
-    setText(modeLabels.get('upgrades')!, globals.available.length > 0 ? `Mejoras (${globals.available.length})` : 'Mejoras');
+    const synergies = synergyViews(state, ctx.content);
+    syncSynergies(synergies.available.map((u) => ({ ...u, costText: `Comprar (${formatNumber(u.cost, notation)})` })));
+    setClass(synergyHeading, 'hidden', synergies.available.length === 0 && synergies.locked === 0);
+    setClass(synergyNote, 'hidden', synergies.locked === 0);
+    setText(synergyNote, 'Hay más sinergias: aparecen al tener las mismas unidades de dos herramientas vecinas (15, 25 o 50 según el par).');
+    // El número de la pestaña cuenta solo las mejoras que puedes comprar ahora mismo.
+    const affordable = globals.available.filter((u) => u.canAfford).length + synergies.available.filter((u) => u.canAfford).length;
+    setText(modeLabels.get('upgrades')!, affordable > 0 ? `Mejoras (${affordable})` : 'Mejoras');
     setClass(globalNote, 'hidden', globals.nextUnlockAt === null && globals.available.length > 0);
     setText(globalNote, globals.nextUnlockAt !== null ? `Siguiente mejora al ganar ${formatNumber(globals.nextUnlockAt, notation)} monedas en total.` : 'No quedan más mejoras por ahora.');
 

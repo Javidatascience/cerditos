@@ -25,6 +25,8 @@ import {
   momentumMult,
   relicOwned,
   skinOwned,
+  synergyCost,
+  synergyUnlocked,
   nextUpgradeCost,
   nextUpgradeThreshold,
   nextUpgradeUnlocked,
@@ -483,6 +485,40 @@ export function globalUpgradeViews(state: GameState, content: Content): { availa
     available.push({ id: def.id, name: def.name, flavor: def.flavor, mult: def.mult, momentumAdd: def.momentumAdd ?? 0, cost, canAfford: state.coins.gte(cost) });
   }
   return { available, nextUnlockAt };
+}
+
+export interface SynergyView {
+  id: string;
+  name: string;
+  flavor: string;
+  effectText: string;
+  cost: Decimal;
+  canAfford: boolean;
+}
+
+/** Sinergias desbloqueadas (tienes las unidades pedidas de las dos herramientas) y sin comprar; y cuántas quedan por desbloquear. */
+export function synergyViews(state: GameState, content: Content): { available: SynergyView[]; locked: number } {
+  const available: SynergyView[] = [];
+  let locked = 0;
+  const nameOf = (id: string) => content.tools.find((t) => t.id === id)?.name ?? id;
+  const pct = (x: number) => (x * 100).toLocaleString('es-ES', { maximumFractionDigits: 2 });
+  for (const def of content.synergies) {
+    if (state.synergies[def.id]) continue;
+    if (!synergyUnlocked(state, def)) {
+      locked += 1;
+      continue;
+    }
+    const cost = synergyCost(state, content, def);
+    available.push({
+      id: def.id,
+      name: def.name,
+      flavor: def.flavor,
+      effectText: `${nameOf(def.a)}: +${pct(def.aPerB)} % por cada ${nameOf(def.b).toLowerCase()} · ${nameOf(def.b)}: +${pct(def.bPerA)} % por cada ${nameOf(def.a).toLowerCase()}`,
+      cost,
+      canAfford: state.coins.gte(cost),
+    });
+  }
+  return { available, locked };
 }
 
 // ---------------------------------------------------------------------------

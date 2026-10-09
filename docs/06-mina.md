@@ -122,6 +122,13 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 - **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
 - **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).
 
+### Sinergias, avisos de logro y otros (v17)
+
+- **Sinergias** (`content/synergies.ts`, como las de Cookie Clicker): una por cada par de herramientas vecinas (17). Aparecen en Mejoras al tener 15, 25 o 50 unidades (según el par) de las dos; al comprarlas, la menor gana +0,5 % de producción por cada unidad de la mayor y la mayor +0,1 % por cada unidad de la menor. Se pierden al ascender.
+- El número de la pestaña *Mejoras* cuenta solo las que puedes comprar ahora. El conejo solo regala unidades de herramientas que ya tienes.
+- Las mejoras compradas del pico multiplican el mínimo de un toque (1 moneda × mejoras × bonos de producción); con ingresos, un toque sigue siendo 0,05 s de producción.
+- Aviso de logro conseguido (`ui/app.ts`): cartel arriba de uno en uno; si llegan más de 3 de golpe, uno solo.
+
 ### Cueva: equilibrio (v16)
 
 - Hornos con crecimiento ×1,28, un quinto horno (Mina de azufre) y hitos automáticos: al tener 10, 25 y 50 de un horno, ese horno produce el doble. Ventajas con costes mucho más altos (las últimas, de miles de millones de brasas) y cada una muestra su efecto. Las brasas solo cuentan la primera hora de ausencia (`offlineEmbersSeconds`).

@@ -14,6 +14,8 @@ import {
   getPerk,
   globalUpgradeCost,
   globalUpgradeUnlocked,
+  synergyCost,
+  synergyUnlocked,
   skinOwned,
   nextUpgradeCost,
   nextUpgradeUnlocked,
@@ -98,6 +100,17 @@ export function buyGlobalUpgrade(state: GameState, content: Content, id: string)
   return true;
 }
 
+/** Compra una sinergia (desbloqueada con las unidades de las dos herramientas). */
+export function buySynergy(state: GameState, content: Content, id: string): boolean {
+  const def = content.synergies.find((s) => s.id === id);
+  if (!def || state.synergies[id] || !synergyUnlocked(state, def)) return false;
+  const cost = synergyCost(state, content, def);
+  if (state.coins.lt(cost)) return false;
+  state.coins = state.coins.sub(cost);
+  state.synergies[id] = true;
+  return true;
+}
+
 /** Cambia la cantidad por defecto de los botones de compra (×1 / ×10 / máx). */
 export function setBuyAmount(state: GameState, amount: BuyAmount): void {
   state.settings.buyAmount = amount;
@@ -146,6 +159,7 @@ export function ascend(state: GameState, content: Content, now: number): number 
   state.tools = {};
   state.upgrades = {};
   state.globalUpgrades = {};
+  state.synergies = {};
   state.momentum = 0;
   state.coins = startCoins(state, content);
   state.basketSince = state.time;
@@ -406,7 +420,7 @@ export function useRabbit(state: GameState, content: Content, toolId: ToolId, no
   const rabbit = content.companions.find((c) => c.ability.kind === 'freeTool');
   if (!rabbit || !state.activeCompanions.includes(rabbit.id) || rabbitWaitSeconds(state, content, now) > 0) return false;
   const index = content.tools.findIndex((t) => t.id === toolId);
-  if (index < 0 || index >= state.revealed) return false;
+  if (index < 0 || index >= state.revealed || toolOwned(state, toolId) <= 0) return false; // solo herramientas que ya tienes
   state.tools[toolId] = toolOwned(state, toolId) + 1;
   state.maxOwned[toolId] = Math.max(state.maxOwned[toolId] ?? 0, state.tools[toolId] ?? 0);
   state.companionProgress[rabbit.id] = now;

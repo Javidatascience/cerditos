@@ -213,11 +213,48 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     if (kind && visitorBar) visitorBar.style.width = `${Math.min(100, ((visitor?.secondsLeft() ?? 0) / visitorTotal) * 100).toFixed(1)}%`;
   }
 
+  // Logros: al conseguir uno sale un aviso arriba, de uno en uno (para sentirlo como una colección).
+  const toastLayer = h('div', { className: 'achievement-toasts', 'aria-live': 'polite' });
+  const seenAchievements = new Set(Object.keys(state.achievements));
+  const toastQueue: { name: string; flavor: string }[] = [];
+  let toastShowing = false;
+  function showNextToast(): void {
+    const next = toastQueue.shift();
+    if (!next) {
+      toastShowing = false;
+      return;
+    }
+    toastShowing = true;
+    const el = h('div', { className: 'achievement-toast' }, [
+      artSprite('ui', 'logro', 'md'),
+      h('div', { className: 'achievement-toast-text' }, [h('b', {}, ['¡Logro conseguido!']), h('span', {}, [next.name]), h('span', { className: 'achievement-toast-flavor' }, [next.flavor])]),
+    ]);
+    toastLayer.replaceChildren(el);
+    window.setTimeout(() => {
+      el.remove();
+      window.setTimeout(showNextToast, 250);
+    }, 3500);
+  }
+  function checkAchievements(): void {
+    const fresh = Object.keys(state.achievements).filter((id) => !seenAchievements.has(id));
+    if (fresh.length === 0) return;
+    for (const id of fresh) seenAchievements.add(id);
+    // Si llegan muchos de golpe (al volver de estar fuera) se avisa en un solo cartel.
+    if (fresh.length > 3) toastQueue.push({ name: `${fresh.length} logros nuevos`, flavor: 'Mira la pestaña Logros.' });
+    else for (const id of fresh) {
+      const def = content.achievements.find((a) => a.id === id);
+      if (def) toastQueue.push({ name: def.name, flavor: def.flavor });
+    }
+    if (!toastShowing) showNextToast();
+  }
+
   root.appendChild(h('div', { className: 'app' }, [header, visitorSlot, viewContainer, nav]));
+  root.appendChild(toastLayer);
   switchTab('pick');
 
   function render(): void {
     renderVisitor();
+    checkAchievements();
     const head = headerView(state, content);
     const notation = state.settings.notation;
     setText(coinsText, ` ${formatNumber(head.coins, notation)}`);

@@ -112,7 +112,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
       pigSlot.replaceChildren(pigStack({ skin: state.activeSkin, head: worn.head, body: worn.body, tail: worn.tail }, 'lg'));
     }
     const statuses = companionStatusViews(state, ctx.content, Date.now());
-    const statusKey = `${statuses.map((c) => c.id).join(',')}:${state.revealed}`;
+    const statusKey = `${statuses.map((c) => c.id).join(',')}:${state.revealed}:${ctx.content.tools.filter((t) => (state.tools[t.id] ?? 0) > 0).length}`;
     if (statusKey !== companionStatusKey) {
       companionStatusKey = statusKey;
       companionLines = statuses.map((c) => {
@@ -121,7 +121,7 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
             ? h(
                 'div',
                 { className: 'chip-row hidden' },
-                ctx.content.tools.slice(0, state.revealed).map((tool) =>
+                ctx.content.tools.slice(0, state.revealed).filter((tool) => (state.tools[tool.id] ?? 0) > 0).map((tool) =>
                   h('button', { className: 'chip chip-button', title: `Gratis: ${tool.name}`, onclick: () => ctx.dispatch((s) => void useRabbit(s, ctx.content, tool.id, Date.now())) }, [artSprite('tools', tool.id)]),
                 ),
               )

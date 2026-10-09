@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 16;
+export const STATE_VERSION = 17;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -50,6 +50,8 @@ export interface GameState {
   upgrades: Record<ToolId, number>;
   /** Mejoras globales compradas (se pierden al ascender). */
   globalUpgrades: Record<string, true>;
+  /** Sinergias compradas (se pierden al ascender). */
+  synergies: Record<string, true>;
   /** Inercia 0..1: sube al picar y baja sola; multiplica la producción hasta ×momentumMax. */
   momentum: number;
   /** Cuántas herramientas (por orden) ya se han descubierto: las demás se ven difuminadas u ocultas. Solo crece. */
@@ -119,6 +121,7 @@ export function createInitialState(content: Content, now: number): GameState {
     tools: {},
     upgrades: {},
     globalUpgrades: {},
+    synergies: {},
     momentum: 0,
     revealed: 1,
     lifetime: D(0),

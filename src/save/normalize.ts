@@ -28,6 +28,9 @@ export function normalize(state: GameState, content: Content): GameState {
 
   const globalIds = new Set(content.globalUpgrades.map((u) => u.id));
   for (const id of Object.keys(state.globalUpgrades)) if (!globalIds.has(id)) delete state.globalUpgrades[id];
+  state.synergies = state.synergies && typeof state.synergies === 'object' ? state.synergies : {};
+  const synergyIds = new Set(content.synergies.map((u) => u.id));
+  for (const id of Object.keys(state.synergies)) if (!synergyIds.has(id)) delete state.synergies[id];
   state.momentum = Math.min(1, Math.max(0, Number.isFinite(state.momentum) ? state.momentum : 0));
   state.acorns = clampInt(state.acorns, 0, Number.MAX_SAFE_INTEGER);
 

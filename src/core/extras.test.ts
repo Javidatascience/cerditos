@@ -3,8 +3,8 @@ import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
 import { basketAcornsReady } from './nest.ts';
 import { cellShiny } from './garden.ts';
-import { boostCreature, buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
-import { lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
+import { buySynergy, boostCreature, buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { synergyMult, synergyUnlocked, tapGain, unitProduction, lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
 import { growMs, mutationChance, shinyChance } from './garden.ts';
@@ -209,6 +209,8 @@ describe('perro, pájaro y conejo', () => {
     expect(useRabbit(state, CONTENT, PICO.id, t0)).toBe(false); // sin llevarlo
     state.activeCompanions = ['conejo'];
     expect(useRabbit(state, CONTENT, CONTENT.tools[5]!.id, t0)).toBe(false); // no descubierta
+    state.revealed = 3;
+    expect(useRabbit(state, CONTENT, CONTENT.tools[1]!.id, t0)).toBe(false); // descubierta pero sin ninguna unidad: solo vale lo que ya tienes
     expect(useRabbit(state, CONTENT, PICO.id, t0)).toBe(true);
     expect(state.tools[PICO.id]).toBe(21);
     expect(state.coins.toNumber()).toBe(0);
@@ -643,5 +645,30 @@ describe('estadísticas y herramienta siguiente', () => {
     expect(teaser.name).toBe('Cubo y pala');
     expect(teaser.nextCost.toNumber()).toBeGreaterThanOrEqual(100);
     expect(teaser.missing.toNumber()).toBeCloseTo(teaser.nextCost.toNumber() - 40, 9);
+  });
+
+  it('las sinergias se ven al tener las unidades de las dos herramientas, suben la producción de ambas y se pierden al ascender', () => {
+    const state = fresh();
+    const syn = CONTENT.synergies[0]!;
+    expect(synergyUnlocked(state, syn)).toBe(false);
+    state.tools[syn.a] = syn.need;
+    state.tools[syn.b] = syn.need;
+    expect(synergyUnlocked(state, syn)).toBe(true);
+    expect(buySynergy(state, CONTENT, syn.id)).toBe(false); // sin monedas
+    state.coins = D(1e30);
+    const unitA = unitProduction(state, CONTENT, CONTENT.tools.find((t) => t.id === syn.a)!).toNumber();
+    expect(buySynergy(state, CONTENT, syn.id)).toBe(true);
+    expect(buySynergy(state, CONTENT, syn.id)).toBe(false); // ya comprada
+    const after = unitProduction(state, CONTENT, CONTENT.tools.find((t) => t.id === syn.a)!).toNumber();
+    expect(after / unitA).toBeCloseTo(1 + syn.aPerB * syn.need, 9);
+    expect(synergyMult(state, CONTENT, syn.b)).toBeCloseTo(1 + syn.bPerA * syn.need, 9);
+  });
+
+  it('las mejoras del pico también suben lo que da cada toque cuando aún no hay ingresos', () => {
+    const state = fresh();
+    state.tools = {};
+    const base = tapGain(state, CONTENT).toNumber();
+    state.upgrades[PICO.id] = 2;
+    expect(tapGain(state, CONTENT).toNumber()).toBeCloseTo(base * 4, 9);
   });
 });

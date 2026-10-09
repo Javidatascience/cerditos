@@ -121,6 +121,12 @@ function v15ToV16(old: RawSave): RawSave {
   return { ...old, version: 16, state: { ...state, version: 16, garden: { ...garden, found: next }, nest: { ...nest, boosts: {} } } };
 }
 
+/** v16 → v17: sinergias entre herramientas (ninguna comprada). */
+function v16ToV17(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 17 };
+  return { ...old, version: 17, state: { ...old['state'], version: 17, synergies: {} } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -134,6 +140,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   13: v13ToV14,
   14: v14ToV15,
   15: v15ToV16,
+  16: v16ToV17,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

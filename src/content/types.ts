@@ -108,6 +108,23 @@ export interface GlobalUpgradeDef {
   momentumAdd?: number;
 }
 
+/** Sinergia: liga dos herramientas; al comprarla, cada una gana producción por cada unidad de la otra. */
+export interface SynergyDef {
+  id: string;
+  name: string;
+  flavor: string;
+  /** La herramienta menor y la mayor del par. */
+  a: ToolId;
+  b: ToolId;
+  /** Unidades que hay que tener de cada una para verla. */
+  need: number;
+  cost: number;
+  /** Fracción de producción que gana `a` por cada unidad de `b` (0,005 = +0,5 %). */
+  aPerB: number;
+  /** Fracción de producción que gana `b` por cada unidad de `a`. */
+  bPerA: number;
+}
+
 /** Cosmético del cerdito: color de piel. Se compra con bellotas o se consigue con un logro. */
 export interface SkinDef {
   id: string;
@@ -321,6 +338,7 @@ export interface Content {
   tools: ToolDef[];
   perks: PerkDef[];
   globalUpgrades: GlobalUpgradeDef[];
+  synergies: SynergyDef[];
   skins: SkinDef[];
   companions: CompanionDef[];
   relics: RelicDef[];

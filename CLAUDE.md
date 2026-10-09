@@ -51,9 +51,10 @@ Por defecto el juego es tranquilo: sin cajas ni gacha, sin rachas ni recompensas
 3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*).
 4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 2; el dorado, 6) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
 5. Efectos y animaciones (números que suben) con interruptor en Ajustes; se apagan con `prefers-reduced-motion`.
+6. Al conseguir un logro sale un aviso breve arriba (de uno en uno, sin bloquear nada) para dar sensación de colección; no da premios por sí mismo.
 
 Si una tarea parece requerir romper otra regla, parar y preguntar.
 
 ## Estado actual
 
-Jugable de punta a punta: picar, 18 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v16, Nido, jardín, compañeros con habilidad y Cueva del Dragón, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.
+Jugable de punta a punta: picar, 18 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v17, Nido, jardín, compañeros con habilidad y Cueva del Dragón, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.

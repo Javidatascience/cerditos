@@ -1,7 +1,7 @@
 // Fórmulas del juego. Ver docs/06-mina.md. Todo número sale de `content.game` y de los datos de
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
-import type { AccessoryDef, CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
+import type { AccessoryDef, CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, SynergyDef, ToolDef } from '../content/types.ts';
 import { caveProduct, caveSum, dragonBonus } from './cave.ts';
 import { nestBoost } from './nest.ts';
 import { gardenProduct, gardenSum } from './garden.ts';
@@ -151,9 +151,30 @@ export function momentumMult(state: GameState, content: Content, momentum: numbe
   return 1 + (momentumMaxMult(state, content) - 1) * momentum;
 }
 
+/** ¿Se ven ya las unidades pedidas de las dos herramientas de la sinergia? */
+export function synergyUnlocked(state: GameState, def: SynergyDef): boolean {
+  return toolOwned(state, def.a) >= def.need && toolOwned(state, def.b) >= def.need;
+}
+
+/** Coste de la sinergia (con Regateo en la feria). */
+export function synergyCost(state: GameState, content: Content, def: SynergyDef): Decimal {
+  return D(def.cost).mul(costMultiplier(state, content)).ceil();
+}
+
+/** ×(1 + bonos) de las sinergias compradas que tocan a la herramienta. */
+export function synergyMult(state: GameState, content: Content, toolId: ToolId): number {
+  let bonus = 0;
+  for (const s of content.synergies) {
+    if (!state.synergies[s.id]) continue;
+    if (s.a === toolId) bonus += s.aPerB * toolOwned(state, s.b);
+    else if (s.b === toolId) bonus += s.bPerA * toolOwned(state, s.a);
+  }
+  return 1 + bonus;
+}
+
 /** Producción por segundo de UNA unidad de la herramienta (con sus mejoras compradas y los bonos). */
 export function unitProduction(state: GameState, content: Content, tool: ToolDef): Decimal {
-  return D(tool.baseProd).mul(upgradeMult(content, upgradesBought(state, tool.id))).mul(prodMultiplier(state, content)).mul(bestToolMult(state, content, tool));
+  return D(tool.baseProd).mul(upgradeMult(content, upgradesBought(state, tool.id))).mul(synergyMult(state, content, tool.id)).mul(prodMultiplier(state, content)).mul(bestToolMult(state, content, tool));
 }
 
 /** Índice de la mejor herramienta que se tiene (la de mayor índice con alguna unidad), o -1. */
@@ -221,7 +242,10 @@ export function currentIncomePerSecond(state: GameState, content: Content): Deci
 
 /** Lo que da un toque: `tapSeconds` de producción (mínimo 1 moneda) × Manos de acero × impulso del visitante. */
 export function tapGain(state: GameState, content: Content): Decimal {
-  const base = Decimal.max(1, incomePerSecond(state, content).mul(content.game.tapSeconds));
+  // Mínimo de un toque: 1 moneda × las mejoras compradas del pico (la primera herramienta) × los bonos de producción.
+  const pick = content.tools[0];
+  const floor = D(upgradeMult(content, pick ? upgradesBought(state, pick.id) : 0)).mul(prodMultiplier(state, content));
+  const base = Decimal.max(floor, incomePerSecond(state, content).mul(content.game.tapSeconds));
   return base.mul(1 + perkSum(state, content, 'tapMult') + gardenSum(state, content, 'tapMult') + nestBoost(state, content, 'tapMult')).mul(state.buff?.mult ?? 1);
 }
 
