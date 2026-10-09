@@ -63,13 +63,13 @@ export const GLOBAL_UPGRADES: GlobalUpgradeDef[] = [
   { id: 'luz-de-las-estrellas', name: 'Luz de las estrellas', flavor: 'Trabajar de noche también tiene su encanto.', unlockAt: 1e19, cost: 1e20, mult: 1.5 },
 ];
 
-/** Pieles del cerdito: unas se compran con bellotas (la moneda del cerdito viajero), otras las regalan logros. */
+/** Pieles del cerdito: solo una se compra con bellotas (la moneda del cerdito viajero); el resto las regalan logros. */
 export const SKINS: SkinDef[] = [
   { id: 'rosa', name: 'Rosa de siempre', flavor: 'El color de toda la vida.', color: '#f4c7c3', cost: 0, achievement: null },
-  { id: 'manchado', name: 'Manchado', flavor: 'Cada mancha cuenta una historia distinta.', color: '#e6c9b5', cost: 3, achievement: null },
+  { id: 'manchado', name: 'Manchado', flavor: 'Cada mancha cuenta una historia distinta.', color: '#e6c9b5', cost: null, achievement: 'picar-100' },
   { id: 'azulado', name: 'Azulado', flavor: 'Como si hubiera nevado sobre él.', color: '#b7c9e6', cost: 5, achievement: null },
-  { id: 'menta', name: 'Menta', flavor: 'Huele a hierbabuena.', color: '#bfe3cf', cost: 5, achievement: null },
-  { id: 'terciopelo', name: 'Terciopelo negro', flavor: 'Elegante hasta debajo del barro.', color: '#7a7272', cost: 8, achievement: null },
+  { id: 'menta', name: 'Menta', flavor: 'Huele a hierbabuena.', color: '#bfe3cf', cost: null, achievement: 'cosechar-50' },
+  { id: 'terciopelo', name: 'Terciopelo negro', flavor: 'Elegante hasta debajo del barro.', color: '#7a7272', cost: null, achievement: 'ascender-3' },
   { id: 'dorado', name: 'Dorado', flavor: 'Para quien ya ha ganado mil millones.', color: '#f2c94c', cost: null, achievement: 'monedas-1000000000' },
   { id: 'plateado', name: 'Plateado', flavor: 'Reluce tras cinco ascensiones.', color: '#c9ced6', cost: null, achievement: 'ascender-5' },
   { id: 'lila', name: 'Lila de feria', flavor: 'El premio a diez mil picos.', color: '#d7b8e6', cost: null, achievement: 'picar-10000' },

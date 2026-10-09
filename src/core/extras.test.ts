@@ -120,13 +120,14 @@ describe('bellotas, pieles, compañeros y reliquias', () => {
   it('las pieles se compran con bellotas, se equipan y las de logro se tienen al conseguirlo', () => {
     const state = fresh();
     expect(state.activeSkin).toBe('rosa');
-    expect(buySkin(state, CONTENT, 'manchado')).toBe(false);
-    expect(equipSkin(state, CONTENT, 'manchado')).toBe(false);
-    state.acorns = 4;
-    expect(buySkin(state, CONTENT, 'manchado')).toBe(true);
-    expect(state.acorns).toBe(1);
-    expect(equipSkin(state, CONTENT, 'manchado')).toBe(true);
-    expect(state.activeSkin).toBe('manchado');
+    expect(buySkin(state, CONTENT, 'azulado')).toBe(false);
+    expect(equipSkin(state, CONTENT, 'azulado')).toBe(false);
+    state.acorns = 7;
+    expect(buySkin(state, CONTENT, 'azulado')).toBe(true);
+    expect(state.acorns).toBe(2);
+    expect(equipSkin(state, CONTENT, 'azulado')).toBe(true);
+    expect(state.activeSkin).toBe('azulado');
+    expect(buySkin(state, CONTENT, 'manchado')).toBe(false); // las demás pieles son de logro
     expect(buySkin(state, CONTENT, 'dorado')).toBe(false);
     state.achievements['monedas-1000000000'] = { at: 0 };
     expect(equipSkin(state, CONTENT, 'dorado')).toBe(true);
