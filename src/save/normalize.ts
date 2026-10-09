@@ -99,7 +99,7 @@ export function normalize(state: GameState, content: Content): GameState {
   // Casillas del jardín: tantas como filas haya (las de base más las de Más tierra, ya acotadas arriba).
   state.garden.cells = Array.from({ length: content.garden.cols * gardenRows(state, content) }, (_, i) => {
     const p = state.garden.cells[i];
-    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt } : null;
+    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt, grown: Number.isFinite(p.grown) && p.grown >= 0 ? p.grown : 0, since: Number.isFinite(p.since) ? p.since : p.plantedAt } : null;
   });
   state.activeCompanions = state.activeCompanions.slice(-(2 + Math.round(perkSumOf(state, content, 'companionSlots'))));
 

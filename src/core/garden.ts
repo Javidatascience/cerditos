@@ -43,6 +43,35 @@ export function growMs(state: GameState, content: Content, flower: { growSeconds
   return flower.growSeconds * 1000 * factor;
 }
 
+/** Velocidad a la que crecen las flores ahora: 1 = normal; el pato y Tierra buena la suben (el tiempo de las flores corre más deprisa). */
+export function growRate(state: GameState, content: Content): number {
+  return 1000 / growMs(state, content, { growSeconds: 1 });
+}
+
+/** Crecimiento acumulado de una casilla a las `at` (ms de tiempo de flor: lo guardado más lo que lleva desde entonces a la velocidad actual). */
+export function cellGrownMs(state: GameState, content: Content, cell: number, at: number): number {
+  const c = state.garden.cells[cell];
+  if (!c) return 0;
+  return c.grown + Math.max(0, at - c.since) * growRate(state, content);
+}
+
+/** ¿Está madura la flor de la casilla a las `at`? */
+export function cellMature(state: GameState, content: Content, cell: number, at: number): boolean {
+  const c = state.garden.cells[cell];
+  const flower = c ? content.garden.flowers.find((f) => f.id === c.flower) : undefined;
+  return flower !== undefined && cellGrownMs(state, content, cell, at) >= flower.growSeconds * 1000;
+}
+
+/** Anota el crecimiento de todas las flores hasta `now`. Hay que llamarla justo antes de cualquier cosa que cambie la velocidad (llevar o quitar al pato, comprarle mejoras, Tierra buena). */
+export function settleGarden(state: GameState, content: Content, now: number): void {
+  const rate = growRate(state, content);
+  for (const c of state.garden.cells) {
+    if (!c) continue;
+    c.grown += Math.max(0, now - c.since) * rate;
+    c.since = Math.max(c.since, now);
+  }
+}
+
 /** Suma de lo que aportan los compañeros de suerte del jardín (Mariposa). */
 function luck(state: GameState, content: Content): { mutation: number; shiny: number } {
   let mutation = 0;

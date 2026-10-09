@@ -5,7 +5,7 @@ import type { AchievementReq, CaveEffect, CompanionAbility, Content, GardenEffec
 import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
-import { cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
+import { cellGrownMs, cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, growRate, shinyChance } from './garden.ts';
 import { gameClockMs } from './journal.ts';
 import { basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost, furnaceMilestoneMult } from './cave.ts';
@@ -872,9 +872,9 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
   const cells = state.garden.cells.map((p, index) => {
     const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
     if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false, shiny: false };
-    const total = growMs(state, content, flower);
-    const elapsed = Math.max(0, now - p.plantedAt);
-    return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total, shiny: cellShiny(state, content, index) };
+    const total = flower.growSeconds * 1000;
+    const grown = cellGrownMs(state, content, index, now);
+    return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - grown) / growRate(state, content) / 1000), progress: Math.min(1, grown / total), ready: grown >= total, shiny: cellShiny(state, content, index) };
   });
   return {
     unlocked: gardenUnlocked(state, content),

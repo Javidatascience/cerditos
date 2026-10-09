@@ -30,7 +30,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
-import { cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, growMs, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
+import { settleGarden, cellMature, cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
 import { addEntry, gameClockMs } from './journal.ts';
@@ -132,6 +132,7 @@ export function buyPerk(state: GameState, content: Content, perkId: PerkId, now:
   const cost = perkCost(perk, level);
   if (state.plumas.lt(cost)) return false;
   state.plumas = state.plumas.sub(cost);
+  settleGarden(state, content, now); // Tierra buena cambia la velocidad: se anota lo crecido antes
   state.perks[perkId] = level + 1;
   syncGardenCells(state, content); // Más tierra añade filas de casillas
   return true;
@@ -337,6 +338,7 @@ export function upgradeCompanion(state: GameState, content: Content, id: string,
   const next = companion.upgrades[level];
   if (!next || state.acorns < next.cost) return false;
   state.acorns -= next.cost;
+  settleGarden(state, content, now);
   state.companionLevels[id] = level + 1;
   if (id === 'topo' && level + 1 >= content.nest.topoLevel && state.basketAcornsAt <= 0) state.basketAcornsAt = now; // el topo empieza a cavar ahora
   return true;
@@ -350,9 +352,10 @@ export function maxActiveCompanions(state: GameState, content: Content): number 
 }
 
 /** Pone o quita un compañero que ya se tiene de la escena (si hay demasiados, sale el más antiguo). */
-export function toggleCompanion(state: GameState, content: Content, id: string): boolean {
+export function toggleCompanion(state: GameState, content: Content, id: string, now: number = gameClockMs(state)): boolean {
   const companion = content.companions.find((c) => c.id === id);
   if (!companion || !companionOwned(state, companion)) return false;
+  settleGarden(state, content, now); // el pato cambia la velocidad del jardín: se anota lo crecido antes
   if (state.activeCompanions.includes(id)) {
     state.activeCompanions = state.activeCompanions.filter((c) => c !== id);
   } else {
@@ -484,7 +487,7 @@ export function plantFlower(state: GameState, content: Content, cell: number, fl
   const index = content.garden.flowers.findIndex((f) => f.id === flowerId);
   if (index < 0 || cell < 0 || cell >= state.garden.cells.length || state.garden.cells[cell] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
   if (!state.garden.cells.some((c) => c)) state.garden.mutateAt = now; // los cruces empiezan a contar desde la primera flor
-  state.garden.cells[cell] = { flower: flowerId, plantedAt: now };
+  state.garden.cells[cell] = { flower: flowerId, plantedAt: now, grown: 0, since: now };
   return true;
 }
 
@@ -492,7 +495,7 @@ export function plantFlower(state: GameState, content: Content, cell: number, fl
 export function harvestFlower(state: GameState, content: Content, cell: number, now: number): { shiny: boolean; isNew: boolean } | null {
   const planted = state.garden.cells[cell];
   const flower = planted ? content.garden.flowers.find((f) => f.id === planted.flower) : undefined;
-  if (!planted || !flower || now - planted.plantedAt < growMs(state, content, flower)) return null;
+  if (!planted || !flower || !cellMature(state, content, cell, now)) return null;
   const before = state.garden.found[flower.id];
   const shiny = cellShiny(state, content, cell);
   state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny, shinyCount: (before?.shinyCount ?? 0) + (shiny ? 1 : 0) };
@@ -513,8 +516,7 @@ function mutateOnce(state: GameState, content: Content, at: number, interval: nu
   const matureAround = (i: number): string[] =>
     neighbors(i, g.cols, gardenRows(state, content)).flatMap((n) => {
       const c = cells[n];
-      const def = c ? g.flowers.find((f) => f.id === c.flower) : undefined;
-      return c && def && at - c.plantedAt >= growMs(state, content, def) ? [c.flower] : [];
+      return c && cellMature(state, content, n, at) ? [c.flower] : [];
     });
   const spawned: [number, string][] = [];
   cells.forEach((cell, i) => {
@@ -530,7 +532,7 @@ function mutateOnce(state: GameState, content: Content, at: number, interval: nu
       break;
     }
   });
-  for (const [i, flower] of spawned) cells[i] = { flower, plantedAt: at };
+  for (const [i, flower] of spawned) cells[i] = { flower, plantedAt: at, grown: 0, since: at };
 }
 
 /** Pone al día los cruces del jardín hasta `now` (como mucho 1 h de intervalos de golpe). */

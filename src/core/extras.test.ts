@@ -431,6 +431,19 @@ describe('jardín', () => {
     return state;
   }
 
+  it('el pato acelera el tiempo de las flores y quitarlo no las hace retroceder', () => {
+    const state = garden();
+    state.acorns = 100;
+    buyCompanion(state, CONTENT, 'pato');
+    plantFlower(state, CONTENT, 0, 'margarita', 0); // 60 s de base
+    toggleCompanion(state, CONTENT, 'pato', 30_000); // a los 30 s lo llevo: va más deprisa (×1/0,85)
+    expect(harvestFlower(state, CONTENT, 0, 55_000)).toBeNull();
+    toggleCompanion(state, CONTENT, 'pato', 40_000); // a los 40 s lo quito: lo crecido se conserva
+    expect(state.garden.cells[0]!.grown).toBeCloseTo(30_000 + 10_000 / 0.85, 3);
+    expect(harvestFlower(state, CONTENT, 0, 58_000)).toBeNull();
+    expect(harvestFlower(state, CONTENT, 0, 58_500)).not.toBeNull();
+  });
+
   it('está cerrado hasta tener las plumas indicadas', () => {
     const state = fresh();
     expect(plantFlower(state, CONTENT, 0, 'margarita', 0)).toBe(false);

@@ -153,9 +153,9 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
     companionList.replaceChildren(
       ...views.companions.map((c) => {
         const action = c.equipped
-          ? actionButton('Quitar', () => ctx.dispatch((s) => void toggleCompanion(s, ctx.content, c.id)), false, true)
+          ? actionButton('Quitar', () => ctx.dispatch((s) => void toggleCompanion(s, ctx.content, c.id, Date.now())), false, true)
           : c.owned
-            ? actionButton('Llevar', () => ctx.dispatch((s) => void toggleCompanion(s, ctx.content, c.id)))
+            ? actionButton('Llevar', () => ctx.dispatch((s) => void toggleCompanion(s, ctx.content, c.id, Date.now())))
             : c.cost !== null
               ? actionButton(['Comprar (', ...withAcorn(String(c.cost)), ')'], () => ctx.dispatch((s) => void buyCompanion(s, ctx.content, c.id)), !c.canBuy)
               : costLine(c);
@@ -171,7 +171,7 @@ export function mountCosmeticsView(root: HTMLElement, ctx: UiContext): View {
           h('div', { className: 'cosmetic-actions' }, [
             action,
             ...(c.owned && c.upgradeCost !== null
-              ? [actionButton(['Mejorar (', ...withAcorn(String(c.upgradeCost)), ')'], () => ctx.dispatch((s) => void upgradeCompanion(s, ctx.content, c.id)), !c.canUpgrade, true)]
+              ? [actionButton(['Mejorar (', ...withAcorn(String(c.upgradeCost)), ')'], () => ctx.dispatch((s) => void upgradeCompanion(s, ctx.content, c.id, Date.now())), !c.canUpgrade, true)]
               : []),
           ]),
         ]);
