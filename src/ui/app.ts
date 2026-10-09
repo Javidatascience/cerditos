@@ -110,6 +110,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
   }
 
   // "Picar" lleva a la pantalla del cerdito; tocarlo estando ahí abre el menú de herramientas y mejoras, y volver a tocarlo regresa al cerdito.
+  // Con el resto de pestañas pasa igual: tocar la que ya está abierta vuelve al cerdito.
   function toggleTools(): void {
     switchTab(activeTab === 'pick' ? 'tools' : 'pick');
   }
@@ -118,7 +119,7 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     'nav',
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
     TABS.filter((t) => t.inNav !== false).map((t) => {
-      const btn = h('button', { className: 'nav-button', onclick: () => (t.id === 'pick' ? toggleTools() : switchTab(t.id)) }, [
+      const btn = h('button', { className: 'nav-button', onclick: () => (t.id === 'pick' ? toggleTools() : switchTab(activeTab === t.id ? 'pick' : t.id)) }, [
         h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [artSprite('ui', t.icon)]),
         h('span', { className: 'nav-label' }, [t.label]),
       ]) as HTMLButtonElement;
