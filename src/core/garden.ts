@@ -91,6 +91,13 @@ export function neighbors(index: number, cols: number, rows: number): number[] {
   return out;
 }
 
+/** ¿Esta casilla dará una flor brillante? Se decide con el momento de plantar (igual offline y al recoger). */
+export function cellShiny(state: GameState, content: Content, cell: number): boolean {
+  const planted = state.garden.cells[cell];
+  if (!planted) return false;
+  return rand01(state.createdAt, Math.floor(planted.plantedAt / 1000), cell + 977) < shinyChance(state, content);
+}
+
 /** Número pseudoaleatorio determinista en [0,1) a partir de tres enteros (el cruce no usa Math.random: así es igual offline). */
 export function rand01(a: number, b: number, c: number): number {
   let h = (Math.imul(a | 0, 0x9e3779b1) ^ Math.imul(b | 0, 0x85ebca6b) ^ Math.imul(c | 0, 0xc2b2ae35)) >>> 0;

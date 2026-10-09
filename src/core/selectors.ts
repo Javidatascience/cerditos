@@ -1,14 +1,14 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
 // llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import type { AchievementReq, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
+import type { AchievementReq, CaveEffect, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
-import { durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
+import { cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, shinyChance } from './garden.ts';
 import { gameClockMs } from './journal.ts';
 import { basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
-import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost } from './cave.ts';
+import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost, furnaceMilestoneMult } from './cave.ts';
 import {
   accessoryOwned,
   ascendUnlocked,
@@ -711,8 +711,31 @@ export interface CaveView {
   prodBonus: number;
   /** El dragón: etapa actual, la siguiente (null si ya es anciano) y lo que cuesta alimentarlo. */
   dragon: { stage: number; spriteId: string; name: string; flavor: string; bonusText: string; next: { name: string; cost: Decimal; bonusText: string } | null; canFeed: boolean };
-  furnaces: { id: string; name: string; emoji: string; flavor: string; owned: number; cost: Decimal; each: Decimal; canBuy: boolean }[];
-  branches: { id: string; name: string; emoji: string; nodes: { id: string; name: string; flavor: string; cost: number; bought: boolean; lockedBy: string | null; canBuy: boolean }[] }[];
+  furnaces: { id: string; name: string; emoji: string; flavor: string; owned: number; cost: Decimal; each: Decimal; nextMilestone: number | null; canBuy: boolean }[];
+  branches: { id: string; name: string; emoji: string; nodes: { id: string; name: string; flavor: string; effectText: string; cost: number; bought: boolean; lockedBy: string | null; canBuy: boolean }[] }[];
+}
+
+/** Qué da una ventaja de la cueva, en una frase. */
+export function caveEffectText(effect: CaveEffect): string {
+  const v = effect.value;
+  switch (effect.kind) {
+    case 'embers':
+      return `Las brasas se multiplican ×${v}`;
+    case 'momentumMax':
+      return `+${v} al tope de la inercia`;
+    case 'prodMult':
+      return `×${v} a la producción del juego principal`;
+    case 'basketSeconds':
+      return `La cesta aguanta ${Math.round(v / 60)} min más`;
+    case 'visitorStay':
+      return `El cerdito viajero se queda ${v} s más`;
+    case 'offlineHours':
+      return `+${v} h de producción de monedas mientras no estás`;
+    case 'blow':
+      return `Cada soplido da ×${v} brasas`;
+    case 'furnaceCost':
+      return `Los hornos cuestan un ${Math.round((1 - v) * 100)} % menos`;
+  }
 }
 
 export function caveView(state: GameState, content: Content): CaveView {
@@ -741,7 +764,8 @@ export function caveView(state: GameState, content: Content): CaveView {
     furnaces: content.cave.furnaces.map((f) => {
       const owned = state.cave.furnaces[f.id] ?? 0;
       const cost = furnaceCost(content.cave, f, owned, caveCostFactor(state, content));
-      return { id: f.id, name: f.name, emoji: f.emoji, flavor: f.flavor, owned, cost, each: D(f.baseProd).mul(mult), canBuy: state.cave.embers.gte(cost) };
+      const nextMilestone = content.cave.furnaceMilestones.find((m) => owned < m) ?? null;
+      return { id: f.id, name: f.name, emoji: f.emoji, flavor: f.flavor, owned, cost, each: D(f.baseProd).mul(mult).mul(furnaceMilestoneMult(content.cave, owned)), nextMilestone, canBuy: state.cave.embers.gte(cost) };
     }),
     branches: content.cave.branches.map((b) => ({
       id: b.id,
@@ -752,7 +776,7 @@ export function caveView(state: GameState, content: Content): CaveView {
         .map((n) => {
           const bought = state.cave.nodes[n.id] === true;
           const lockedBy = n.requires !== null && !state.cave.nodes[n.requires] ? (content.cave.nodes.find((x) => x.id === n.requires)?.name ?? n.requires) : null;
-          return { id: n.id, name: n.name, flavor: n.flavor, cost: n.cost, bought, lockedBy, canBuy: !bought && lockedBy === null && state.cave.embers.gte(n.cost) };
+          return { id: n.id, name: n.name, flavor: n.flavor, effectText: caveEffectText(n.effect), cost: n.cost, bought, lockedBy, canBuy: !bought && lockedBy === null && state.cave.embers.gte(n.cost) };
         }),
     })),
   };
@@ -773,9 +797,9 @@ export interface GardenView {
   shinyPercent: number;
   /** Bonos temporales activos ahora. */
   active: { id: string; emoji: string; name: string; secondsLeft: number }[];
-  cells: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean }[];
+  cells: { index: number; flowerId: string | null; flowerName: string; emoji: string; readyInSeconds: number; progress: number; ready: boolean; shiny: boolean }[];
   readyCount: number;
-  flowers: { id: string; name: string; emoji: string; flavor: string; growSeconds: number; available: boolean; found: boolean; shiny: boolean; count: number; effectText: string; recipeText: string | null }[];
+  flowers: { id: string; name: string; emoji: string; flavor: string; growSeconds: number; available: boolean; found: boolean; shiny: boolean; count: number; shinyCount: number; effectText: string; recipeText: string | null }[];
 }
 
 function gardenEffectText(effect: GardenEffect, shiny: boolean, factor = 1): string {
@@ -802,10 +826,10 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
   const flowers = content.garden.flowers;
   const cells = state.garden.cells.map((p, index) => {
     const flower = p ? flowers.find((f) => f.id === p.flower) : undefined;
-    if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false };
+    if (!p || !flower) return { index, flowerId: null, flowerName: '', emoji: '', readyInSeconds: 0, progress: 0, ready: false, shiny: false };
     const total = growMs(state, content, flower);
     const elapsed = Math.max(0, now - p.plantedAt);
-    return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total };
+    return { index, flowerId: flower.id, flowerName: flower.name, emoji: flower.emoji, readyInSeconds: Math.max(0, (total - elapsed) / 1000), progress: Math.min(1, elapsed / total), ready: elapsed >= total, shiny: cellShiny(state, content, index) };
   });
   return {
     unlocked: gardenUnlocked(state, content),
@@ -831,6 +855,7 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         found: got !== undefined,
         shiny: got?.shiny === true,
         count: got?.count ?? 0,
+        shinyCount: got?.shinyCount ?? 0,
         effectText: `${gardenEffectText(f.effect, false, durationFactor(state, content))} (brillante: ${gardenEffectText(f.effect, true, durationFactor(state, content))})`,
         recipeText: f.recipe ? `Cruza ${name(p)?.name} con ${name(q)?.name} en casillas vecinas` : null,
       };

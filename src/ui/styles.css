@@ -2475,3 +2475,31 @@ button {
   font-size: 1.8rem;
   color: var(--color-text-muted);
 }
+
+/* Jardín: estrella de la flor brillante y mensaje al tocar una que crece */
+.garden-cell {
+  position: relative;
+}
+
+.garden-cell .garden-star {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+}
+
+.garden-message {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 3px solid var(--ink);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.garden-shiny-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+}

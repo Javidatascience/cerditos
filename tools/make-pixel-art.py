@@ -556,6 +556,17 @@ def corazon(c):
     c.pts('p', (3, 3), (4, 3))
 
 
+def azufre(c):
+    c.ell(7, 10, 6, 3, 'G')
+    c.rect(1, 9, 12, 12, 'G')
+    c.rect(2, 10, 5, 11, 'g')
+    for x0, top in ((3, 3), (6, 1), (9, 4)):
+        c.rect(x0, top, x0 + 1, 9, 'y')
+        c.pts('Y', (x0 + 1, top + 2), (x0 + 1, top + 4), (x0 + 1, top + 6))
+        c.pts('W', (x0, top))
+    c.pts('O', (7, 6), (4, 7))
+
+
 def escudo(c):
     c.rect(2, 1, 11, 7, 'C')
     for y, hw in zip(range(8, 13), [5, 4, 3, 2, 1]):
@@ -576,7 +587,7 @@ def bolsa(c):
     c.pts('Y', (5, 8), (8, 8), (5, 10), (8, 10))
 
 
-FURNACES = {'brasero': brasero, 'fragua': fragua, 'horno-de-roca': horno, 'corazon-de-lava': corazon,
+FURNACES = {'brasero': brasero, 'fragua': fragua, 'horno-de-roca': horno, 'corazon-de-lava': corazon, 'mina-de-azufre': azufre,
             'rama-fuego': lambda c: flama(c, 7, 11, 11), 'rama-escamas': escudo, 'rama-tesoro': bolsa}
 
 # ---------------------------------------------------------------- iconos de menú, logros y mejoras
@@ -693,7 +704,18 @@ def destello(c):
     c.pts('y', (3, 3), (10, 3), (3, 10), (10, 10))
 
 
+def chispa(c):
+    c.rect(6, 1, 7, 12, 'y')
+    c.rect(1, 6, 12, 7, 'y')
+    c.rect(5, 4, 8, 9, 'y')
+    c.rect(4, 5, 9, 8, 'y')
+    c.rect(6, 5, 7, 8, 'w')
+    c.rect(5, 6, 8, 7, 'w')
+    c.pts('Y', (3, 3), (10, 3), (3, 10), (10, 10))
+
+
 UI = {
+    'brillo': chispa,
     'nav-picar': pico, 'nav-ascender': pluma, 'nav-cerdito': cara_cerdo, 'nav-jardin': brote, 'nav-cueva': dragon,
     'nav-logros': copa, 'nav-ajustes': engranaje,
     'logro-flor': margarita, 'logro-horno': brasero,

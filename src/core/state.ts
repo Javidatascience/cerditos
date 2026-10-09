@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 15;
+export const STATE_VERSION = 16;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -81,7 +81,7 @@ export interface GameState {
   /** El Jardín: parcelas (null = vacía; `plantedAt` en epoch ms) y flores ya recogidas. */
   garden: {
     cells: ({ flower: string; plantedAt: number } | null)[];
-    found: Record<string, { count: number; shiny: boolean }>;
+    found: Record<string, { count: number; shiny: boolean; /** Cuántas de las recogidas salieron brillantes. */ shinyCount: number }>;
     /** Flor → `time` en que termina su bono temporal. */
     buffs: Record<string, number>;
     /** Epoch ms hasta el que se han comprobado los cruces. */

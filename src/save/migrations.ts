@@ -109,6 +109,17 @@ function v14ToV15(old: RawSave): RawSave {
   return { ...old, version: 15, state: { ...old['state'], version: 15, nest: { slots: [null, null, null], adults: {} }, basketAcornsAt: 0 } };
 }
 
+/** v15 → v16: cuántas flores brillantes se han recogido de cada tipo. */
+function v15ToV16(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 16 };
+  const state = old['state'];
+  const garden = isPlainObject(state['garden']) ? state['garden'] : {};
+  const found = isPlainObject(garden['found']) ? garden['found'] : {};
+  const next: RawSave = {};
+  for (const [id, v] of Object.entries(found)) next[id] = isPlainObject(v) ? { ...v, shinyCount: v['shiny'] === true ? 1 : 0 } : v;
+  return { ...old, version: 16, state: { ...state, version: 16, garden: { ...garden, found: next } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -121,6 +132,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   12: v12ToV13,
   13: v13ToV14,
   14: v14ToV15,
+  15: v15ToV16,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

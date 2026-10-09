@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
 import { basketAcornsReady } from './nest.ts';
+import { cellShiny } from './garden.ts';
 import { buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
@@ -416,24 +417,41 @@ describe('jardín', () => {
     expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(true);
     expect(state.coins.toNumber()).toBe(0);
     expect(plantFlower(state, CONTENT, 0, 'margarita', 1000)).toBe(false);
-    expect(harvestFlower(state, CONTENT, 0, 1000 + 59_000, 0.5)).toBeNull();
-    expect(harvestFlower(state, CONTENT, 0, 1000 + 60_000, 0.5)).toEqual({ shiny: false, isNew: true });
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 59_000)).toBeNull();
+    expect(harvestFlower(state, CONTENT, 0, 1000 + 60_000)).toMatchObject({ isNew: true });
     expect(state.garden.harvests).toBe(1);
     expect(state.garden.cells[0]).toBeNull();
+  });
+
+  it('dos flores iguales recogidas seguidas encadenan sus bonos: la segunda empieza cuando acaba la primera', () => {
+    const state = garden();
+    plantFlower(state, CONTENT, 0, 'margarita', 0);
+    plantFlower(state, CONTENT, 1, 'margarita', 0);
+    const shinyBefore = (state.garden.cells[0] && cellShiny(state, CONTENT, 0) ? 2 : 1) + (cellShiny(state, CONTENT, 1) ? 2 : 1);
+    harvestFlower(state, CONTENT, 0, 60_000);
+    harvestFlower(state, CONTENT, 1, 60_000);
+    expect(state.garden.buffs['margarita']).toBe(state.time + 30 * shinyBefore);
   });
 
   it('la flor da un bono temporal y la brillante dura el doble', () => {
     const state = garden();
     const before = prodMultiplier(state, CONTENT);
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    harvestFlower(state, CONTENT, 0, 60_000, 0.5);
+    harvestFlower(state, CONTENT, 0, 60_000);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
     advance(state, CONTENT, 29);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
     advance(state, CONTENT, 2);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1, 9);
-    plantFlower(state, CONTENT, 0, 'margarita', 0);
-    expect(harvestFlower(state, CONTENT, 0, 60_000, 0.05)?.shiny).toBe(true);
+    let at = 0;
+    while (true) {
+      plantFlower(state, CONTENT, 0, 'margarita', at);
+      if (cellShiny(state, CONTENT, 0)) break;
+      state.garden.cells[0] = null;
+      at += 1000;
+    }
+    expect(harvestFlower(state, CONTENT, 0, at + 60_000)?.shiny).toBe(true);
+    expect(state.garden.found['margarita']?.shinyCount).toBe(1);
     advance(state, CONTENT, 50);
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9); // dura 60 s
   });
@@ -455,13 +473,13 @@ describe('jardín', () => {
 
   it('el hibisco da ingresos de golpe, no un bono', () => {
     const state = garden();
-    state.garden.found['rosa'] = { count: 1, shiny: false };
-    state.garden.found['lavanda'] = { count: 1, shiny: false };
-    state.garden.found['hibisco'] = { count: 1, shiny: false };
+    state.garden.found['rosa'] = { count: 1, shiny: false, shinyCount: 0 };
+    state.garden.found['lavanda'] = { count: 1, shiny: false, shinyCount: 0 };
+    state.garden.found['hibisco'] = { count: 1, shiny: false, shinyCount: 0 };
     plantFlower(state, CONTENT, 0, 'hibisco', 0);
     const base = baseIncomePerSecond(state, CONTENT).toNumber();
     const coins = state.coins.toNumber();
-    harvestFlower(state, CONTENT, 0, 2 * 3600_000, 0.5);
+    harvestFlower(state, CONTENT, 0, 2 * 3600_000);
     expect(state.coins.toNumber() - coins).toBeCloseTo(base * 300, 4);
   });
 });
@@ -507,7 +525,7 @@ describe('árbol de ventajas', () => {
     buyPerk(state, CONTENT, 'abonado');
     buyPerk(state, CONTENT, 'polen');
     expect(mutationChance(state, CONTENT)).toBeCloseTo(CONTENT.garden.mutationChance + 0.05, 9);
-    state.garden.found['margarita'] = { count: 1, shiny: false };
+    state.garden.found['margarita'] = { count: 1, shiny: false, shinyCount: 0 };
     const flower = CONTENT.garden.flowers[0]!;
     expect(growMs(state, CONTENT, flower)).toBeCloseTo(flower.growSeconds * 1000 * 0.9, 6);
     buyPerk(state, CONTENT, 'brasas');

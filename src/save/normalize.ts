@@ -52,7 +52,7 @@ export function normalize(state: GameState, content: Content): GameState {
   for (const id of Object.keys(state.garden.found)) {
     const f = state.garden.found[id];
     if (!flowerIds.has(id) || !f) delete state.garden.found[id];
-    else state.garden.found[id] = { count: clampInt(f.count, 1, Number.MAX_SAFE_INTEGER), shiny: f.shiny === true };
+    else state.garden.found[id] = { count: clampInt(f.count, 1, Number.MAX_SAFE_INTEGER), shiny: f.shiny === true, shinyCount: clampInt(f.shinyCount ?? (f.shiny ? 1 : 0), 0, Number.MAX_SAFE_INTEGER) };
   }
   for (const id of Object.keys(state.garden.buffs)) {
     const until = state.garden.buffs[id];

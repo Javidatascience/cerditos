@@ -3,7 +3,7 @@
 // contenido es fijo) y solo se actualizan, para que ningún clic se pierda. Ver docs/06-mina.md.
 
 import { buyCaveNode, buyFurnace, caveBlow, feedDragon } from '../../core/actions.ts';
-import { caveView } from '../../core/selectors.ts';
+import { caveEffectText, caveView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
 import { artSprite, spriteBadge } from '../art.ts';
@@ -54,11 +54,12 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
 
   const nodeRows = ctx.content.cave.nodes.map((n) => {
     const stateText = document.createTextNode('');
+    const effectText = caveEffectText(n.effect);
     const costText = document.createTextNode('');
     const button = h('button', { className: 'buy-button' }, [costText, artSprite('ui', 'brasa', 'sm')]) as HTMLButtonElement;
     button.addEventListener('click', () => ctx.dispatch((s) => void buyCaveNode(s, ctx.content, n.id)));
     const el = h('li', { className: 'perk-row' }, [
-      h('div', { className: 'perk-info' }, [h('span', { className: 'upgrade-name' }, [n.name]), h('span', { className: 'generator-flavor' }, [n.flavor]), h('span', { className: 'perk-locked' }, [stateText])]),
+      h('div', { className: 'perk-info' }, [h('span', { className: 'upgrade-name' }, [n.name]), h('span', { className: 'generator-flavor' }, [n.flavor]), h('span', { className: 'upgrade-effect' }, [effectText]), h('span', { className: 'perk-locked' }, [stateText])]),
       button,
     ]);
     return { id: n.id, branch: n.branch, el, stateText, costText, button };
@@ -108,7 +109,7 @@ export function mountCaveView(root: HTMLElement, ctx: UiContext): View {
     for (const row of furnaceRows) {
       const f = view.furnaces.find((x) => x.id === row.id)!;
       setText(row.ownedText, `×${f.owned}`);
-      setText(row.prodText, `Cada uno da ${formatNumber(f.each, notation)} brasas/s`);
+      setText(row.prodText, `Cada uno da ${formatNumber(f.each, notation)} brasas/s${f.nextMilestone ? ` · al tener ${f.nextMilestone}, el doble` : ''}`);
       setText(row.costText, `Comprar (${formatNumber(f.cost, notation)})`);
       setDisabled(row.button, !f.canBuy);
     }

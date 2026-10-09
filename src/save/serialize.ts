@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 15;
+export const CURRENT_VERSION = 16;
 
 export interface SerializedGameState {
   version: number;

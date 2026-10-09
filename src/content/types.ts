@@ -203,7 +203,7 @@ export interface AchievementDef {
 
 /** Efecto de una ventaja de la cueva sobre el juego. */
 export interface CaveEffect {
-  kind: 'embers' | 'momentumMax' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours';
+  kind: 'embers' | 'momentumMax' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours' | 'blow' | 'furnaceCost';
   value: number;
 }
 
@@ -242,6 +242,10 @@ export interface CaveDef {
   /** La primera etapa (huevo) es el punto de partida y no cuesta nada; el resto se compran en orden. */
   dragon: DragonStageDef[];
   furnaceGrowth: number;
+  /** Al tener tantos hornos de un tipo, ese horno produce el doble (automático, una vez por cifra). */
+  furnaceMilestones: number[];
+  /** Segundos de ausencia que cuentan para las brasas (las monedas usan el tope normal). */
+  offlineEmbersSeconds: number;
   blowCooldown: number;
   blowSeconds: number;
   furnaces: CaveFurnaceDef[];

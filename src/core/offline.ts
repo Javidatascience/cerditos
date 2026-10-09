@@ -3,6 +3,7 @@
 // No hay compras de por medio, así que el resultado es exacto, trocee como trocee.
 
 import type { Content } from '../content/types.ts';
+import { embersPerSecond } from './cave.ts';
 import { offlineCapSeconds } from './formulas.ts';
 import type { Decimal } from './num.ts';
 import type { GameState } from './state.ts';
@@ -31,7 +32,11 @@ export function simulateOffline(state: GameState, content: Content, seconds: num
   const capped = Math.min(seconds, offlineCapSeconds(state, content));
   const chunks = Math.min(MAX_CHUNKS, Math.max(1, Math.ceil(capped / CHUNK_SECONDS)));
   const chunkSeconds = capped / chunks;
+  const embersBefore = state.cave.embers;
+  const embersPerSec = embersPerSecond(state, content);
   for (let i = 0; i < chunks; i++) advance(state, content, chunkSeconds);
+  // Las brasas solo cuentan la primera hora de ausencia (las compras no cambian el ritmo mientras no estás).
+  state.cave.embers = embersBefore.add(embersPerSec.mul(Math.min(capped, content.cave.offlineEmbersSeconds)));
 
   return { awaySeconds: capped, totalAwaySeconds: seconds, coinsEarned: state.coins.sub(before) };
 }

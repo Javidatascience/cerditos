@@ -28,7 +28,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
-import { durationFactor, flowerAvailable, gardenRows, gardenUnlocked, growMs, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
+import { cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, growMs, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
 import { addEntry, gameClockMs } from './journal.ts';
@@ -464,14 +464,14 @@ export function plantFlower(state: GameState, content: Content, cell: number, fl
   return true;
 }
 
-/** Recoge una flor crecida. Devuelve null si no está lista; si no, si ha salido brillante y si es nueva. */
-export function harvestFlower(state: GameState, content: Content, cell: number, now: number, roll: number): { shiny: boolean; isNew: boolean } | null {
+/** Recoge una flor crecida. Devuelve null si no está lista; si no, si ha salido brillante (se sabe desde que se planta) y si es nueva. */
+export function harvestFlower(state: GameState, content: Content, cell: number, now: number): { shiny: boolean; isNew: boolean } | null {
   const planted = state.garden.cells[cell];
   const flower = planted ? content.garden.flowers.find((f) => f.id === planted.flower) : undefined;
   if (!planted || !flower || now - planted.plantedAt < growMs(state, content, flower)) return null;
   const before = state.garden.found[flower.id];
-  const shiny = roll < shinyChance(state, content);
-  state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny };
+  const shiny = cellShiny(state, content, cell);
+  state.garden.found[flower.id] = { count: (before?.count ?? 0) + 1, shiny: before?.shiny === true || shiny, shinyCount: (before?.shinyCount ?? 0) + (shiny ? 1 : 0) };
   state.garden.cells[cell] = null;
   state.garden.harvests += 1;
   const seconds = flower.effect.seconds * (shiny ? 2 : 1) * durationFactor(state, content); // la brillante dura (o da) el doble

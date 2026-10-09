@@ -12,7 +12,7 @@ export function furnaceCost(cave: CaveDef, furnace: CaveFurnaceDef, owned: numbe
 
 /** Factor de coste de los hornos por las ventajas del árbol (1 sin ninguna). */
 export function caveCostFactor(state: GameState, content: Content): number {
-  return perkProductOf(state, content, 'caveCost');
+  return perkProductOf(state, content, 'caveCost') * caveProduct(state, content, 'furnaceCost');
 }
 
 function boughtEffects(state: GameState, content: Content, kind: CaveEffect['kind']): number[] {
@@ -42,10 +42,15 @@ export function dragonBonus(state: GameState, content: Content): { prod: number;
   return { prod, embers };
 }
 
+/** ×2 por cada cifra de hornos alcanzada (10, 25, 50…). */
+export function furnaceMilestoneMult(cave: CaveDef, owned: number): number {
+  return 2 ** cave.furnaceMilestones.filter((m) => owned >= m).length;
+}
+
 /** Brasas por segundo. */
 export function embersPerSecond(state: GameState, content: Content): Decimal {
   let total = D(0);
-  for (const f of content.cave.furnaces) total = total.add(D(f.baseProd).mul(state.cave.furnaces[f.id] ?? 0));
+  for (const f of content.cave.furnaces) total = total.add(D(f.baseProd).mul(state.cave.furnaces[f.id] ?? 0).mul(furnaceMilestoneMult(content.cave, state.cave.furnaces[f.id] ?? 0)));
   return total.mul(embersFactor(state, content));
 }
 
@@ -57,7 +62,7 @@ export function embersFactor(state: GameState, content: Content): number {
 }
 
 export function blowGain(state: GameState, content: Content): Decimal {
-  return Decimal.max(1, embersPerSecond(state, content).mul(content.cave.blowSeconds)).mul(1 + perkSumOf(state, content, 'caveBlow'));
+  return Decimal.max(1, embersPerSecond(state, content).mul(content.cave.blowSeconds)).mul(1 + perkSumOf(state, content, 'caveBlow')).mul(caveProduct(state, content, 'blow'));
 }
 
 export function blowReady(state: GameState, content: Content): boolean {
