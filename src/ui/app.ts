@@ -18,6 +18,7 @@ import { mountFlyView } from './views/flyView.ts';
 import { mountLogbookView } from './views/logbookView.ts';
 import { mountNestView } from './views/nestView.ts';
 import { mountPickView } from './views/pickView.ts';
+import { mountToolsView } from './views/toolsView.ts';
 import { mountSettingsView } from './views/settingsView.ts';
 
 /** Una vista montada: `update` repinta a partir del estado, `destroy` limpia sus nodos. */
@@ -48,6 +49,7 @@ interface TabDef {
 
 const TABS: TabDef[] = [
   { id: 'pick', label: 'Picar', icon: 'nav-picar', mount: mountPickView },
+  { id: 'tools', label: 'Herramientas', icon: 'nav-picar', mount: mountToolsView, inNav: false },
   { id: 'fly', label: 'Ascender', icon: 'nav-ascender', mount: mountFlyView, inNav: false },
   { id: 'cosmetics', label: 'Cerdito', icon: 'nav-cerdito', mount: mountCosmeticsView },
   { id: 'garden', label: 'Jardín', icon: 'nav-jardin', mount: mountGardenView },
@@ -89,8 +91,8 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     activeView = def.mount(viewContainer, ctx);
     gemButton.classList.toggle('gem-open', tabId === 'fly');
     for (const [id, btn] of navButtons) {
-      btn.classList.toggle('active', id === tabId);
-      if (id === tabId) btn.setAttribute('aria-current', 'page');
+      btn.classList.toggle('active', id === tabId || (id === 'pick' && tabId === 'tools'));
+      if (id === tabId || (id === 'pick' && tabId === 'tools')) btn.setAttribute('aria-current', 'page');
       else btn.removeAttribute('aria-current');
     }
     activeView.update(state);
@@ -107,11 +109,16 @@ export function mountApp(root: HTMLElement, content: Content, state: GameState, 
     }
   }
 
+  // "Picar" lleva a la pantalla del cerdito; tocarlo estando ahí abre el menú de herramientas y mejoras, y volver a tocarlo regresa al cerdito.
+  function toggleTools(): void {
+    switchTab(activeTab === 'pick' ? 'tools' : 'pick');
+  }
+
   const nav = h(
     'nav',
     { className: 'bottom-nav', 'aria-label': 'Secciones del juego' },
     TABS.filter((t) => t.inNav !== false).map((t) => {
-      const btn = h('button', { className: 'nav-button', onclick: () => switchTab(t.id) }, [
+      const btn = h('button', { className: 'nav-button', onclick: () => (t.id === 'pick' ? toggleTools() : switchTab(t.id)) }, [
         h('span', { className: 'nav-icon', 'aria-hidden': 'true' }, [artSprite('ui', t.icon)]),
         h('span', { className: 'nav-label' }, [t.label]),
       ]) as HTMLButtonElement;
