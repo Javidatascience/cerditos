@@ -78,7 +78,7 @@ export const SKINS: SkinDef[] = [
 /** Compañeros que van con el cerdito en el fondo; cada uno hace algo mientras lo llevas y se mejora con bellotas. */
 export const COMPANIONS: CompanionDef[] = [
   {
-    id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas y desentierra bellotas.', cost: 4, achievement: null,
+    id: 'topo', name: 'Topo', emoji: '🦔', flavor: 'Cava mientras picas y desentierra bellotas. Al nivel 3 cava también solo: 1 bellota en la cesta cada 6 horas.', cost: 4, achievement: null,
     ability: { kind: 'tapAcorn', every: 40 },
     upgrades: [
       { cost: 3, ability: { kind: 'tapAcorn', every: 30 } },

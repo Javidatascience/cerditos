@@ -76,6 +76,8 @@ export function normalize(state: GameState, content: Content): GameState {
     return { creature: s.creature, stage: clampInt(s.stage, 0, 3), since: s.since };
   });
   for (const id of Object.keys(state.nest.adults)) if (!creatureById.has(id)) delete state.nest.adults[id];
+  state.nest.boosts = state.nest.boosts && typeof state.nest.boosts === 'object' ? state.nest.boosts : {};
+  for (const id of Object.keys(state.nest.boosts)) if (!creatureById.has(id) || !Number.isFinite(state.nest.boosts[id])) delete state.nest.boosts[id];
   if (!Number.isFinite(state.basketAcornsAt) || state.basketAcornsAt < 0) state.basketAcornsAt = 0;
   const accessoryById = new Map(content.accessories.map((a) => [a.id, a]));
   for (const id of Object.keys(state.wardrobe.owned)) if (!accessoryById.has(id)) delete state.wardrobe.owned[id];

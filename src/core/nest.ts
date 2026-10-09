@@ -28,8 +28,19 @@ export function hatchLeftMs(content: Content, slot: { creature: string; stage: n
 
 /** Horas que tarda el Topo excavador en dejar una bellota en la cesta (null si no se tiene la ventaja). */
 export function basketAcornHours(state: GameState, content: Content): number | null {
-  const perk = content.perks.find((p) => p.effect.kind === 'basketAcorns' && (state.perks[p.id] ?? 0) > 0);
-  return perk && perk.effect.kind === 'basketAcorns' ? perk.effect.perLevel : null;
+  return (state.companionLevels['topo'] ?? 0) >= content.nest.topoLevel ? content.nest.topoHours : null;
+}
+
+/** Bono temporal de las ofrendas a criaturas adultas: producto (prodMult) o suma (tapMult, momentumMax) de las activas. */
+export function nestBoost(state: GameState, content: Content, kind: 'prodMult' | 'tapMult' | 'momentumMax'): number {
+  let product = 1;
+  let sum = 0;
+  for (const c of content.nest.creatures) {
+    if (c.boost.kind !== kind || (state.nest.boosts[c.id] ?? 0) <= state.time) continue;
+    product *= c.boost.value;
+    sum += c.boost.value;
+  }
+  return kind === 'prodMult' ? product : sum;
 }
 
 /** Bellotas que hay ahora en la cesta, dejadas por el topo (con tope; no cuentan mientras no se tenga la ventaja). */

@@ -106,7 +106,7 @@ function v13ToV14(old: RawSave): RawSave {
 /** v14 → v15: el Nido (vacío) y las bellotas de la cesta (sin empezar). */
 function v14ToV15(old: RawSave): RawSave {
   if (!isPlainObject(old['state'])) return { ...old, version: 15 };
-  return { ...old, version: 15, state: { ...old['state'], version: 15, nest: { slots: [null, null, null], adults: {} }, basketAcornsAt: 0 } };
+  return { ...old, version: 15, state: { ...old['state'], version: 15, nest: { slots: [null, null, null], adults: {}, boosts: {} }, basketAcornsAt: 0 } };
 }
 
 /** v15 → v16: cuántas flores brillantes se han recogido de cada tipo. */
@@ -117,7 +117,8 @@ function v15ToV16(old: RawSave): RawSave {
   const found = isPlainObject(garden['found']) ? garden['found'] : {};
   const next: RawSave = {};
   for (const [id, v] of Object.entries(found)) next[id] = isPlainObject(v) ? { ...v, shinyCount: v['shiny'] === true ? 1 : 0 } : v;
-  return { ...old, version: 16, state: { ...state, version: 16, garden: { ...garden, found: next } } };
+  const nest = isPlainObject(state['nest']) ? state['nest'] : { slots: [null, null, null], adults: {} };
+  return { ...old, version: 16, state: { ...state, version: 16, garden: { ...garden, found: next }, nest: { ...nest, boosts: {} } } };
 }
 
 /** v(n) → v(n+1). */

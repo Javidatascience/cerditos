@@ -3,7 +3,7 @@
 // puede retirar para liberar el nido. Se repinta solo cuando cambia algo (los botones no se recrean cada
 // 250 ms y ningún clic se pierde); las cuentas atrás se actualizan aparte. Ver docs/06-mina.md.
 
-import { buyEgg, feedCreature, hatchEgg, removeCreature } from '../../core/actions.ts';
+import { boostCreature, buyEgg, feedCreature, hatchEgg, removeCreature } from '../../core/actions.ts';
 import { nestView, type NestView } from '../../core/selectors.ts';
 import type { GameState } from '../../core/state.ts';
 import type { UiContext, View } from '../app.ts';
@@ -30,6 +30,7 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
 
   let lastKey = '';
   const countdowns = new Map<number, Text>();
+  const boostCounts = new Map<number, Text>();
 
   function acornLabel(text: string): (string | HTMLElement)[] {
     return [`${text} `, artSprite('ui', 'bellota', 'sm')];
@@ -44,6 +45,7 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
 
   function build(view: NestView, notation: GameState['settings']['notation']): void {
     countdowns.clear();
+    boostCounts.clear();
     slotList.replaceChildren(
       ...view.slots.map((s) => {
         if (!s.usable) {
@@ -66,7 +68,16 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
         } else if (s.feedCost !== null) {
           actions.push(button(['Alimentar (', ...acornLabel(String(s.feedCost)), ')'], () => ctx.dispatch((st) => void feedCreature(st, ctx.content, s.index)), !s.canFeed));
         } else {
-          actions.push(h('span', { className: 'settings-hint' }, ['¡Adulta!']), button(['Retirar'], () => ctx.dispatch((st) => void removeCreature(st, ctx.content, s.index)), false, true));
+          const left = document.createTextNode('');
+          boostCounts.set(s.index, left);
+          actions.push(
+            h('span', { className: 'settings-hint' }, ['¡Adulta! ', s.boost?.text ? `Ofrenda: ${s.boost.text}.` : '']),
+            h('span', { className: 'upgrade-effect' }, [left]),
+            h('div', { className: 'amount-row' }, [
+              button(['Ofrenda (', ...acornLabel(String(s.boost?.cost ?? 0)), ')'], () => ctx.dispatch((st) => void boostCreature(st, ctx.content, s.index)), !s.boost?.canGive),
+              button(['Retirar'], () => ctx.dispatch((st) => void removeCreature(st, ctx.content, s.index)), false, true),
+            ]),
+          );
         }
         return h('div', { className: 'nest-slot' }, [
           artSprite('creatures', s.spriteId!, 'lg'),
@@ -103,7 +114,7 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
       return;
     }
     setText(introText, 'Cría criaturas con bellotas. Las adultas se anotan para siempre y dan un logro y una reliquia; después puedes retirarlas para criar otra.');
-    const key = JSON.stringify({ ...view, plumas: undefined, slots: view.slots.map((s) => ({ ...s, hatchLeftSeconds: 0 })), acorns: state.acorns });
+    const key = JSON.stringify({ ...view, plumas: undefined, slots: view.slots.map((s) => ({ ...s, hatchLeftSeconds: 0, boost: s.boost && { ...s.boost, secondsLeft: s.boost.secondsLeft > 0 ? 1 : 0 } })), acorns: state.acorns });
     if (key !== lastKey) {
       lastKey = key;
       build(view, notation);
@@ -111,6 +122,8 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
     for (const s of view.slots) {
       const text = countdowns.get(s.index);
       if (text) setText(text, `Eclosiona en ${formatDuration(s.hatchLeftSeconds)}`);
+      const boostText = boostCounts.get(s.index);
+      if (boostText) setText(boostText, s.boost && s.boost.secondsLeft > 0 ? `Bono activo: quedan ${formatDuration(s.boost.secondsLeft)}` : '');
     }
   }
 

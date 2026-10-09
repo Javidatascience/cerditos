@@ -121,7 +121,6 @@ export function buyPerk(state: GameState, content: Content, perkId: PerkId, now:
   state.plumas = state.plumas.sub(cost);
   state.perks[perkId] = level + 1;
   syncGardenCells(state, content); // Más tierra añade filas de casillas
-  if (perk.effect.kind === 'basketAcorns' && state.basketAcornsAt <= 0) state.basketAcornsAt = now; // el topo empieza a cavar ahora
   return true;
 }
 
@@ -277,6 +276,16 @@ export function feedCreature(state: GameState, content: Content, slot: number): 
   return true;
 }
 
+/** Ofrenda: da bellotas a una criatura adulta y activa su bono un rato (si ya estaba activo, se encadena detrás). */
+export function boostCreature(state: GameState, content: Content, slot: number): boolean {
+  const s = state.nest.slots[slot];
+  const creature = s ? creatureOf(content, s.creature) : undefined;
+  if (!s || !creature || s.stage !== 3 || state.acorns < creature.boost.cost) return false;
+  state.acorns -= creature.boost.cost;
+  state.nest.boosts[creature.id] = Math.max(state.nest.boosts[creature.id] ?? 0, state.time) + creature.boost.seconds;
+  return true;
+}
+
 /** Retira una criatura adulta del nido para dejar la casilla libre (queda anotada para siempre). */
 export function removeCreature(state: GameState, content: Content, slot: number): boolean {
   const s = state.nest.slots[slot];
@@ -307,7 +316,7 @@ export function wearAccessory(state: GameState, content: Content, slot: Accessor
 }
 
 /** Mejora un compañero con bellotas (un nivel). */
-export function upgradeCompanion(state: GameState, content: Content, id: string): boolean {
+export function upgradeCompanion(state: GameState, content: Content, id: string, now: number = gameClockMs(state)): boolean {
   const companion = content.companions.find((c) => c.id === id);
   if (!companion || !companionOwned(state, companion)) return false;
   const level = companionLevel(state, id);
@@ -315,6 +324,7 @@ export function upgradeCompanion(state: GameState, content: Content, id: string)
   if (!next || state.acorns < next.cost) return false;
   state.acorns -= next.cost;
   state.companionLevels[id] = level + 1;
+  if (id === 'topo' && level + 1 >= content.nest.topoLevel && state.basketAcornsAt <= 0) state.basketAcornsAt = now; // el topo empieza a cavar ahora
   return true;
 }
 

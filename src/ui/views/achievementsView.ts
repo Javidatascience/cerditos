@@ -78,7 +78,7 @@ export function mountAchievementsView(root: HTMLElement, ctx: UiContext): View {
             spriteBadge('relics', r.id, !r.owned),
             h('div', { className: 'upgrade-info' }, [
               h('span', { className: 'upgrade-name' }, [r.owned ? r.name : '???']),
-              h('span', { className: 'generator-flavor' }, [r.owned ? r.flavor : r.achievementName === '???' ? 'Se consigue criando un huevo hasta su fase final (pestaña Nido).' : `Se consigue con el logro: ${r.achievementName}`]),
+              h('span', { className: 'generator-flavor' }, [r.owned ? r.flavor : r.hint ? `${r.hint} (pestaña Nido).` : `Se consigue con el logro: ${r.achievementName}`]),
               h('span', { className: 'upgrade-effect' }, [r.effectText]),
             ]),
           ]),

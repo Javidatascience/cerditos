@@ -74,9 +74,7 @@ export type PerkEffect =
   /** Cueva: coste de los hornos ×perLevel^nivel. */
   | { kind: 'caveCost'; perLevel: number }
   /** Nido: nidos extra (+perLevel por nivel). */
-  | { kind: 'nestSlots'; perLevel: number }
-  /** Cesta: el topo cava solo y deja 1 bellota en la cesta cada `perLevel` horas (reloj real). */
-  | { kind: 'basketAcorns'; perLevel: number };
+  | { kind: 'nestSlots'; perLevel: number };
 
 export interface PerkDef {
   id: PerkId;
@@ -297,6 +295,8 @@ export interface CreatureDef {
   feedCosts: [number, number];
   /** Las cuatro etapas: huevo, cría, joven y adulta. */
   stages: { name: string; flavor: string }[];
+  /** Ofrenda: al ser adulta se le pueden dar bellotas y da este bono durante un rato (tiempo de juego). */
+  boost: { kind: 'prodMult' | 'tapMult' | 'momentumMax'; value: number; seconds: number; cost: number };
 }
 
 export interface NestDef {
@@ -306,6 +306,9 @@ export interface NestDef {
   maxSlots: number;
   /** Bellotas que puede acumular la cesta (Topo excavador) antes de parar. */
   basketAcornCap: number;
+  /** El Topo (compañero) cava solo al llegar a este nivel de mejora: deja 1 bellota en la cesta cada `topoHours` horas. */
+  topoLevel: number;
+  topoHours: number;
   creatures: CreatureDef[];
 }
 

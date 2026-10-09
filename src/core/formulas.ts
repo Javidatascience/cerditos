@@ -3,6 +3,7 @@
 
 import type { AccessoryDef, CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, ToolDef } from '../content/types.ts';
 import { caveProduct, caveSum, dragonBonus } from './cave.ts';
+import { nestBoost } from './nest.ts';
 import { gardenProduct, gardenSum } from './garden.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
@@ -136,13 +137,13 @@ export function globalMultiplier(state: GameState, content: Content): number {
 
 /** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod * gardenProduct(state, content, 'prodMult');
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod * gardenProduct(state, content, 'prodMult') * nestBoost(state, content, 'prodMult');
 }
 
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
 export function momentumMaxMult(state: GameState, content: Content): number {
   const bought = content.globalUpgrades.reduce((sum, u) => sum + (state.globalUpgrades[u.id] ? (u.momentumAdd ?? 0) : 0), 0);
-  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax') + caveSum(state, content, 'momentumMax');
+  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax') + caveSum(state, content, 'momentumMax') + nestBoost(state, content, 'momentumMax');
 }
 
 /** Multiplicador de la inercia con la barra en `momentum` (0..1): 1 + (máx − 1) · barra. */
@@ -221,7 +222,7 @@ export function currentIncomePerSecond(state: GameState, content: Content): Deci
 /** Lo que da un toque: `tapSeconds` de producción (mínimo 1 moneda) × Manos de acero × impulso del visitante. */
 export function tapGain(state: GameState, content: Content): Decimal {
   const base = Decimal.max(1, incomePerSecond(state, content).mul(content.game.tapSeconds));
-  return base.mul(1 + perkSum(state, content, 'tapMult') + gardenSum(state, content, 'tapMult')).mul(state.buff?.mult ?? 1);
+  return base.mul(1 + perkSum(state, content, 'tapMult') + gardenSum(state, content, 'tapMult') + nestBoost(state, content, 'tapMult')).mul(state.buff?.mult ?? 1);
 }
 
 // ---------------------------------------------------------------------------

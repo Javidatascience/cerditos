@@ -3,7 +3,7 @@ import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
 import { basketAcornsReady } from './nest.ts';
 import { cellShiny } from './garden.ts';
-import { buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { boostCreature, buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
 import { caveCostFactor, embersPerSecond } from './cave.ts';
@@ -342,21 +342,43 @@ describe('nido y bellotas de la cesta', () => {
     expect(state.nest.adults['fenix']).toBe(true); // queda anotada
   });
 
-  it('el topo excavador deja una bellota en la cesta cada 6 h (con tope) y la cesta las recoge', () => {
+  it('el topo al nivel 3 deja una bellota en la cesta cada 6 h (con tope) y la cesta las recoge', () => {
     const state = fresh();
-    state.plumas = D(100);
-    state.plumasTotal = D(5);
-    expect(basketAcornsReady(state, CONTENT, 100 * HOUR)).toBe(0); // sin la ventaja
-    buyPerk(state, CONTENT, 'nidos');
-    expect(buyPerk(state, CONTENT, 'topo-solo', 1)).toBe(true); // el topo empieza a cavar en el instante 1 (0 significa "sin empezar")
+    state.acorns = 500;
+    expect(basketAcornsReady(state, CONTENT, 100 * HOUR)).toBe(0); // sin el nivel 3
+    expect(buyCompanion(state, CONTENT, 'topo')).toBe(true);
+    expect(upgradeCompanion(state, CONTENT, 'topo', 1)).toBe(true);
+    expect(upgradeCompanion(state, CONTENT, 'topo', 1)).toBe(true);
+    expect(basketAcornsReady(state, CONTENT, 100 * HOUR)).toBe(0);
+    expect(upgradeCompanion(state, CONTENT, 'topo', 1)).toBe(true); // nivel 3: empieza a cavar en el instante 1 (0 = "sin empezar")
     expect(basketAcornsReady(state, CONTENT, 5 * HOUR)).toBe(0);
     expect(basketAcornsReady(state, CONTENT, 13 * HOUR)).toBe(2);
     expect(basketAcornsReady(state, CONTENT, 1000 * HOUR)).toBe(CONTENT.nest.basketAcornCap);
+    const before = state.acorns;
     collectBasket(state, CONTENT, 13 * HOUR);
-    expect(state.acorns).toBe(2);
+    expect(state.acorns).toBe(before + 2);
     expect(basketAcornsReady(state, CONTENT, 13 * HOUR)).toBe(0);
     expect(basketAcornsReady(state, CONTENT, 18 * HOUR)).toBe(0);
     expect(basketAcornsReady(state, CONTENT, 19 * HOUR)).toBe(1); // conserva lo que sobraba
+  });
+
+  it('la ofrenda a una criatura adulta da su bono un rato y se encadena si se repite', () => {
+    const state = fresh();
+    state.plumasTotal = D(5);
+    state.acorns = 1000;
+    buyEgg(state, CONTENT, 'fenix', 0, 0);
+    hatchEgg(state, CONTENT, 0, 10 * HOUR);
+    feedCreature(state, CONTENT, 0);
+    expect(boostCreature(state, CONTENT, 0)).toBe(false); // aún no es adulta
+    feedCreature(state, CONTENT, 0);
+    advance(state, CONTENT, 1); // se anota el logro y llega la reliquia
+    const base = prodMultiplier(state, CONTENT);
+    expect(boostCreature(state, CONTENT, 0)).toBe(true);
+    expect(prodMultiplier(state, CONTENT) / base).toBeCloseTo(1.5, 9);
+    boostCreature(state, CONTENT, 0);
+    expect(state.nest.boosts['fenix']).toBe(state.time + 2 * 2 * 3600);
+    advance(state, CONTENT, 4 * 3600 + 1);
+    expect(prodMultiplier(state, CONTENT) / base).toBeCloseTo(1, 9);
   });
 });
 

@@ -96,7 +96,7 @@ export interface GameState {
   /** Prendas del cerdito: las compradas y la que lleva puesta en cada hueco (el color son las pieles). */
   wardrobe: { owned: Record<string, true>; worn: { head: string | null; body: string | null; tail: string | null } };
   /** El Nido: hasta 3 casillas con una criatura (etapa 0 = huevo; `since` = epoch ms en que se puso a incubar) y las que ya fueron adultas. */
-  nest: { slots: ({ creature: string; stage: number; since: number } | null)[]; adults: Record<string, true> };
+  nest: { slots: ({ creature: string; stage: number; since: number } | null)[]; adults: Record<string, true>; /** Criatura → `time` en que acaba su ofrenda (bono temporal). */ boosts: Record<string, number> };
   /** Epoch ms desde el que se acumulan las bellotas de la cesta (Topo excavador); 0 = aún no cuenta. */
   basketAcornsAt: number;
   /** Instante (segundos de `time`) desde el que se llena la cesta. */
@@ -139,7 +139,7 @@ export function createInitialState(content: Content, now: number): GameState {
     cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000, dragonStage: 0 },
     stats: { visitors: 0, bestIncome: D(0) },
     wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },
-    nest: { slots: [null, null, null], adults: {} },
+    nest: { slots: [null, null, null], adults: {}, boosts: {} },
     basketAcornsAt: 0,
     basketSince: 0,
     achievements: {},

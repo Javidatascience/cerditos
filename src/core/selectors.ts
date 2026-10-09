@@ -244,8 +244,6 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
       return `hornos ×${(effect.perLevel ** level).toFixed(2)} de coste`;
     case 'nestSlots':
       return `+${effect.perLevel * level} nido${effect.perLevel * level === 1 ? '' : 's'}`;
-    case 'basketAcorns':
-      return `el topo deja 1 bellota en la cesta cada ${effect.perLevel} h`;
   }
 }
 
@@ -390,6 +388,8 @@ export interface NestSlotView {
   feedCost: number | null;
   canFeed: boolean;
   canRemove: boolean;
+  /** Ofrenda a la adulta: bellotas, texto del bono, segundos que le quedan activo y si se puede dar. */
+  boost: { cost: number; text: string; secondsLeft: number; canGive: boolean } | null;
 }
 
 export interface NestView {
@@ -404,12 +404,17 @@ export interface NestView {
   freeSlot: number | null;
 }
 
+function nestBoostText(b: { kind: 'prodMult' | 'tapMult' | 'momentumMax'; value: number; seconds: number }): string {
+  const what = b.kind === 'prodMult' ? `producción ×${b.value}` : b.kind === 'tapMult' ? `+${Math.round(b.value * 100)} % a los picos` : `+${b.value} al tope de la inercia`;
+  return `${what} durante ${formatDurationShort(b.seconds)}`;
+}
+
 export function nestView(state: GameState, content: Content, now: number): NestView {
   const count = nestSlotCount(state, content);
   const slots: NestSlotView[] = state.nest.slots.map((s, index) => {
     const creature = s ? creatureOf(content, s.creature) : undefined;
     const base = { index, usable: index < count };
-    if (!s || !creature) return { ...base, creatureId: null, name: '', stage: 0, stageName: '', flavor: '', spriteId: null, hatchLeftSeconds: 0, canHatch: false, feedCost: null, canFeed: false, canRemove: false };
+    if (!s || !creature) return { ...base, creatureId: null, name: '', stage: 0, stageName: '', flavor: '', spriteId: null, hatchLeftSeconds: 0, canHatch: false, feedCost: null, canFeed: false, canRemove: false, boost: null };
     const left = hatchLeftMs(content, s, now);
     const feedCost = s.stage >= 1 && s.stage <= 2 ? creature.feedCosts[s.stage - 1]! : null;
     return {
@@ -425,6 +430,7 @@ export function nestView(state: GameState, content: Content, now: number): NestV
       feedCost,
       canFeed: feedCost !== null && state.acorns >= feedCost,
       canRemove: s.stage === 3,
+      boost: s.stage === 3 ? { cost: creature.boost.cost, text: nestBoostText(creature.boost), secondsLeft: Math.max(0, (state.nest.boosts[creature.id] ?? 0) - state.time), canGive: state.acorns >= creature.boost.cost } : null,
     };
   });
   const freeSlot = slots.findIndex((s) => s.usable && s.creatureId === null);
@@ -513,6 +519,8 @@ export interface RelicView {
   owned: boolean;
   effectText: string;
   achievementName: string;
+  /** Cómo conseguirla cuando el logro oculta el animal (criaturas del Nido): dice el tipo de huevo. */
+  hint: string | null;
 }
 
 function achievementName(content: Content, id: string | null): string | null {
@@ -601,6 +609,7 @@ export function cosmeticViews(
       owned: relicOwned(state, r),
       effectText: perkEffectValueText(r.effect, 1),
       achievementName: content.achievements.find((a) => a.id === r.achievement)?.requires.kind === 'creatureAdult' && state.achievements[r.achievement] === undefined ? '???' : (achievementName(content, r.achievement) ?? r.achievement),
+      hint: ((req) => (req?.kind === 'creatureAdult' ? describeRequirement(content, req)(String) : null))(content.achievements.find((a) => a.id === r.achievement)?.requires),
     })),
   };
 }

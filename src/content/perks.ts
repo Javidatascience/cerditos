@@ -28,7 +28,6 @@ export const PERKS: PerkDef[] = [
   { id: 'hornos-baratos', name: 'Hornos de saldo', flavor: 'Construir hornos cuesta menos.', maxLevel: 5, baseCost: 12, costGrowth: 2.2, requires: ['soplido'], effect: { kind: 'caveCost', perLevel: 0.92 }, icon: 'perk-hornos', layout: { col: 1, row: 19, dir: 'right' } },
   // --- Nido (se abre con 5 esmeraldas en total): baratas y rápidas de conseguir ---
   { id: 'nidos', name: 'Más nidos', flavor: 'Un nido más para criar otra criatura.', maxLevel: 2, baseCost: 3, costGrowth: 2, requires: [], requiresPlumasTotal: 5, section: 'Nido', effect: { kind: 'nestSlots', perLevel: 1 }, icon: 'perk-nidos', layout: { col: 1, row: 23, dir: 'right' } },
-  { id: 'topo-solo', name: 'Topo excavador', flavor: 'El topo cava solo: deja una bellota en la cesta cada 6 horas.', maxLevel: 1, baseCost: 4, costGrowth: 1, requires: ['nidos'], effect: { kind: 'basketAcorns', perLevel: 6 }, icon: 'perk-topo', layout: { col: 1, row: 24, dir: 'right' } },
 
   { id: 'calor-del-dragon', name: 'Calor del dragón', flavor: 'El calor de la cueva sube hasta la mina.', maxLevel: 5, baseCost: 30, costGrowth: 2.8, requires: ['hornos-baratos'], effect: { kind: 'prodMult', perLevel: 1.05 }, icon: 'perk-calor', layout: { col: 1, row: 20, dir: 'right' } },
 ];
