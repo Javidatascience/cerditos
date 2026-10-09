@@ -14,7 +14,7 @@ export const NEST: NestDef = {
   topoHours: 6,
   creatures: [
     {
-      id: 'fenix', name: 'Fénix', flavor: 'Renace de sus propias cenizas, o eso dice.', eggCost: 10, hatchSeconds: 1 * HOUR, feedCosts: [15, 40], boost: { kind: 'prodMult', value: 1.5, seconds: 2 * HOUR, cost: 20 },
+      id: 'fenix', name: 'Fénix', flavor: 'Renace de sus propias cenizas, o eso dice.', eggCost: 10, hatchSeconds: 1 * HOUR, feedCosts: [15, 40], boost: { kind: 'embersMult', value: 2, seconds: 2 * HOUR, cost: 20 },
       stages: [
         { name: 'Huevo rojo', flavor: 'Está calentito, casi quema.' },
         { name: 'Pollito rojo', flavor: 'Pía muy fuerte y echa alguna chispa.' },
@@ -32,10 +32,10 @@ export const NEST: NestDef = {
       ],
     },
     {
-      id: 'ornitorrinco', name: 'Ornitorrinco', flavor: 'Pone huevos, tiene pico y es mamífero: no preguntes.', eggCost: 10, hatchSeconds: 1 * HOUR, feedCosts: [15, 40], boost: { kind: 'momentumMax', value: 0.5, seconds: 2 * HOUR, cost: 20 },
+      id: 'ornitorrinco', name: 'Ornitorrinco', flavor: 'Pone huevos, tiene pico y es mamífero: no preguntes.', eggCost: 10, hatchSeconds: 1 * HOUR, feedCosts: [15, 40], boost: { kind: 'prodMult', value: 1.5, seconds: 2 * HOUR, cost: 20 },
       stages: [
         { name: 'Huevo marrón', flavor: 'Moteado y con un aire sospechoso.' },
-        { name: 'Algo de plastilina', flavor: 'Nadie sabe todavía qué va a ser.' },
+        { name: 'Mamífero bebé', flavor: 'Nadie sabe todavía qué va a ser.' },
         { name: 'Ornitorrinco pequeño', flavor: 'Ya tiene pico, cola y cara de despistado.' },
         { name: 'Ornitorrinco grande', flavor: 'Con gafas de sol y todo: el más chulo del estanque.' },
       ],

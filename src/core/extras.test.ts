@@ -367,7 +367,7 @@ describe('nido y bellotas de la cesta', () => {
     const state = fresh();
     state.plumasTotal = D(5);
     state.acorns = 1000;
-    buyEgg(state, CONTENT, 'fenix', 0, 0);
+    buyEgg(state, CONTENT, 'ornitorrinco', 0, 0);
     hatchEgg(state, CONTENT, 0, 10 * HOUR);
     feedCreature(state, CONTENT, 0);
     expect(boostCreature(state, CONTENT, 0)).toBe(false); // aún no es adulta
@@ -377,7 +377,7 @@ describe('nido y bellotas de la cesta', () => {
     expect(boostCreature(state, CONTENT, 0)).toBe(true);
     expect(prodMultiplier(state, CONTENT) / base).toBeCloseTo(1.5, 9);
     boostCreature(state, CONTENT, 0);
-    expect(state.nest.boosts['fenix']).toBe(state.time + 2 * 2 * 3600);
+    expect(state.nest.boosts['ornitorrinco']).toBe(state.time + 2 * 2 * 3600);
     advance(state, CONTENT, 4 * 3600 + 1);
     expect(prodMultiplier(state, CONTENT) / base).toBeCloseTo(1, 9);
   });

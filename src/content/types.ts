@@ -296,7 +296,7 @@ export interface CreatureDef {
   /** Las cuatro etapas: huevo, cría, joven y adulta. */
   stages: { name: string; flavor: string }[];
   /** Ofrenda: al ser adulta se le pueden dar bellotas y da este bono durante un rato (tiempo de juego). */
-  boost: { kind: 'prodMult' | 'tapMult' | 'momentumMax'; value: number; seconds: number; cost: number };
+  boost: { kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'; value: number; seconds: number; cost: number };
 }
 
 export interface NestDef {

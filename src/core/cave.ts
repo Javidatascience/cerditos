@@ -2,6 +2,7 @@
 
 import type { CaveDef, CaveEffect, CaveFurnaceDef, Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
+import { nestBoost } from './nest.ts';
 import { activeAbilities, perkProductOf, perkSumOf } from './perkEffects.ts';
 import type { GameState } from './state.ts';
 
@@ -58,7 +59,7 @@ export function embersPerSecond(state: GameState, content: Content): Decimal {
 export function embersFactor(state: GameState, content: Content): number {
   let lizard = 1;
   for (const a of activeAbilities(state, content)) if (a.kind === 'embersMult') lizard *= a.mult; // Lagarto de fuego
-  return caveProduct(state, content, 'embers') * (1 + perkSumOf(state, content, 'caveEmbers')) * dragonBonus(state, content).embers * lizard;
+  return caveProduct(state, content, 'embers') * (1 + perkSumOf(state, content, 'caveEmbers')) * dragonBonus(state, content).embers * lizard * nestBoost(state, content, 'embersMult');
 }
 
 export function blowGain(state: GameState, content: Content): Decimal {

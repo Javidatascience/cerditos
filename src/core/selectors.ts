@@ -404,8 +404,8 @@ export interface NestView {
   freeSlot: number | null;
 }
 
-function nestBoostText(b: { kind: 'prodMult' | 'tapMult' | 'momentumMax'; value: number; seconds: number }): string {
-  const what = b.kind === 'prodMult' ? `producción ×${b.value}` : b.kind === 'tapMult' ? `+${Math.round(b.value * 100)} % a los picos` : `+${b.value} al tope de la inercia`;
+function nestBoostText(b: { kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'; value: number; seconds: number }): string {
+  const what = b.kind === 'prodMult' ? `producción ×${b.value}` : b.kind === 'embersMult' ? `brasas de la cueva ×${b.value}` : b.kind === 'tapMult' ? `+${Math.round(b.value * 100)} % a los picos` : `+${b.value} al tope de la inercia`;
   return `${what} durante ${formatDurationShort(b.seconds)}`;
 }
 

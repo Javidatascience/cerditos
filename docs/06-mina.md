@@ -131,9 +131,9 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 
 ### El Nido (guardado v16)
 
-- Pestaña **Nido** (icono: huevo), se abre con 5 esmeraldas en total. Tres criaturas, cada una con 4 dibujos (`public/art/creatures/<id>-0..3.png`): **Fénix** (huevo rojo, pollito rojo, gallina de fuego, fénix), **Tiburón** (huevo azul, pececito, piraña, tiburón) y **Ornitorrinco** (huevo marrón, plastilina, ornitorrinco pequeño, grande con gafas). Datos en `content/nest.ts`.
+- Pestaña **Nido** (icono: huevo), se abre con 5 esmeraldas en total. Tres criaturas, cada una con 4 dibujos (`public/art/creatures/<id>-0..3.png`): **Fénix** (huevo rojo, pollito rojo, gallina de fuego, fénix), **Tiburón** (huevo azul, pececito, piraña, tiburón) y **Ornitorrinco** (huevo marrón, mamífero bebé, ornitorrinco pequeño, grande con gafas). Datos en `content/nest.ts`.
 - Un huevo cuesta 10 bellotas y tarda 1 h de reloj real en poder eclosionar (también con el juego cerrado). Las crías evolucionan alimentándolas: 15 bellotas (cría a joven) y 40 (joven a adulta).
 - Hay 1 nido; la zona **Nido** del árbol de ventajas (5 esmeraldas en total) da hasta 3 (*Más nidos*, 3 y 6 esmeraldas). El compañero **Topo** al nivel 3 de mejora cava solo: 1 bellota en la cesta cada 6 h (hasta 4); la cesta las recoge junto a las monedas.
-- **Ofrenda**: a una criatura adulta (en su nido) se le dan 20 bellotas y activa 2 h de juego un bono: fénix producción ×1,5, tiburón +100 % a los picos, ornitorrinco +0,5 al tope de la inercia. Repetirla encadena el tiempo (`nest.boosts`).
+- **Ofrenda**: a una criatura adulta (en su nido) se le dan 20 bellotas y activa 2 h de juego un bono: fénix brasas de la cueva ×2, tiburón +100 % a los picos, ornitorrinco producción ×1,5. Repetirla encadena el tiempo (`nest.boosts`).
 - Logros y reliquias de las criaturas no nombran al animal hasta conseguirlos (solo el tipo de huevo).
 - Al llegar a adulta se anota (`nest.adults`), da un logro y una reliquia nueva (Pluma de fénix ×1,25 producción, Diente de tiburón ×0,9 costes, Pico de ornitorrinco +2 h offline) y se puede **retirar** para liberar el nido; queda anotada para siempre. Con los 3 nidos se pueden tener las 3 adultas a la vez para verlas.

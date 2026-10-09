@@ -32,7 +32,7 @@ export function basketAcornHours(state: GameState, content: Content): number | n
 }
 
 /** Bono temporal de las ofrendas a criaturas adultas: producto (prodMult) o suma (tapMult, momentumMax) de las activas. */
-export function nestBoost(state: GameState, content: Content, kind: 'prodMult' | 'tapMult' | 'momentumMax'): number {
+export function nestBoost(state: GameState, content: Content, kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'): number {
   let product = 1;
   let sum = 0;
   for (const c of content.nest.creatures) {
@@ -40,7 +40,7 @@ export function nestBoost(state: GameState, content: Content, kind: 'prodMult' |
     product *= c.boost.value;
     sum += c.boost.value;
   }
-  return kind === 'prodMult' ? product : sum;
+  return kind === 'prodMult' || kind === 'embersMult' ? product : sum;
 }
 
 /** Bellotas que hay ahora en la cesta, dejadas por el topo (con tope; no cuentan mientras no se tenga la ventaja). */
