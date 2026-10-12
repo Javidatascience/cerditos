@@ -156,3 +156,13 @@ describe('normalize', () => {
     expect(JSON.stringify(serialize(state, 0))).toBe(before);
   });
 });
+
+describe('normalize: topo', () => {
+  it('si el topo ya estaba al nivel 3 sin haber empezado a cavar, empieza a contar desde la última partida', () => {
+    const state = createInitialState(CONTENT, 5000);
+    state.companionLevels['topo'] = 3;
+    state.basketAcornsAt = 0;
+    expect(normalize(state, CONTENT).basketAcornsAt).toBe(5000);
+  });
+});
+

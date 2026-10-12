@@ -51,7 +51,6 @@ export function normalize(state: GameState, content: Content): GameState {
   }
   const flowerIds = new Set(content.garden.flowers.map((f) => f.id));
   state.garden.harvests = clampInt(state.garden.harvests, 0, Number.MAX_SAFE_INTEGER);
-  if (!Number.isFinite(state.garden.mutateAt)) state.garden.mutateAt = 0;
   for (const id of Object.keys(state.garden.found)) {
     const f = state.garden.found[id];
     if (!flowerIds.has(id) || !f) delete state.garden.found[id];
@@ -82,6 +81,8 @@ export function normalize(state: GameState, content: Content): GameState {
   state.nest.boosts = state.nest.boosts && typeof state.nest.boosts === 'object' ? state.nest.boosts : {};
   for (const id of Object.keys(state.nest.boosts)) if (!creatureById.has(id) || !Number.isFinite(state.nest.boosts[id])) delete state.nest.boosts[id];
   if (!Number.isFinite(state.basketAcornsAt) || state.basketAcornsAt < 0) state.basketAcornsAt = 0;
+  // El topo ya estaba al nivel 3 antes de que cavara solo: empieza a contar desde la última vez que se jugó.
+  if (state.basketAcornsAt <= 0 && (state.companionLevels['topo'] ?? 0) >= content.nest.topoLevel) state.basketAcornsAt = Math.max(1, state.lastTickAt);
   const accessoryById = new Map(content.accessories.map((a) => [a.id, a]));
   for (const id of Object.keys(state.wardrobe.owned)) if (!accessoryById.has(id)) delete state.wardrobe.owned[id];
   for (const slot of ['head', 'body', 'tail'] as const) {
@@ -99,7 +100,7 @@ export function normalize(state: GameState, content: Content): GameState {
   // Casillas del jardín: tantas como filas haya (las de base más las de Más tierra, ya acotadas arriba).
   state.garden.cells = Array.from({ length: content.garden.cols * gardenRows(state, content) }, (_, i) => {
     const p = state.garden.cells[i];
-    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt, grown: Number.isFinite(p.grown) && p.grown >= 0 ? p.grown : 0, since: Number.isFinite(p.since) ? p.since : p.plantedAt } : null;
+    return p && flowerIds.has(p.flower) && Number.isFinite(p.plantedAt) ? { flower: p.flower, plantedAt: p.plantedAt, grown: Number.isFinite(p.grown) && p.grown >= 0 ? p.grown : 0, since: Number.isFinite(p.since) ? p.since : p.plantedAt, crossed: p.crossed === true } : null;
   });
   state.activeCompanions = state.activeCompanions.slice(-(2 + Math.round(perkSumOf(state, content, 'companionSlots'))));
 

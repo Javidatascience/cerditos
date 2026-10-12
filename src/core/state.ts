@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 18;
+export const STATE_VERSION = 19;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -82,12 +82,10 @@ export interface GameState {
   companionLevels: Record<string, number>;
   /** El Jardín: parcelas (null = vacía; `plantedAt` en epoch ms) y flores ya recogidas. */
   garden: {
-    cells: ({ flower: string; plantedAt: number; /** Crecimiento acumulado (ms de "tiempo de flor") hasta `since`. */ grown: number; /** Epoch ms hasta el que está contado `grown`. */ since: number } | null)[];
+    cells: ({ flower: string; plantedAt: number; /** Crecimiento acumulado (ms de "tiempo de flor") hasta `since`. */ grown: number; /** Epoch ms hasta el que está contado `grown`. */ since: number; /** Ya maduró y se tiró el dado del cruce. */ crossed: boolean } | null)[];
     found: Record<string, { count: number; shiny: boolean; /** Cuántas de las recogidas salieron brillantes. */ shinyCount: number }>;
     /** Flor → `time` en que termina su bono temporal. */
-    buffs: Record<string, number>;
-    /** Epoch ms hasta el que se han comprobado los cruces. */
-    mutateAt: number;
+    buffs: Record<string, number>;
     /** Flores recogidas en total. */
     harvests: number;
   };
@@ -138,7 +136,7 @@ export function createInitialState(content: Content, now: number): GameState {
     activeCompanions: [],
     companionProgress: {},
     companionLevels: {},
-    garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, mutateAt: 0, harvests: 0 },
+    garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, harvests: 0 },
     cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000, dragonStage: 0 },
     stats: { visitors: 0, bestIncome: D(0) },
     wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },

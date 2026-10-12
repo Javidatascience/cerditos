@@ -30,11 +30,16 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
   const seedRow = h('div', { className: 'chip-row' }, seedButtons);
 
   const messageText = document.createTextNode('');
-  const message = h('p', { className: 'garden-message hidden' }, [messageText]);
+  // Bocadillo encima de la casilla que se ha tocado.
+  const message = h('div', { className: 'garden-message hidden', role: 'status' }, [messageText]);
   let messageTimer = 0;
-  function showMessage(text: string): void {
+  function showMessage(text: string, over: HTMLElement): void {
     setText(messageText, text);
     setClass(message, 'hidden', false);
+    const parent = over.parentElement;
+    const center = over.offsetLeft + over.offsetWidth / 2;
+    message.style.left = `${parent ? Math.min(Math.max(center, 80), parent.clientWidth - 80) : center}px`; // que no se salga por los lados
+    message.style.top = `${over.offsetTop}px`;
     window.clearTimeout(messageTimer);
     messageTimer = window.setTimeout(() => setClass(message, 'hidden', true), 3000);
   }
@@ -54,7 +59,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     btn.addEventListener('click', () => {
       const cell = lastState ? gardenView(lastState, ctx.content, Date.now()).cells[index] : undefined;
       if (cell?.flowerId && !cell.ready) {
-        showMessage(`${cell.flowerName}: le quedan ${formatDuration(cell.readyInSeconds)} para crecer.`);
+        showMessage(`${cell.flowerName}: le quedan ${formatDuration(cell.readyInSeconds)}`, btn);
         return;
       }
       ctx.dispatch((s) => {
@@ -64,7 +69,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     });
     return btn;
   });
-  const grid = h('div', { className: 'garden-grid' }, cellButtons);
+  const grid = h('div', { className: 'garden-grid' }, [...cellButtons, message]);
   grid.style.gridTemplateColumns = `repeat(${garden.cols}, 1fr)`;
 
   const flowerRows = flowers.map((f) => {
@@ -83,7 +88,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
     return { el, nameText, flavorText, effectText, recipeText, shinyText, shinyBox };
   });
 
-  const playArea = h('div', {}, [seedRow, message, grid, harvestAll]);
+  const playArea = h('div', {}, [seedRow, grid, harvestAll]);
   const container = h('div', { className: 'cosmetics-view' }, [
     h('h3', { className: 'fly-heading' }, ['Jardín']),
     h('p', { className: 'settings-hint' }, [introText]),

@@ -30,7 +30,7 @@ import {
   toolOwned,
 } from './formulas.ts';
 import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
-import { settleGarden, cellMature, cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, mutationChance, neighbors, rand01, shinyChance } from './garden.ts';
+import { settleGarden, cellMature, cellMatureAt, cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, mutationChance, neighbors8, rand01 } from './garden.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
 import { addEntry, gameClockMs } from './journal.ts';
@@ -486,8 +486,7 @@ export function buyCaveNode(state: GameState, content: Content, id: string): boo
 export function plantFlower(state: GameState, content: Content, cell: number, flowerId: string, now: number): boolean {
   const index = content.garden.flowers.findIndex((f) => f.id === flowerId);
   if (index < 0 || cell < 0 || cell >= state.garden.cells.length || state.garden.cells[cell] || !gardenUnlocked(state, content) || !flowerAvailable(state, content, index)) return false;
-  if (!state.garden.cells.some((c) => c)) state.garden.mutateAt = now; // los cruces empiezan a contar desde la primera flor
-  state.garden.cells[cell] = { flower: flowerId, plantedAt: now, grown: 0, since: now };
+  state.garden.cells[cell] = { flower: flowerId, plantedAt: now, grown: 0, since: now, crossed: false };
   return true;
 }
 
@@ -503,52 +502,70 @@ export function harvestFlower(state: GameState, content: Content, cell: number, 
   state.garden.harvests += 1;
   const seconds = flower.effect.seconds * (shiny ? 2 : 1) * durationFactor(state, content); // la brillante dura (o da) el doble
   if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
+  else if (flower.effect.kind === 'acorns') state.acorns += flower.effect.value * (shiny ? 2 : 1);
   else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time) + seconds; // si ya hay una igual activa, la nueva empieza cuando acabe la anterior
   if (before === undefined) addEntry(state, `Has descubierto la flor ${flower.name}.`, gameClockMs(state));
   else if (shiny && !before.shiny) addEntry(state, `¡Ha salido una ${flower.name} brillante!`, gameClockMs(state));
   return { shiny, isNew: before === undefined };
 }
 
-/** Un cruce: cada casilla vacía con las dos flores de una receta maduras a su lado puede dar la flor nueva. */
-function mutateOnce(state: GameState, content: Content, at: number, interval: number): void {
+/**
+ * Cruce al madurar (a lo Cookie Clicker): la flor de `cell` acaba de madurar en `at`. Por cada receta en la que
+ * entra, si la otra flor está madura en una casilla de alrededor, se tira el dado (probabilidad de la receta +
+ * bonos); si sale, brota la flor nueva en una casilla vacía contigua a la que ha madurado. Si no hay cruce,
+ * a veces brota una silvestre. Si no hay casilla vacía alrededor, no brota nada.
+ */
+function crossAt(state: GameState, content: Content, cell: number, at: number): void {
   const g = content.garden;
   const cells = state.garden.cells;
-  const matureAround = (i: number): string[] =>
-    neighbors(i, g.cols, gardenRows(state, content)).flatMap((n) => {
-      const c = cells[n];
-      return c && cellMature(state, content, n, at) ? [c.flower] : [];
-    });
-  const spawned: [number, string][] = [];
-  cells.forEach((cell, i) => {
-    if (cell) return;
-    const around = matureAround(i);
-    if (around.length < 2) return;
-    for (const f of g.flowers) {
-      if (!f.recipe) continue;
-      const [p, q] = f.recipe;
-      const ok = p === q ? around.filter((x) => x === p).length >= 2 : around.includes(p) && around.includes(q);
-      if (!ok) continue;
-      if (rand01(state.createdAt, interval, i) < mutationChance(state, content)) spawned.push([i, f.id]);
-      break;
+  const self = cells[cell];
+  if (!self) return;
+  const around = neighbors8(cell, g.cols, gardenRows(state, content));
+  const empty = around.filter((n) => !cells[n]);
+  if (empty.length === 0) return;
+  const mature = around.filter((n) => cells[n] && cellMature(state, content, n, at)).map((n) => cells[n]!.flower);
+  const seed = Math.floor(self.plantedAt / 1000);
+  const spawn = (flower: string, salt: number) => {
+    const target = empty[Math.floor(rand01(state.createdAt, seed + salt, cell * 131) * empty.length)]!;
+    cells[target] = { flower, plantedAt: at, grown: 0, since: at, crossed: false };
+  };
+  const bonus = mutationChance(state, content);
+  let k = 0;
+  for (const f of g.flowers) {
+    if (!f.recipe) continue;
+    const [p, q] = f.recipe;
+    const partner = p === self.flower ? q : q === self.flower ? p : null;
+    if (partner === null || !mature.includes(partner)) continue;
+    k += 1;
+    if (rand01(state.createdAt, seed + k * 7919, cell * 97 + k) < (f.chance ?? 0) + bonus) {
+      spawn(f.id, k);
+      return;
     }
-  });
-  for (const [i, flower] of spawned) cells[i] = { flower, plantedAt: at, grown: 0, since: at };
+  }
+  const wild = g.flowers.find((f) => f.wild === true);
+  if (wild && rand01(state.createdAt, seed + 104729, cell * 53) < g.wildChance) spawn(wild.id, 999);
 }
 
-/** Pone al día los cruces del jardín hasta `now` (como mucho 1 h de intervalos de golpe). */
+/**
+ * Pone al día el jardín hasta `now`: cada flor que haya madurado y aún no haya tirado su dado de cruce lo tira,
+ * en el orden en que maduraron (así funciona igual con el juego cerrado y las que brotan pueden madurar y cruzarse a su vez).
+ */
 export function gardenTick(state: GameState, content: Content, now: number): void {
   if (!gardenUnlocked(state, content)) return;
-  const step = content.garden.mutationSeconds * 1000;
-  const g = state.garden;
-  if (!g.cells.some((c) => c)) {
-    g.mutateAt = now;
-    return;
+  const cells = state.garden.cells;
+  for (let guard = 0; guard < 300; guard++) {
+    let next = -1;
+    let nextAt = Infinity;
+    cells.forEach((c, i) => {
+      if (!c || c.crossed) return;
+      const at = cellMatureAt(state, content, i);
+      if (at <= now && at < nextAt) {
+        next = i;
+        nextAt = at;
+      }
+    });
+    if (next < 0) return;
+    cells[next]!.crossed = true;
+    crossAt(state, content, next, nextAt);
   }
-  let done = 0;
-  while (g.mutateAt + step <= now && done < 120) {
-    g.mutateAt += step;
-    done += 1;
-    mutateOnce(state, content, g.mutateAt, Math.floor(g.mutateAt / step));
-  }
-  if (g.mutateAt + step <= now) g.mutateAt = now;
 }

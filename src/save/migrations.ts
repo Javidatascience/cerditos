@@ -137,6 +137,17 @@ function v17ToV18(old: RawSave): RawSave {
   return { ...old, version: 18, state: { ...state, version: 18, garden: { ...garden, cells: next } } };
 }
 
+/** v18 → v19: los cruces pasan a tirarse al madurar cada flor (se quita el reloj de cruces). */
+function v18ToV19(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 19 };
+  const state = old['state'];
+  const garden = isPlainObject(state['garden']) ? { ...state['garden'] } : {};
+  delete garden['mutateAt'];
+  const cells = Array.isArray(garden['cells']) ? garden['cells'] : [];
+  garden['cells'] = cells.map((c) => (isPlainObject(c) ? { ...c, crossed: false } : c));
+  return { ...old, version: 19, state: { ...state, version: 19, garden } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -152,6 +163,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   15: v15ToV16,
   16: v16ToV17,
   17: v17ToV18,
+  18: v18ToV19,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

@@ -1,11 +1,12 @@
 // Calibración rápida de la economía: simula a un jugador que visita cada `STEP` segundos, pica un
 // puñado de veces, compra la herramienta con mejor amortización que pueda pagar, gasta las plumas en
 // ventajas y asciende cuando duplica sus plumas. Uso: node tools/calibrate.ts [segundosPorVisita] [horas] [picosPorVisita]
+// Con VISITOR=1 también cuenta al cerdito viajero (una media de ~50 s de ingresos cada 90 s) y compra sinergias.
 // Solo imprime una tabla; no forma parte de los tests.
 
 import { CONTENT } from '../src/content/index.ts';
-import { ascend, buyGlobalUpgrade, buyPerk, buyTool, buyUpgrade, tap } from '../src/core/actions.ts';
-import { ascendUnlocked, incomePerSecond, plumasPending, toolBulkCost, toolOwned, unitProduction } from '../src/core/formulas.ts';
+import { ascend, buyGlobalUpgrade, buyPerk, buySynergy, buyTool, buyUpgrade, tap } from '../src/core/actions.ts';
+import { baseIncomePerSecond, ascendUnlocked, incomePerSecond, plumasPending, toolBulkCost, toolOwned, unitProduction } from '../src/core/formulas.ts';
 import { createInitialState } from '../src/core/state.ts';
 import { advance } from '../src/core/tick.ts';
 import { formatNumber } from '../src/ui/format.ts';
@@ -13,6 +14,7 @@ import { formatNumber } from '../src/ui/format.ts';
 const step = Number(process.argv[2] ?? 60);
 const hours = Number(process.argv[3] ?? 48);
 const tapsPerVisit = Number(process.argv[4] ?? 20);
+const withVisitor = process.env['VISITOR'] === '1';
 const state = createInitialState(CONTENT, 0);
 const reportEvery = Math.max(3600, Math.floor((hours * 3600) / 24));
 let nextReport = 0;
@@ -21,6 +23,7 @@ function shop(): void {
   for (let guard = 0; guard < 500; guard++) {
     for (const tool of CONTENT.tools) while (buyUpgrade(state, CONTENT, tool.id)) { /* compra las mejoras desbloqueadas que pueda pagar */ }
     for (const upgrade of CONTENT.globalUpgrades) buyGlobalUpgrade(state, CONTENT, upgrade.id);
+    if (withVisitor) for (const s of CONTENT.synergies) buySynergy(state, CONTENT, s.id);
     let best: { id: string; score: number } | null = null;
     for (const tool of CONTENT.tools) {
       const owned = toolOwned(state, tool.id);
@@ -48,6 +51,11 @@ let t = 0;
 while (t < hours * 3600) {
   advance(state, CONTENT, step);
   t += step;
+  if (withVisitor) {
+    const extra = baseIncomePerSecond(state, CONTENT).mul((50 * step) / 90);
+    state.coins = state.coins.add(extra);
+    state.lifetime = state.lifetime.add(extra);
+  }
   for (let i = 0; i < tapsPerVisit; i++) tap(state, CONTENT);
   shop();
   const gain = plumasPending(state, CONTENT);

@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 18;
+export const CURRENT_VERSION = 19;
 
 export interface SerializedGameState {
   version: number;
@@ -84,7 +84,7 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       activeCompanions: [...state.activeCompanions],
       companionProgress: { ...state.companionProgress },
       companionLevels: { ...state.companionLevels },
-      garden: { cells: state.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs }, mutateAt: state.garden.mutateAt, harvests: state.garden.harvests },
+      garden: { cells: state.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs }, harvests: state.garden.harvests },
       cave: { embers: state.cave.embers.toString(), furnaces: { ...state.cave.furnaces }, nodes: { ...state.cave.nodes }, blowAt: state.cave.blowAt, dragonStage: state.cave.dragonStage },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       wardrobe: { owned: { ...state.wardrobe.owned }, worn: { ...state.wardrobe.worn } },
@@ -127,7 +127,7 @@ export function deserialize(data: SaveData): GameState {
     activeCompanions: [...s.activeCompanions],
     companionProgress: { ...s.companionProgress },
     companionLevels: { ...s.companionLevels },
-    garden: { cells: s.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...s.garden.buffs }, mutateAt: s.garden.mutateAt, harvests: s.garden.harvests },
+    garden: { cells: s.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...s.garden.buffs }, harvests: s.garden.harvests },
     cave: { embers: new Decimal(s.cave.embers), furnaces: { ...s.cave.furnaces }, nodes: { ...s.cave.nodes }, blowAt: s.cave.blowAt, dragonStage: s.cave.dragonStage },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     wardrobe: { owned: { ...s.wardrobe.owned }, worn: { ...s.wardrobe.worn } },

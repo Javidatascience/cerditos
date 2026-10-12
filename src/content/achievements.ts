@@ -29,7 +29,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ...[1, 3, 5, 8].map((n) => ({ id: `companeros-${n}`, name: n === 1 ? 'Primer compañero' : `${n} compañeros`, flavor: 'Mejor acompañado que solo.', requires: { kind: 'companionsOwned' as const, count: n } })),
   ...[1, 5, 10, 15, 20, 24].map((n) => ({ id: `mejoras-companeros-${n}`, name: n === 1 ? 'Primera mejora de compañero' : `${n} niveles de compañeros`, flavor: 'Se les nota más contentos.', requires: { kind: 'companionLevels' as const, count: n } })),
   ...[10, 50, 200, 1000].map((n) => ({ id: `cosechar-${n}`, name: `Recoger ×${fmt(n)}`, flavor: 'Con las manos llenas de tierra.', requires: { kind: 'harvests' as const, count: n } })),
-  ...[1, 4, 7, 10].map((n) => ({ id: `flores-${n}`, name: n === 1 ? 'Primera flor' : `${n} flores distintas`, flavor: 'El jardín florece.', requires: { kind: 'flowersFound' as const, count: n } })),
+  ...[1, 4, 7, 10, 15, 20].map((n) => ({ id: `flores-${n}`, name: n === 1 ? 'Primera flor' : `${n} flores distintas`, flavor: 'El jardín florece.', requires: { kind: 'flowersFound' as const, count: n } })),
   ...[1, 3, 5, 10].map((n) => ({ id: `brillantes-${n}`, name: n === 1 ? 'Primera flor brillante' : `${n} flores brillantes`, flavor: 'Reluce más que una moneda.', requires: { kind: 'shinyFound' as const, count: n } })),
   ...[1, 10, 25, 50, 100].map((n) => ({ id: `hornos-${n}`, name: n === 1 ? 'Primer horno' : `${n} hornos`, flavor: 'La cueva ya no se enfría.', requires: { kind: 'furnaces' as const, count: n } })),
   ...[1, 2, 3, 4].map((n) => ({ id: `dragon-etapa-${n}`, name: ['Cría de dragón', 'Dragón joven', 'Dragón adulto', 'Dragón anciano'][n - 1]!, flavor: 'Crece bien alimentado.', requires: { kind: 'dragonStage' as const, count: n } })),

@@ -30,10 +30,10 @@ export function gardenUnlocked(state: GameState, content: Content): boolean {
   return state.plumasTotal.gte(content.garden.unlockPlumas);
 }
 
-/** Una flor se puede plantar si no nace de un cruce o ya se recogió alguna vez. */
+/** Una flor se puede plantar si es de las de base o ya se recogió alguna vez (las de cruce y las silvestres hay que encontrarlas). */
 export function flowerAvailable(state: GameState, content: Content, index: number): boolean {
   const flower = content.garden.flowers[index];
-  return flower !== undefined && (flower.recipe === null || state.garden.found[flower.id] !== undefined);
+  return flower !== undefined && ((flower.recipe === null && flower.wild !== true) || state.garden.found[flower.id] !== undefined);
 }
 
 /** Tiempo de crecimiento de una flor en ms, con las ventajas del árbol (Tierra buena). */
@@ -53,6 +53,14 @@ export function cellGrownMs(state: GameState, content: Content, cell: number, at
   const c = state.garden.cells[cell];
   if (!c) return 0;
   return c.grown + Math.max(0, at - c.since) * growRate(state, content);
+}
+
+/** Instante (epoch ms) en que la flor de la casilla madura o maduró, a la velocidad actual (Infinity si está vacía). */
+export function cellMatureAt(state: GameState, content: Content, cell: number): number {
+  const c = state.garden.cells[cell];
+  const flower = c ? content.garden.flowers.find((f) => f.id === c.flower) : undefined;
+  if (!c || !flower) return Infinity;
+  return c.since + Math.max(0, flower.growSeconds * 1000 - c.grown) / growRate(state, content);
 }
 
 /** ¿Está madura la flor de la casilla a las `at`? */
@@ -95,9 +103,9 @@ export function gardenMaxRows(content: Content): number {
   return content.garden.rows + Math.round(perkSumMax(content, 'gardenRows'));
 }
 
-/** Probabilidad de cruce por casilla vacía y de flor brillante, y factor de duración de los bonos (con las ventajas). */
+/** Lo que suman Mucho polen y la mariposa a la probabilidad de cada cruce. */
 export function mutationChance(state: GameState, content: Content): number {
-  return content.garden.mutationChance + perkSumOf(state, content, 'gardenMutation') + luck(state, content).mutation;
+  return perkSumOf(state, content, 'gardenMutation') + luck(state, content).mutation;
 }
 
 export function shinyChance(state: GameState, content: Content): number {
@@ -125,6 +133,19 @@ export function cellShiny(state: GameState, content: Content, cell: number): boo
   const planted = state.garden.cells[cell];
   if (!planted) return false;
   return rand01(state.createdAt, Math.floor(planted.plantedAt / 1000), cell + 977) < shinyChance(state, content);
+}
+
+/** Las 8 casillas de alrededor (también en diagonal), como en el jardín de Cookie Clicker. */
+export function neighbors8(index: number, cols: number, rows: number): number[] {
+  const x = index % cols;
+  const y = Math.floor(index / cols);
+  const out: number[] = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if ((dx || dy) && x + dx >= 0 && x + dx < cols && y + dy >= 0 && y + dy < rows) out.push(index + dy * cols + dx);
+    }
+  }
+  return out;
 }
 
 /** Número pseudoaleatorio determinista en [0,1) a partir de tres enteros (el cruce no usa Math.random: así es igual offline). */

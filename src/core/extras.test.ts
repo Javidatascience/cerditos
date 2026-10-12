@@ -494,19 +494,48 @@ describe('jardín', () => {
     expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9); // dura 60 s
   });
 
-  it('dos margaritas maduras vecinas pueden cruzarse en una casilla vacía y dar un girasol', () => {
+  it('al madurar una margarita con otra madura al lado, a veces brota un girasol en una casilla vacía contigua (determinista)', () => {
+    let found: { at: number; cells: GameState['garden']['cells'] } | null = null;
+    for (let at = 0; at < 300_000 && !found; at += 1000) {
+      const state = garden();
+      plantFlower(state, CONTENT, 6, 'margarita', at);
+      plantFlower(state, CONTENT, 7, 'margarita', at);
+      gardenTick(state, CONTENT, at + 60_000);
+      if (state.garden.cells.some((c) => c?.flower === 'girasol')) found = { at, cells: state.garden.cells };
+    }
+    expect(found).not.toBeNull();
+    const index = found!.cells.findIndex((c) => c?.flower === 'girasol');
+    expect([0, 1, 2, 3, 5, 8, 10, 11, 12, 13]).toContain(index); // alrededor de la 6 o de la 7
+    expect(found!.cells[index]!.crossed).toBe(false); // el girasol aún tiene que madurar
+    const again = garden();
+    plantFlower(again, CONTENT, 6, 'margarita', found!.at);
+    plantFlower(again, CONTENT, 7, 'margarita', found!.at);
+    gardenTick(again, CONTENT, found!.at + 60_000);
+    expect(again.garden.cells).toEqual(found!.cells);
+  });
+
+  it('cada flor tira el dado del cruce una sola vez, al madurar', () => {
     const state = garden();
     plantFlower(state, CONTENT, 0, 'margarita', 0);
-    plantFlower(state, CONTENT, 2, 'margarita', 0);
-    // la casilla 1 está entre las dos: se comprueban cruces durante mucho tiempo
+    gardenTick(state, CONTENT, 30_000);
+    expect(state.garden.cells[0]!.crossed).toBe(false);
+    gardenTick(state, CONTENT, 60_000);
+    expect(state.garden.cells[0]!.crossed).toBe(true);
+    const snapshot = JSON.stringify(state.garden.cells);
     gardenTick(state, CONTENT, 10 * 60_000);
-    expect(state.garden.cells[1]?.flower).toBe('girasol');
-    // determinista: el mismo estado da el mismo resultado
-    const other = garden();
-    plantFlower(other, CONTENT, 0, 'margarita', 0);
-    plantFlower(other, CONTENT, 2, 'margarita', 0);
-    gardenTick(other, CONTENT, 10 * 60_000);
-    expect(other.garden.cells).toEqual(state.garden.cells);
+    expect(JSON.stringify(state.garden.cells.map((c, i) => (i === 0 ? c : null)))).toBe(JSON.stringify(JSON.parse(snapshot).map((c: unknown, i: number) => (i === 0 ? c : null))));
+  });
+
+  it('el trébol da bellotas al recogerlo y el hierbajo no se puede plantar hasta encontrarlo', () => {
+    const state = garden();
+    expect(plantFlower(state, CONTENT, 0, 'hierbajo', 0)).toBe(false);
+    state.garden.found['hierbajo'] = { count: 1, shiny: false, shinyCount: 0 };
+    expect(plantFlower(state, CONTENT, 0, 'hierbajo', 0)).toBe(true);
+    state.garden.found['trebol'] = { count: 1, shiny: false, shinyCount: 0 };
+    plantFlower(state, CONTENT, 1, 'trebol', 0);
+    const before = state.acorns;
+    const res = harvestFlower(state, CONTENT, 1, 3 * 60_000);
+    expect(state.acorns - before).toBe(res?.shiny ? 2 : 1);
   });
 
   it('el hibisco da ingresos de golpe, no un bono', () => {
@@ -562,7 +591,7 @@ describe('árbol de ventajas', () => {
     expect(buyPerk(state, CONTENT, 'polen')).toBe(false); // antes Tierra buena
     buyPerk(state, CONTENT, 'abonado');
     buyPerk(state, CONTENT, 'polen');
-    expect(mutationChance(state, CONTENT)).toBeCloseTo(CONTENT.garden.mutationChance + 0.05, 9);
+    expect(mutationChance(state, CONTENT)).toBeCloseTo(0.05, 9);
     state.garden.found['margarita'] = { count: 1, shiny: false, shinyCount: 0 };
     const flower = CONTENT.garden.flowers[0]!;
     expect(growMs(state, CONTENT, flower)).toBeCloseTo(flower.growSeconds * 1000 * 0.9, 6);

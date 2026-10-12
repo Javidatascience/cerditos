@@ -270,8 +270,8 @@ export interface CaveDef {
 
 /** Efecto pasivo de una flor del jardín. */
 export interface GardenEffect {
-  /** `coins`: regalo inmediato de `seconds` segundos de ingresos; el resto son bonos temporales de `seconds` segundos. */
-  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'coins';
+  /** `coins`: regalo inmediato de `seconds` segundos de ingresos; `acorns`: `value` bellotas al recogerla; el resto son bonos temporales de `seconds` segundos. */
+  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'coins' | 'acorns';
   value: number;
   seconds: number;
 }
@@ -283,8 +283,12 @@ export interface GardenFlowerDef {
   flavor: string;
   growSeconds: number;
   effect: GardenEffect;
-  /** Dos flores vecinas que, al cruzarse en una casilla vacía, pueden dar esta (null = se planta desde el principio). */
+  /** Cruce (a lo Cookie Clicker): cuando madura una de las dos con la otra madura al lado, puede brotar esta en una casilla vacía contigua. null = se planta desde el principio. */
   recipe: [string, string] | null;
+  /** Probabilidad de que brote al madurar una de sus dos flores (antes de los bonos de Mucho polen y la mariposa). */
+  chance?: number;
+  /** Silvestre: no se planta hasta encontrarla; brota sola, a veces, junto a una flor que madura. */
+  wild?: boolean;
 }
 
 export interface GardenDef {
@@ -293,9 +297,8 @@ export interface GardenDef {
   shinyChance: number;
   /** Plumas en total necesarias para abrir el jardín. */
   unlockPlumas: number;
-  /** Cada cuántos segundos reales se comprueban los cruces, y la probabilidad por casilla vacía. */
-  mutationSeconds: number;
-  mutationChance: number;
+  /** Probabilidad de que brote una flor silvestre junto a una flor que madura (si no ha habido cruce). */
+  wildChance: number;
   flowers: GardenFlowerDef[];
 }
 

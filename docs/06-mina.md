@@ -84,7 +84,7 @@ Se llevan hasta 2 a la vez. Topo: 1 bellota cada 40 picos. Perro: ×1,1 a la mej
 - **Herramientas**: 18, con los costes y la producción base de los edificios de Cookie Clicker (wiki: precio × 1,15^n; aquí `costGrowth` 1,17). Cada una cuesta ~12-15× la anterior y produce ~5-8×, así que las altas tardan horas en amortizarse. Con `npm run calibrate`, un jugador óptimo asciende por primera vez a las ~9 h.
 - **Plumas**: como las fichas celestiales (1 por cada raíz cúbica de lo ganado entre 1e8; cada pluma +1 %). La Cueva pide 10 plumas en total y el Jardín 5.
 - **Inercia**: tope ×1,25 y 6 mejoras de +0,15. Picar da 0,05 s de producción (mín. 1 moneda). Las mejoras globales ×1,5 se desbloquean mucho más tarde.
-- **Jardín**: cuadrícula 5×5, plantar gratis, flores comunes de 1-20 min con bonos pequeños y raras de 1-12 h con bonos grandes. Dos flores vecinas maduras se cruzan en una casilla vacía (cada 30 s, 25 %, determinista) y dan flores nuevas; la receta se ve en la lista.
+- **Jardín**: cuadrícula 5×5, plantar gratis, flores comunes de 1-20 min con bonos pequeños y raras de 1-12 h con bonos grandes. (Cruces: ver «Jardín a lo Cookie Clicker».)
 - **Interfaz**: Picar tiene dos secciones (Herramientas / Mejoras); Diario va dentro de Logros.
 
 ### Arte (pixel art)
@@ -121,6 +121,14 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 
 - **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
 - **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).
+
+### Jardín a lo Cookie Clicker (guardado v19)
+
+- 20 flores (`content/garden.ts`): 2 de base, 1 silvestre (*Hierbajo*) y 17 de cruce, de 3 min a 12 h. Efectos: producción, picos, inercia, precios, monedas de golpe y **bellotas** (trébol, trébol de cuatro hojas, seta luminosa).
+- **Cruces al madurar**: cuando una flor madura (cada flor tira el dado una sola vez, `crossed`), por cada receta en la que entra, si la otra flor está madura en alguna de las 8 casillas de alrededor, hay `chance` (+ Mucho polen y mariposa) de que brote la flor nueva en una casilla vacía contigua a la que ha madurado. Sin casilla vacía no brota nada. Si no hay cruce, un 5 % de que brote un hierbajo. Se procesa en el orden en que maduran, también con el juego cerrado (determinista).
+- El crecimiento se guarda acumulado (`grown`/`since`): el pato acelera el tiempo de las flores y quitarlo no las hace retroceder.
+- Tocar una flor que crece muestra un bocadillo encima con lo que le queda.
+- El topo al nivel 3 se ve en la cesta: cuántas bellotas lleva y cuándo deja la siguiente.
 
 ### Sinergias, avisos de logro y otros (v17)
 

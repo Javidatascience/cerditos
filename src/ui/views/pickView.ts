@@ -91,8 +91,11 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
   // Bellotas que el topo deja en la cesta (solo con la ventaja Topo excavador)
   const basketAcornText = document.createTextNode('');
   const basketAcorns = h('span', { className: 'basket-text hidden' }, [' · ', artSprite('ui', 'bellota', 'sm'), basketAcornText]);
+  // El topo al nivel 3 cava solo: cuántas bellotas ha dejado y cuándo deja la siguiente.
+  const topoText = document.createTextNode('');
+  const topoLine = h('span', { className: 'basket-text topo-line hidden' }, [artSprite('companions', 'topo', 'sm'), topoText]);
   const basketBlock = h('div', { className: 'basket-block' }, [
-    h('div', { className: 'basket-info' }, [h('span', { className: 'basket-text' }, [basketText]), basketAcorns, h('div', { className: 'progress-bar', role: 'presentation' }, [basketFill])]),
+    h('div', { className: 'basket-info' }, [h('span', { className: 'basket-text' }, [basketText]), basketAcorns, h('div', { className: 'progress-bar', role: 'presentation' }, [basketFill]), topoLine]),
     basketButton,
   ]);
 
@@ -181,7 +184,9 @@ export function mountPickView(root: HTMLElement, ctx: UiContext): View {
     setClass(basketAcorns, 'hidden', basket.acorns <= 0);
     setStyleProp(basketFill, 'width', `${(basket.fill * 100).toFixed(1)}%`);
     setDisabled(basketButton, basket.value.lte(0) && basket.acorns <= 0);
-    setClass(basketBlock, 'hidden', head.income.lte(0) && basket.acorns <= 0);
+    setClass(basketBlock, 'hidden', head.income.lte(0) && basket.acorns <= 0 && basket.topo === null);
+    setClass(topoLine, 'hidden', basket.topo === null);
+    if (basket.topo) setText(topoText, ` Topo: ${basket.acorns}/${basket.topo.cap} bellotas en la cesta${basket.topo.nextSeconds > 0 ? ` · la siguiente en ${formatDuration(basket.topo.nextSeconds)}` : ' (llena: recógela)'}`);
 
   }
 

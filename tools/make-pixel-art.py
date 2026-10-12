@@ -479,6 +479,109 @@ def oro(c):
     c.pts('w', (3, 3), (10, 2), (5, 7), (0, 0), (13, 1), (12, 8), (1, 7))
 
 
+def hierbajo(c):
+    c.ell(7, 12, 5, 1.4, 'B')
+    for x0, top, col in ((3, 4, 'N'), (5, 2, 'n'), (7, 5, 'N'), (9, 1, 'n'), (11, 4, 'N')):
+        c.line(7, 12, x0, top, col)
+    c.pts('l', (5, 3), (9, 2))
+    c.pts('y', (3, 4), (11, 4))
+
+
+def trebol(c):
+    stem(c, top=8, leaves=False)
+    for cx, cy in ((5, 4), (9, 4), (7, 7)):
+        c.ell(cx, cy, 2.1, 2.0, 'n')
+    c.pts('l', (4, 3), (8, 3), (6, 6))
+    c.pts('N', (7, 5), (6, 5), (8, 5))
+
+
+def diente(c):
+    c.line(7, 13, 7, 7, 'N')
+    c.pts('n', (5, 12), (4, 11), (9, 12), (10, 11))
+    import math
+    for i in range(12):
+        a = 2 * math.pi * i / 12
+        c.line(7, 4, round(7 + 3.6 * math.cos(a)), round(4 + 3.6 * math.sin(a)), 'W')
+    for i in range(12):
+        a = 2 * math.pi * i / 12
+        c.p(round(7 + 3.6 * math.cos(a)), round(4 + 3.6 * math.sin(a)), 'w')
+    c.ell(7, 4, 1, 1, 'y')
+
+
+def campanilla(c):
+    c.line(3, 13, 3, 2, 'N')
+    c.line(3, 2, 9, 1, 'N')
+    for cx in (6, 10):
+        c.rect(cx - 1, 3, cx + 1, 5, 'C')
+        c.rect(cx - 2, 6, cx + 2, 6, 'C')
+        c.pts('c', (cx - 1, 3), (cx - 1, 4))
+        c.pts('w', (cx, 7))
+        c.line(cx, 1, cx, 2, 'N')
+    c.pts('n', (2, 9), (4, 8), (2, 11))
+
+
+def cactus(c):
+    c.rect(2, 11, 11, 13, 'O')
+    c.rect(2, 11, 11, 11, 'Y')
+    c.rect(6, 3, 8, 10, 'n')
+    c.rect(3, 5, 4, 8, 'n')
+    c.rect(4, 8, 5, 8, 'n')
+    c.rect(10, 4, 11, 7, 'n')
+    c.rect(9, 7, 10, 7, 'n')
+    c.pts('N', (7, 4), (7, 6), (7, 8), (3, 6), (11, 5))
+    c.pts('w', (5, 4), (9, 5), (6, 9), (12, 4), (2, 5))
+    c.pts('p', (7, 2), (6, 2), (8, 2))
+
+
+def amapola(c):
+    stem(c, top=8)
+    c.ell(7, 4.5, 4, 3.4, 'r')
+    c.pts('R', (5, 3), (9, 3), (4, 5), (10, 5), (7, 7))
+    c.ell(7, 4.5, 1.3, 1.3, 'k')
+    c.pts('p', (5, 2), (4, 3))
+
+
+def trebol4(c):
+    stem(c, top=8, leaves=False)
+    for cx, cy in ((5, 3), (9, 3), (5, 7), (9, 7)):
+        c.ell(cx, cy, 2.1, 2.0, 'n')
+    c.pts('l', (4, 2), (8, 2), (4, 6), (8, 6))
+    c.pts('N', (7, 5), (6, 5), (8, 5), (7, 4), (7, 6))
+    c.pts('y', (12, 1), (1, 1), (12, 9))
+
+
+def seta(c):
+    c.rect(6, 7, 8, 12, 'W')
+    c.rect(5, 12, 9, 13, 'w')
+    c.ell(7, 5, 5.5, 3.6, 'c')
+    c.rect(1, 6, 13, 7, 'C')
+    c.pts('w', (4, 3), (8, 2), (10, 4), (6, 5))
+    c.pts('y', (0, 1), (13, 2), (2, 10), (12, 11))
+
+
+def nenufar(c):
+    c.rect(0, 9, 13, 13, 'C')
+    c.rect(1, 9, 12, 9, 'c')
+    c.ell(7, 10, 5.5, 2.0, 'n')
+    c.pts('C', (7, 10), (8, 11))
+    c.pts('N', (3, 11), (11, 11))
+    for y, hw in zip(range(4, 9), [0, 1, 2, 2, 3]):
+        c.rect(7 - hw, y, 7 + hw, y, 'w')
+    c.pts('q', (7, 5), (6, 7), (8, 7))
+    c.pts('y', (7, 8))
+
+
+def cardo(c):
+    stem(c, top=8)
+    c.ell(7, 6, 2.4, 2.2, 'N')
+    c.pts('l', (6, 6), (8, 7))
+    for x in range(4, 11):
+        c.p(x, 3 if x % 2 == 0 else 2, 'm')
+    c.rect(5, 3, 9, 4, 'M')
+    c.pts('m', (6, 1), (8, 1), (7, 0))
+    c.pts('n', (3, 7), (11, 7), (4, 8), (10, 8))
+
+
 def brote(c):
     c.ell(7, 12, 5, 1.6, 'B')
     c.line(7, 12, 7, 7, 'N')
@@ -499,6 +602,8 @@ FLOWERS = {
     'margarita': margarita, 'tulipan': tulipan, 'girasol': girasol, 'rosa': rosa, 'lavanda': lavanda,
     'loto': loto, 'hibisco': hibisco, 'orquidea': orquidea, 'flor-de-luna': luna, 'flor-de-oro': oro,
     'brote': brote, 'semilla': semilla,
+    'hierbajo': hierbajo, 'trebol': trebol, 'diente-de-leon': diente, 'campanilla': campanilla, 'cactus': cactus,
+    'amapola': amapola, 'trebol-de-cuatro': trebol4, 'seta-luminosa': seta, 'nenufar': nenufar, 'cardo': cardo,
 }
 
 # ---------------------------------------------------------------- hornos y ramas de la cueva

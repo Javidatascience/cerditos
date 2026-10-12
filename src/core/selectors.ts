@@ -5,9 +5,9 @@ import type { AchievementReq, CaveEffect, CompanionAbility, Content, GardenEffec
 import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketCap, basketSeconds, basketValue } from './basket.ts';
-import { cellGrownMs, cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, growRate, shinyChance } from './garden.ts';
+import { cellGrownMs, cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, growRate, mutationChance, shinyChance } from './garden.ts';
 import { gameClockMs } from './journal.ts';
-import { basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
+import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost, furnaceMilestoneMult } from './cave.ts';
 import {
   accessoryOwned,
@@ -363,14 +363,20 @@ export interface BasketView {
   capSeconds: number;
   /** 0..1 */
   fill: number;
-  /** Bellotas que el topo ha dejado en la cesta (solo con Topo excavador). */
+  /** Bellotas que el topo ha dejado en la cesta (topo al nivel 3). */
   acorns: number;
+  /** Si el topo cava solo: segundos para la siguiente bellota (0 si la cesta de bellotas está llena) y tope. */
+  topo: { nextSeconds: number; cap: number } | null;
 }
 
 export function basketView(state: GameState, content: Content, now: number = gameClockMs(state)): BasketView {
   const cap = basketCap(state, content);
   const seconds = basketSeconds(state, cap);
-  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap, acorns: basketAcornsReady(state, content, now) };
+  const acorns = basketAcornsReady(state, content, now);
+  const hours = basketAcornHours(state, content);
+  const every = (hours ?? 0) * 3600_000;
+  const topo = hours !== null && state.basketAcornsAt > 0 ? { nextSeconds: acorns >= content.nest.basketAcornCap ? 0 : (every - ((now - state.basketAcornsAt) % every)) / 1000, cap: content.nest.basketAcornCap } : null;
+  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap, acorns, topo };
 }
 
 export interface NestSlotView {
@@ -859,7 +865,11 @@ function gardenEffectText(effect: GardenEffect, shiny: boolean, factor = 1): str
     case 'momentumMax':
       return `+${effect.value} al tope de la inercia durante ${formatDurationShort(seconds)}`;
     case 'coins':
-      return `${Math.round(seconds / 60)} min de ingresos de golpe`;
+      return `${formatDurationShort(seconds)} de ingresos de golpe`;
+    case 'acorns': {
+      const n = effect.value * (shiny ? 2 : 1);
+      return `${n} bellota${n === 1 ? '' : 's'}`;
+    }
   }
 }
 
@@ -902,7 +912,11 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         count: got?.count ?? 0,
         shinyCount: got?.shinyCount ?? 0,
         effectText: `${gardenEffectText(f.effect, false, durationFactor(state, content))} (brillante: ${gardenEffectText(f.effect, true, durationFactor(state, content))})`,
-        recipeText: f.recipe ? `Cruza ${name(p)?.name} con ${name(q)?.name} en casillas vecinas` : null,
+        recipeText: f.wild
+          ? `Brota sola, a veces (${Math.round(content.garden.wildChance * 100)} %), junto a una flor que madura si no ha habido cruce`
+          : f.recipe
+            ? `${p === q ? `Dos ${name(p)?.name.toLowerCase()}s` : `${name(p)?.name} y ${name(q)?.name.toLowerCase()}`} juntas: cuando madura una con la otra madura al lado, ${Math.round(((f.chance ?? 0) + mutationChance(state, content)) * 100)} % de que brote al lado`
+            : null,
       };
     }),
   };

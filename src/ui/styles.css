@@ -2489,12 +2489,24 @@ button {
   height: 20px;
 }
 
+.garden-grid {
+  position: relative;
+}
+
 .garden-message {
-  margin: 6px 0;
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 6px));
+  max-width: 220px;
+  width: max-content;
   padding: 6px 8px;
   border: 3px solid var(--ink);
   background: var(--color-surface);
+  color: var(--color-text);
   text-align: center;
+  font-size: 0.9rem;
+  pointer-events: none;
+  box-shadow: 0 3px 0 var(--ink);
 }
 
 .garden-shiny-count {
@@ -2555,4 +2567,11 @@ button {
   .achievement-toast {
     animation: none;
   }
+}
+
+.topo-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
 }
