@@ -2591,3 +2591,30 @@ button {
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+.cave-runner {
+  aspect-ratio: 4 / 3;
+}
+
+.rage-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.rage-bar {
+  flex: 1;
+}
+
+.rage-bar .progress-bar-inner {
+  background: #e0563a;
+}
+
+.rage-button {
+  min-width: 110px;
+}
+
+.rage-active .rage-button {
+  background: #e0563a;
+}

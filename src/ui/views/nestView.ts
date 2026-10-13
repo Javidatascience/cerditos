@@ -71,7 +71,8 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
           const left = document.createTextNode('');
           boostCounts.set(s.index, left);
           actions.push(
-            h('span', { className: 'settings-hint' }, ['¡Adulta! ', s.boost?.text ? `Ofrenda: ${s.boost.text}.` : '']),
+            h('span', { className: 'upgrade-effect' }, [`¡Adulta! ${s.residentText}.`]),
+            h('span', { className: 'settings-hint' }, [s.boost?.text ? `Ofrenda: ${s.boost.text}.` : '']),
             h('span', { className: 'upgrade-effect' }, [left]),
             h('div', { className: 'amount-row' }, [
               button(['Ofrenda (', ...acornLabel(String(s.boost?.cost ?? 0)), ')'], () => ctx.dispatch((st) => void boostCreature(st, ctx.content, s.index)), !s.boost?.canGive),
@@ -89,8 +90,8 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
     eggList.replaceChildren(
       ...view.eggs.map((egg) =>
         h('li', { className: 'cosmetic-row' }, [
-          h('div', { className: 'row-art' }, [artSprite('creatures', `${egg.id}-0`, 'md'), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [egg.stageName])])]),
-          button(['Comprar (', ...acornLabel(String(egg.cost)), ')'], () => view.freeSlot !== null && ctx.dispatch((st) => void buyEgg(st, ctx.content, egg.id, view.freeSlot!, Date.now())), !egg.canBuy),
+          h('div', { className: 'row-art' }, [artSprite('creatures', `${egg.id}-0`, 'md'), h('div', { className: 'upgrade-info' }, [h('span', { className: 'upgrade-name' }, [egg.stageName]), h('span', { className: 'generator-flavor' }, [`De adulta: ${egg.residentText.charAt(0).toLowerCase()}${egg.residentText.slice(1)}.`])])]),
+          button(egg.cost === 0 ? ['Incubar (gratis)'] : ['Comprar (', ...acornLabel(String(egg.cost)), ')'], () => view.freeSlot !== null && ctx.dispatch((st) => void buyEgg(st, ctx.content, egg.id, view.freeSlot!, Date.now())), !egg.canBuy),
         ]),
       ),
     );
@@ -113,7 +114,7 @@ export function mountNestView(root: HTMLElement, ctx: UiContext): View {
       setText(introText, `El nido se abre al conseguir ${view.unlockPlumas} esmeraldas en total (llevas ${formatNumber(view.plumas, notation)}). Las esmeraldas se consiguen ascendiendo.`);
       return;
     }
-    setText(introText, 'Cría criaturas con bellotas. Las adultas se anotan para siempre y dan un logro y una reliquia; después puedes retirarlas para criar otra.');
+    setText(introText, 'Cría criaturas con bellotas. De adultas, mientras estén en su nido, cada una da algo (lo pone en su ficha) y aceptan ofrendas para un bono más fuerte. Se anotan para siempre con un logro y una reliquia; puedes retirarlas para criar otra. Al vencer al dragón adulto en la cueva, te deja un huevo de dragón.');
     const key = JSON.stringify({ ...view, plumas: undefined, slots: view.slots.map((s) => ({ ...s, hatchLeftSeconds: 0, boost: s.boost && { ...s.boost, secondsLeft: s.boost.secondsLeft > 0 ? 1 : 0 } })), acorns: state.acorns });
     if (key !== lastKey) {
       lastKey = key;

@@ -72,6 +72,16 @@ export function normalize(state: GameState, content: Content): GameState {
   state.cave.bestMeters = Math.max(state.cave.meters, Number.isFinite(state.cave.bestMeters) ? state.cave.bestMeters : 0);
   state.cave.bosses = clampInt(state.cave.bosses, 0, 1000);
   state.cave.souls = clampInt(state.cave.souls, 0, Number.MAX_SAFE_INTEGER);
+  state.cave.soulsTotal = Math.max(state.cave.souls, clampInt(state.cave.soulsTotal, 0, Number.MAX_SAFE_INTEGER));
+  state.cave.soulUpgrades = state.cave.soulUpgrades && typeof state.cave.soulUpgrades === 'object' ? state.cave.soulUpgrades : {};
+  const soulById = new Map(content.cave.soulUpgrades.map((x) => [x.id, x]));
+  for (const id of Object.keys(state.cave.soulUpgrades)) {
+    const up = soulById.get(id);
+    if (!up) delete state.cave.soulUpgrades[id];
+    else state.cave.soulUpgrades[id] = clampInt(state.cave.soulUpgrades[id] ?? 0, 0, up.maxLevel ?? Number.MAX_SAFE_INTEGER);
+  }
+  state.garden.seeds = state.garden.seeds && typeof state.garden.seeds === 'object' ? state.garden.seeds : {};
+  for (const id of Object.keys(state.garden.seeds)) if (!content.garden.flowers.some((f) => f.id === id && f.seed)) delete state.garden.seeds[id];
   state.cave.monsters = clampInt(state.cave.monsters, 0, Number.MAX_SAFE_INTEGER);
   if (!Number.isFinite(state.cave.nextBossAt) || state.cave.nextBossAt <= 0) state.cave.nextBossAt = state.cave.meters + content.cave.bossEvery;
   state.cave.dragonStage = clampInt(state.cave.dragonStage, 0, content.cave.dragon.length - 1);

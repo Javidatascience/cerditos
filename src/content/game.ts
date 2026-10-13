@@ -162,5 +162,6 @@ export const RELICS: RelicDef[] = [
   { id: 'pluma-de-fenix', name: 'Pluma de fénix', emoji: '🔥', flavor: 'No se quema, pero calienta todo lo que toca.', achievement: 'fenix-adulto', effect: { kind: 'prodMult', perLevel: 1.25 } },
   { id: 'diente-de-tiburon', name: 'Diente de tiburón', emoji: '🦷', flavor: 'Afilado como el mejor pico: todo sale más barato.', achievement: 'tiburon-adulto', effect: { kind: 'costMult', perLevel: 0.9 } },
   { id: 'pico-de-ornitorrinco', name: 'Pico de ornitorrinco', emoji: '🦆', flavor: 'Rastrea el fondo del estanque mientras no estás.', achievement: 'ornitorrinco-adulto', effect: { kind: 'offlineHours', perLevel: 2 } },
+  { id: 'escama-de-dragon', name: 'Escama de dragón', emoji: '🐉', flavor: 'Brilla como las brasas de la cueva.', achievement: 'dragon-adulto', effect: { kind: 'caveEmbers', perLevel: 0.5 } },
   { id: 'corazon-de-agujero', name: 'Corazón de agujero negro', emoji: '🕳️', flavor: 'Late muy despacio y lo atrae todo.', achievement: 'agujero-negro-1', effect: { kind: 'prodMult', perLevel: 1.5 } },
 ];

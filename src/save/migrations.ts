@@ -175,6 +175,16 @@ function v19ToV20(old: RawSave): RawSave {
   return { ...old, version: 20, state: { ...state, version: 20 } };
 }
 
+/** v20 → v21: almas para gastar (las que había cuentan también como conseguidas), mejoras de almas y semillas de la cueva. */
+function v20ToV21(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 21 };
+  const state = old['state'];
+  const cave = isPlainObject(state['cave']) ? state['cave'] : {};
+  const garden = isPlainObject(state['garden']) ? state['garden'] : {};
+  const souls = typeof cave['souls'] === 'number' ? cave['souls'] : 0;
+  return { ...old, version: 21, state: { ...state, version: 21, cave: { ...cave, soulsTotal: souls, soulUpgrades: {} }, garden: { ...garden, seeds: {} } } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -192,6 +202,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   17: v17ToV18,
   18: v18ToV19,
   19: v19ToV20,
+  20: v20ToV21,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

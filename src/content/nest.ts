@@ -40,5 +40,14 @@ export const NEST: NestDef = {
         { name: 'Ornitorrinco grande', flavor: 'Con gafas de sol y todo: el más chulo del estanque.' },
       ],
     },
+    {
+      id: 'dragon', name: 'Dragón', flavor: 'El huevo que te dejó el dragón adulto de la cueva.', eggCost: 0, requiresDragonStage: 3, hatchSeconds: 3 * HOUR, feedCosts: [40, 100], boost: { kind: 'embersMult', value: 3, seconds: 2 * HOUR, cost: 30 }, resident: { kind: 'prodMult', value: 1.25 },
+      stages: [
+        { name: 'Huevo de dragón', flavor: 'Moteado de verde y siempre caliente.' },
+        { name: 'Dragoncito', flavor: 'Estornuda chispas y se esconde detrás del cerdito.' },
+        { name: 'Dragón joven', flavor: 'Ya vuela un poco, sobre todo hacia la comida.' },
+        { name: 'Dragón guardián', flavor: 'Vigila la mina desde lo alto: todo rinde más.' },
+      ],
+    },
   ],
 };

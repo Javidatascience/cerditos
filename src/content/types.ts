@@ -220,10 +220,36 @@ export interface AchievementDef {
 export interface CaveMonsterDef {
   id: string;
   name: string;
-  hp: number;
+  /** Brasas y almas de base al derrotarlo (las brasas crecen con los metros). */
   embers: number;
+  souls: number;
   /** Metros a partir de los que puede aparecer. */
   fromMeters: number;
+  /** Va volando: hay que saltar para alcanzarlo. */
+  flies?: boolean;
+  /** Flor del jardín cuya semilla suelta a veces. */
+  flower: string;
+}
+
+/** Mejora permanente de la cueva que se compra con almas (no se pierde al renacer). */
+export interface SoulUpgradeDef {
+  id: string;
+  name: string;
+  flavor: string;
+  baseCost: number;
+  costGrowth: number;
+  maxLevel: number | null;
+  effect:
+    /** Brasas / almas +perLevel (fracción) por nivel. */
+    | { kind: 'embers' | 'souls'; perLevel: number }
+    /** Segundos extra de furia y de jefe por nivel. */
+    | { kind: 'rageSeconds' | 'bossSeconds'; perLevel: number }
+    /** Más cofres: ×(1 + perLevel) por nivel. */
+    | { kind: 'chests'; perLevel: number }
+    /** Brasas del suelo con las que empiezas al renacer (×perLevel por nivel). */
+    | { kind: 'startEmbers'; perLevel: number }
+    /** El monstruo evoluciona: da más brasas y almas. */
+    | { kind: 'evolve'; monster: string };
 }
 
 /** Objeto de la armería (se compra con brasas, por niveles; se pierde al renacer). */
@@ -245,9 +271,7 @@ export interface ArmoryItemDef {
     /** Saltos extra en el aire (+perLevel por nivel). */
     | { kind: 'jumps'; perLevel: number }
     /** Brasas +perLevel (fracción) por nivel. */
-    | { kind: 'embers'; perLevel: number }
-    /** Salta solo por encima de lo que no puede derrotar rápido y para coger brasas. */
-    | { kind: 'auto'; perLevel: number };
+    | { kind: 'embers'; perLevel: number };
 }
 
 /** Etapa del dragón: se alcanza derrotándolo como jefe en la carrera y da bonos acumulados a la producción y a las brasas. */
@@ -269,11 +293,24 @@ export interface CaveDef {
   speed: number;
   /** Brasas de base de cada brasa recogida del suelo. */
   coinEmbers: number;
-  /** Cada 100 m, la vida de los monstruos ×hpGrowth y sus brasas (y las del suelo) ×rewardGrowth. */
-  hpGrowth: number;
+  /** Cada 100 m, las brasas de los monstruos y del suelo ×rewardGrowth (los monstruos caen al chocar). */
   rewardGrowth: number;
-  /** Golpes por segundo del cerdito al pelear. */
+  /** Golpes por segundo del cerdito contra el jefe. */
   hitsPerSecond: number;
+  /** Probabilidad de que un monstruo suelte la semilla de su flor (si aún no la tienes). */
+  seedChance: number;
+  /** Un cofre cada tantos metros (de media). */
+  chestEvery: number;
+  /** Furia: se llena derrotando monstruos; dura unos segundos y multiplica brasas y almas. */
+  rageKills: number;
+  rageSeconds: number;
+  rageMult: number;
+  /** Un monstruo evolucionado da ×evolveEmbers brasas y ×evolveSouls almas. */
+  evolveEmbers: number;
+  evolveSouls: number;
+  /** Almas del jefe: bossSouls × (jefes derrotados en esta vida + 1). */
+  bossSouls: number;
+  soulUpgrades: SoulUpgradeDef[];
   monsters: CaveMonsterDef[];
   /** Un jefe cada tantos metros: vida = bossHp × bossHpGrowth^jefes derrotados en esta vida; brasas = vida × bossReward. */
   bossEvery: number;
@@ -288,15 +325,15 @@ export interface CaveDef {
   armory: ArmoryItemDef[];
   /** Renacer: almas = floor(sqrt(brasas ganadas en esta vida / soulsDivisor)). */
   soulsDivisor: number;
-  /** Cada alma: +soulEmbers a las brasas y +soulProd a la producción de la mina. */
+  /** Cada alma conseguida en total: +soulEmbers a las brasas y +soulProd a la producción de la mina. */
   soulEmbers: number;
   soulProd: number;
 }
 
 /** Efecto pasivo de una flor del jardín. */
 export interface GardenEffect {
-  /** `coins`: regalo inmediato de `seconds` segundos de ingresos; `acorns`: `value` bellotas al recogerla; el resto son bonos temporales de `seconds` segundos. */
-  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'coins' | 'acorns';
+  /** `coins`: regalo inmediato de `seconds` segundos de ingresos; `acorns`: `value` bellotas al recogerla; `embers`: `value` brasas del suelo de la cueva (al récord de metros); el resto son bonos temporales de `seconds` segundos. */
+  kind: 'prodMult' | 'costMult' | 'tapMult' | 'momentumMax' | 'coins' | 'acorns' | 'embers';
   value: number;
   seconds: number;
 }
@@ -314,6 +351,8 @@ export interface GardenFlowerDef {
   chance?: number;
   /** Silvestre: no se planta hasta encontrarla; brota sola, a veces, junto a una flor que madura. */
   wild?: boolean;
+  /** Semilla que suelta a veces este monstruo de la cueva: hasta tenerla no se puede plantar. */
+  seed?: string;
 }
 
 export interface GardenDef {
@@ -334,6 +373,8 @@ export interface CreatureDef {
   flavor: string;
   /** Bellotas que cuesta el huevo. */
   eggCost: number;
+  /** Solo se puede incubar con el dragón de la cueva en esta etapa o más. */
+  requiresDragonStage?: number;
   /** Segundos de reloj real hasta que el huevo puede eclosionar. */
   hatchSeconds: number;
   /** Bellotas que cuesta alimentarla para pasar de cría a joven y de joven a adulta. */

@@ -582,6 +582,57 @@ def cardo(c):
     c.pts('n', (3, 7), (11, 7), (4, 8), (10, 8))
 
 
+def lirio_lava(c):
+    stem(c, top=8)
+    for x0, x1 in ((3, 6), (11, 8)):
+        c.line(x0, 2, x1, 7, 'O')
+    c.ell(7, 5, 2.2, 3.2, 'r')
+    c.line(7, 1, 7, 7, 'O')
+    c.pts('y', (7, 2), (6, 4), (8, 4))
+    c.pts('R', (5, 7), (9, 7))
+    c.pts('y', (2, 1), (12, 1))
+
+
+def flor_murcielago(c):
+    stem(c, top=9)
+    c.ell(7, 5, 2.4, 2.4, 'k')
+    c.rect(1, 3, 5, 6, 'M')
+    c.rect(9, 3, 13, 6, 'M')
+    c.pts('M', (0, 2), (13, 2))
+    c.pts('m', (2, 4), (11, 4))
+    for x in (5, 7, 9):
+        c.line(x, 7, x - 1, 12, 'k')
+    c.pts('y', (6, 4), (8, 4))
+
+
+def seta_cueva(c):
+    c.rect(5, 7, 8, 12, 'W')
+    c.rect(4, 12, 9, 13, 'w')
+    c.ell(6.5, 5, 5.5, 3.2, 'b')
+    c.rect(1, 6, 12, 7, 'B')
+    c.pts('o', (3, 4), (6, 3), (9, 4), (5, 5))
+    c.pts('c', (11, 2), (1, 2), (12, 9))
+
+
+def flor_arana(c):
+    stem(c, top=8)
+    c.ell(7, 6, 2.6, 2.2, 'p')
+    for x1, y1 in ((2, 1), (4, 0), (10, 0), (12, 1), (1, 4), (13, 4)):
+        c.line(7, 5, x1, y1, 'P')
+    c.pts('q', (6, 5), (8, 6))
+    c.pts('y', (2, 1), (4, 0), (10, 0), (12, 1))
+
+
+def musgo_golem(c):
+    c.ell(7, 10, 6, 3.5, 'g')
+    c.rect(2, 10, 12, 13, 'g')
+    c.ell(7, 8, 5, 2.2, 'n')
+    c.pts('N', (3, 8), (6, 7), (9, 8), (11, 9))
+    c.pts('l', (4, 7), (8, 6), (10, 7))
+    c.pts('G', (4, 11), (8, 12), (11, 11))
+    c.pts('O', (6, 10), (9, 10))
+
+
 def brote(c):
     c.ell(7, 12, 5, 1.6, 'B')
     c.line(7, 12, 7, 7, 'N')
@@ -604,6 +655,7 @@ FLOWERS = {
     'brote': brote, 'semilla': semilla,
     'hierbajo': hierbajo, 'trebol': trebol, 'diente-de-leon': diente, 'campanilla': campanilla, 'cactus': cactus,
     'amapola': amapola, 'trebol-de-cuatro': trebol4, 'seta-luminosa': seta, 'nenufar': nenufar, 'cardo': cardo,
+    'flor-babosa': lirio_lava, 'flor-murcielago': flor_murcielago, 'flor-seta': seta_cueva, 'flor-arana': flor_arana, 'musgo-de-golem': musgo_golem,
 }
 
 # ---------------------------------------------------------------- hornos y ramas de la cueva
@@ -992,7 +1044,22 @@ def m_portal(c):
     c.pts('y', (1, 1), (12, 2), (0, 11), (13, 12))
 
 
-MONSTERS = {'babosa': m_babosa, 'murcielago': m_murcielago, 'seta': m_seta, 'arana': m_arana, 'golem': m_golem, 'portal': m_portal}
+def m_cofre(c):
+    c.rect(1, 5, 12, 12, 'b')
+    c.rect(1, 3, 12, 5, 'B')
+    c.rect(2, 2, 11, 2, 'B')
+    c.rect(1, 6, 12, 6, 'Y')
+    c.rect(1, 10, 12, 10, 'Y')
+    c.rect(6, 5, 7, 8, 'y')
+    c.pts('k', (6, 7), (7, 7))
+    c.pts('o', (3, 8), (10, 8), (3, 11), (10, 11))
+
+
+MONSTERS = {'babosa': m_babosa, 'murcielago': m_murcielago, 'seta': m_seta, 'arana': m_arana, 'golem': m_golem, 'portal': m_portal, 'cofre': m_cofre}
+
+
+# El dragón del nido usa los mismos dibujos que el de la cueva.
+CREATURES.update({'dragon-0': dragon_huevo, 'dragon-1': dragon_cria, 'dragon-2': dragon, 'dragon-3': dragon_adulto})  # noqa: F821
 
 
 def main() -> None:

@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 20;
+export const STATE_VERSION = 21;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -88,6 +88,8 @@ export interface GameState {
     buffs: Record<string, number>;
     /** Flores recogidas en total. */
     harvests: number;
+    /** Semillas de flores de la cueva que ya han soltado los monstruos. */
+    seeds: Record<string, true>;
   };
   /** La Cueva del Dragón (el corredor). No se reinicia al ascender; al renacer se reinicia la carrera (no las almas, el dragón ni el récord). */
   cave: {
@@ -104,7 +106,10 @@ export interface GameState {
     nextBossAt: number;
     /** Etapa del dragón (0 = huevo): la más alta conseguida, para siempre. */
     dragonStage: number;
+    /** Almas para gastar en mejoras permanentes y almas conseguidas en total (dan los bonos). */
     souls: number;
+    soulsTotal: number;
+    soulUpgrades: Record<string, number>;
     /** Monstruos derrotados en total. */
     monsters: number;
   };
@@ -153,8 +158,8 @@ export function createInitialState(content: Content, now: number): GameState {
     activeCompanions: [],
     companionProgress: {},
     companionLevels: {},
-    garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, harvests: 0 },
-    cave: { embers: D(0), runEmbers: D(0), armory: {}, meters: 0, bestMeters: 0, bosses: 0, nextBossAt: content.cave.bossEvery, dragonStage: 0, souls: 0, monsters: 0 },
+    garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, harvests: 0, seeds: {} },
+    cave: { embers: D(0), runEmbers: D(0), armory: {}, meters: 0, bestMeters: 0, bosses: 0, nextBossAt: content.cave.bossEvery, dragonStage: 0, souls: 0, soulsTotal: 0, soulUpgrades: {}, monsters: 0 },
     stats: { visitors: 0, bestIncome: D(0) },
     wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },
     nest: { slots: [null, null, null], adults: {}, boosts: {}, acornClock: 0 },

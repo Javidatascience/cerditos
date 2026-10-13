@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 20;
+export const CURRENT_VERSION = 21;
 
 export interface SerializedGameState {
   version: number;
@@ -33,7 +33,7 @@ export interface SerializedGameState {
   companionProgress: Record<string, number>;
   companionLevels: Record<string, number>;
   garden: GameState['garden'];
-  cave: { embers: string; runEmbers: string; armory: Record<string, number>; meters: number; bestMeters: number; bosses: number; nextBossAt: number; dragonStage: number; souls: number; monsters: number };
+  cave: { embers: string; runEmbers: string; armory: Record<string, number>; meters: number; bestMeters: number; bosses: number; nextBossAt: number; dragonStage: number; souls: number; soulsTotal: number; soulUpgrades: Record<string, number>; monsters: number };
   stats: { visitors: number; bestIncome: string };
   wardrobe: GameState['wardrobe'];
   nest: GameState['nest'];
@@ -84,8 +84,8 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       activeCompanions: [...state.activeCompanions],
       companionProgress: { ...state.companionProgress },
       companionLevels: { ...state.companionLevels },
-      garden: { cells: state.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs }, harvests: state.garden.harvests },
-      cave: { ...state.cave, embers: state.cave.embers.toString(), runEmbers: state.cave.runEmbers.toString(), armory: { ...state.cave.armory } },
+      garden: { cells: state.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs }, harvests: state.garden.harvests, seeds: { ...state.garden.seeds } },
+      cave: { ...state.cave, embers: state.cave.embers.toString(), runEmbers: state.cave.runEmbers.toString(), armory: { ...state.cave.armory }, soulUpgrades: { ...state.cave.soulUpgrades } },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       wardrobe: { owned: { ...state.wardrobe.owned }, worn: { ...state.wardrobe.worn } },
       nest: { slots: state.nest.slots.map((s) => (s ? { ...s } : null)), adults: { ...state.nest.adults }, boosts: { ...state.nest.boosts }, acornClock: state.nest.acornClock },
@@ -127,8 +127,8 @@ export function deserialize(data: SaveData): GameState {
     activeCompanions: [...s.activeCompanions],
     companionProgress: { ...s.companionProgress },
     companionLevels: { ...s.companionLevels },
-    garden: { cells: s.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...s.garden.buffs }, harvests: s.garden.harvests },
-    cave: { ...s.cave, embers: new Decimal(s.cave.embers), runEmbers: new Decimal(s.cave.runEmbers), armory: { ...s.cave.armory } },
+    garden: { cells: s.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...s.garden.buffs }, harvests: s.garden.harvests, seeds: { ...s.garden.seeds } },
+    cave: { ...s.cave, embers: new Decimal(s.cave.embers), runEmbers: new Decimal(s.cave.runEmbers), armory: { ...s.cave.armory }, soulUpgrades: { ...s.cave.soulUpgrades } },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     wardrobe: { owned: { ...s.wardrobe.owned }, worn: { ...s.wardrobe.worn } },
     nest: { slots: s.nest.slots.map((slot) => (slot ? { ...slot } : null)), adults: { ...s.nest.adults }, boosts: { ...s.nest.boosts }, acornClock: s.nest.acornClock },

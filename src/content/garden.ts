@@ -3,7 +3,8 @@
 // bono TEMPORAL (o monedas o bellotas de golpe); si salen brillantes (10 %, siempre visible) dan el doble.
 // Cruces: cuando una flor madura y tiene al lado madura la otra flor de una receta, tira un dado
 // (`chance` + bonos) y, si sale, brota la flor nueva en una casilla vacía contigua. Si no hay cruce,
-// a veces brota un hierbajo, que también sirve para algunas recetas.
+// a veces brota un hierbajo, que también sirve para algunas recetas. Las flores de la cueva salen de las
+// semillas que sueltan los monstruos y dan brasas.
 
 import type { GardenDef } from './types.ts';
 
@@ -41,6 +42,12 @@ export const GARDEN: GardenDef = {
     { id: 'nenufar', name: 'Nenúfar', emoji: '🪷', flavor: 'Una cama de agua para no dejar de picar.', growSeconds: 4 * HOUR, effect: { kind: 'momentumMax', value: 0.5, seconds: 5 * MIN }, recipe: ['loto', 'campanilla'], chance: 0.05 },
     { id: 'flor-de-luna', name: 'Flor de luna', emoji: '🌸', flavor: 'Solo abre de noche y trabaja mientras duermes.', growSeconds: 6 * HOUR, effect: { kind: 'prodMult', value: 3, seconds: 90 }, recipe: ['loto', 'hibisco'], chance: 0.05 },
     { id: 'seta-luminosa', name: 'Seta luminosa', emoji: '🍄', flavor: 'Brilla en la oscuridad y esconde un tesoro de bellotas.', growSeconds: 8 * HOUR, effect: { kind: 'acorns', value: 10, seconds: 0 }, recipe: ['hierbajo', 'flor-de-luna'], chance: 0.04 },
+    // De la cueva: los monstruos sueltan a veces su semilla; dan brasas al recogerlas
+    { id: 'flor-babosa', name: 'Lirio de lava', emoji: '🔥', flavor: 'Brota donde pasó una babosa de lava. Calienta las manos.', growSeconds: 10 * MIN, effect: { kind: 'embers', value: 30, seconds: 0 }, recipe: null, seed: 'babosa' },
+    { id: 'flor-murcielago', name: 'Flor murciélago', emoji: '🦇', flavor: 'Negra, con bigotes largos. Existe de verdad.', growSeconds: 30 * MIN, effect: { kind: 'embers', value: 80, seconds: 0 }, recipe: null, seed: 'murcielago' },
+    { id: 'flor-seta', name: 'Seta de la cueva', emoji: '🍄', flavor: 'Prima de la seta gruñona, pero de buen humor.', growSeconds: 1 * HOUR, effect: { kind: 'embers', value: 200, seconds: 0 }, recipe: null, seed: 'seta' },
+    { id: 'flor-arana', name: 'Flor araña', emoji: '🕸️', flavor: 'Sus pétalos parecen patas. No muerde.', growSeconds: 2 * HOUR, effect: { kind: 'embers', value: 500, seconds: 0 }, recipe: null, seed: 'arana' },
+    { id: 'musgo-de-golem', name: 'Musgo de gólem', emoji: '🪨', flavor: 'Crece sobre la piedra y guarda el calor de la cueva.', growSeconds: 4 * HOUR, effect: { kind: 'embers', value: 1500, seconds: 0 }, recipe: null, seed: 'golem' },
     { id: 'flor-de-oro', name: 'Flor de oro', emoji: '🏵️', flavor: 'La leyenda dice que el cerdito la sueña.', growSeconds: 12 * HOUR, effect: { kind: 'coins', value: 1, seconds: 30 * MIN }, recipe: ['flor-de-luna', 'orquidea'], chance: 0.03 },
   ],
 };

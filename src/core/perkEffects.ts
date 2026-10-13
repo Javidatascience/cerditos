@@ -4,10 +4,11 @@
 import type { CompanionAbility, Content, PerkEffect } from '../content/types.ts';
 import type { GameState } from './state.ts';
 
-/** Suma de `perLevel · nivel` de las ventajas de ese tipo. */
+/** Suma de `perLevel · nivel` de las ventajas de ese tipo (y de las reliquias conseguidas de ese tipo, nivel 1). */
 export function perkSumOf(state: GameState, content: Content, kind: PerkEffect['kind']): number {
   let total = 0;
   for (const perk of content.perks) if (perk.effect.kind === kind) total += perk.effect.perLevel * (state.perks[perk.id] ?? 0);
+  for (const relic of content.relics) if (relic.effect.kind === kind && state.achievements[relic.achievement]) total += relic.effect.perLevel;
   return total;
 }
 

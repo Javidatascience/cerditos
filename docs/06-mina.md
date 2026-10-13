@@ -122,6 +122,16 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 - **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
 - **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).
 
+### Cueva con almas, furia, cofres y semillas; huevo de dragón (guardado v21)
+
+- La carrera va de izquierda a derecha en un lienzo más grande (240×180, 4:3). Los monstruos **caen al chocar** y dan brasas y **almas**; el murciélago y la araña **vuelan** (a dos alturas) y hay que saltar para alcanzarlos. El jefe sigue teniendo vida (la espada sube el daño). Sin *Ojo de lagarto*.
+- **Furia**: cada monstruo llena la barra (25); al activarla, 12 s de ×3 brasas y almas y más velocidad.
+- **Cofres** cada ~350 m: brasas, almas o una semilla.
+- **Semillas**: cada monstruo suelta a veces (3 %) la semilla de su flor (lirio de lava, flor murciélago, seta de la cueva, flor araña, musgo de gólem). Se plantan en el jardín y dan **brasas** al recogerlas.
+- **Almas**: se gastan en mejoras permanentes (brasas, almas, furia, cofres, brasas al renacer, tiempo del jefe) y en **evolucionar** cada monstruo (×3 brasas, ×2 almas; brillan). El bono a la mina y a las brasas va por las almas conseguidas en total (gastarlas no lo quita). Renacer da almas según las brasas de la carrera.
+- **Huevo de dragón**: al vencer al dragón adulto en la cueva, el nido ofrece un huevo de dragón gratis (3 h; 40 y 100 bellotas). De adulto da ×1,25 a la producción; reliquia *Escama de dragón* (+50 % brasas).
+- Cada criatura dice en su ficha lo que da de adulta en su nido.
+
 ### Cueva corredor, cesta offline, criaturas residentes y economía (guardado v20)
 
 - **Cueva = corredor a lo Idle Slayer** (`content/cave.ts`, `core/cave.ts`, `ui/views/caveRunner.ts`): el cerdito corre solo (6 m/s) en un lienzo pixel art; tocar = saltar (peleando, un golpe más). Brasas en el suelo (crecen ×1,12 cada 100 m), 5 monstruos (babosa, murciélago, seta, araña, gólem; vida ×1,15 cada 100 m) con los que se para a pelear (4 golpes/s; si en 15 s no caen, se apartan). Cada 500 m, el dragón como **jefe** (30 s; vida 150 ×4 por jefe): vencerlo da brasas y, la primera vez, hace crecer al dragón (bonos a la mina como antes). Cada 900 m un **portal** a 15 s de bonus (solo brasas).

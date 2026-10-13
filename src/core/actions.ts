@@ -29,7 +29,7 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
-import { armoryCost, armoryLevel, bossStats, coinEmbers, monsterStats, soulsPending } from './cave.ts';
+import { armoryCost, armoryLevel, bossStats, coinEmbers, monstersAt, monsterStats, soulLevel, soulsMult, soulsPending, soulUpgradeCost, startEmbers } from './cave.ts';
 import { settleGarden, cellMature, cellMatureAt, cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, mutationChance, neighbors8, rand01 } from './garden.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
@@ -260,6 +260,7 @@ export function buyCompanion(state: GameState, content: Content, id: string): bo
 export function buyEgg(state: GameState, content: Content, creatureId: string, slot: number, now: number): boolean {
   const creature = creatureOf(content, creatureId);
   if (!creature || !nestUnlocked(state, content) || slot < 0 || slot >= nestSlotCount(state, content) || state.nest.slots[slot] || state.acorns < creature.eggCost) return false;
+  if (creature.requiresDragonStage !== undefined && state.cave.dragonStage < creature.requiresDragonStage) return false;
   state.acorns -= creature.eggCost;
   state.nest.slots[slot] = { creature: creatureId, stage: 0, since: now };
   return true;
@@ -444,39 +445,80 @@ function addEmbers(state: GameState, amount: Decimal): void {
   state.cave.runEmbers = state.cave.runEmbers.add(amount);
 }
 
+function addSouls(state: GameState, souls: number): void {
+  state.cave.souls += souls;
+  state.cave.soulsTotal += souls;
+}
+
+/** Da la semilla de la flor de un monstruo (si aún no se tenía). Devuelve el id de la flor o null. */
+function giveSeed(state: GameState, content: Content, monsterId: string): string | null {
+  const flower = content.garden.flowers.find((f) => f.seed === monsterId);
+  if (!flower || state.garden.seeds[flower.id] || state.garden.found[flower.id]) return null;
+  state.garden.seeds[flower.id] = true;
+  addEntry(state, `Un monstruo de la cueva ha soltado una semilla: ya puedes plantar ${flower.name.toLowerCase()} en el jardín.`, gameClockMs(state));
+  return flower.id;
+}
+
 /**
  * La carrera avanza `meters` metros y el cerdito ha recogido `coins` brasas del suelo (lo manda la UI cada
- * poco). Devuelve las brasas ganadas.
+ * poco; `rage` = con la furia activa). Devuelve las brasas ganadas.
  */
-export function caveRun(state: GameState, content: Content, meters: number, coins: number): Decimal {
+export function caveRun(state: GameState, content: Content, meters: number, coins: number, rage = false): Decimal {
   if (!caveOpen(state, content) || !(meters >= 0) || !(coins >= 0)) return D(0);
-  const gained = coinEmbers(state, content, state.cave.meters).mul(Math.floor(coins));
+  const gained = coinEmbers(state, content, state.cave.meters, rage).mul(Math.floor(coins));
   addEmbers(state, gained);
   state.cave.meters += meters;
   state.cave.bestMeters = Math.max(state.cave.bestMeters, state.cave.meters);
   return gained;
 }
 
-/** El cerdito ha derrotado a un monstruo a los metros actuales. Devuelve las brasas que da. */
-export function caveDefeat(state: GameState, content: Content, monsterId: string): Decimal {
+/**
+ * El cerdito ha chocado con un monstruo (cae al momento): brasas, almas y, a veces (`roll` < probabilidad),
+ * la semilla de su flor. `roll` es un número al azar en [0,1) que pone la UI.
+ */
+export function caveDefeat(state: GameState, content: Content, monsterId: string, roll: number, rage = false): { embers: Decimal; souls: number; seed: string | null } {
   const monster = content.cave.monsters.find((m) => m.id === monsterId);
-  if (!monster || !caveOpen(state, content)) return D(0);
-  const { embers } = monsterStats(state, content, monster, state.cave.meters);
+  if (!monster || !caveOpen(state, content)) return { embers: D(0), souls: 0, seed: null };
+  const { embers, souls } = monsterStats(state, content, monster, state.cave.meters, rage);
   addEmbers(state, embers);
+  addSouls(state, souls);
   state.cave.monsters += 1;
-  return embers;
+  const seed = roll < content.cave.seedChance ? giveSeed(state, content, monster.id) : null;
+  return { embers, souls, seed };
 }
 
-/** Jefe derrotado: brasas, el dragón crece (si es la primera vez que se llega a esa etapa) y el siguiente sale más adelante. */
+/** Un cofre del camino: brasas (mucho), almas o la semilla de una flor de la cueva. `roll` en [0,1) lo pone la UI. */
+export function caveChest(state: GameState, content: Content, roll: number): { kind: 'embers' | 'souls' | 'seed'; embers: Decimal; souls: number; seed: string | null } {
+  const none = { kind: 'embers' as const, embers: D(0), souls: 0, seed: null };
+  if (!caveOpen(state, content)) return none;
+  if (roll < 0.15) {
+    const options = monstersAt(content, state.cave.bestMeters).map((m) => m.id).filter((id) => content.garden.flowers.some((f) => f.seed === id && !state.garden.seeds[f.id] && !state.garden.found[f.id]));
+    const pick = options[Math.floor((roll / 0.15) * options.length)];
+    const seed = pick ? giveSeed(state, content, pick) : null;
+    if (seed) return { kind: 'seed', embers: D(0), souls: 0, seed };
+  }
+  if (roll < 0.4) {
+    const souls = Math.max(3, Math.round(5 * (1 + state.cave.bosses) * soulsMult(state, content)));
+    addSouls(state, souls);
+    return { kind: 'souls', embers: D(0), souls, seed: null };
+  }
+  const embers = coinEmbers(state, content, state.cave.meters).mul(40);
+  addEmbers(state, embers);
+  return { kind: 'embers', embers, souls: 0, seed: null };
+}
+
+/** Jefe derrotado: brasas y almas, el dragón crece (si es la primera vez que se llega a esa etapa) y el siguiente sale más adelante. */
 export function caveBossWin(state: GameState, content: Content): Decimal {
   if (!caveOpen(state, content)) return D(0);
   const boss = bossStats(state, content);
   addEmbers(state, boss.embers);
+  addSouls(state, boss.souls);
   state.cave.bosses += 1;
   state.cave.nextBossAt = Math.max(state.cave.meters, state.cave.nextBossAt) + content.cave.bossEvery;
   if (boss.stage > state.cave.dragonStage) {
     state.cave.dragonStage = boss.stage;
-    addEntry(state, `Has vencido al dragón en la cueva: ahora es ${content.cave.dragon[boss.stage]!.name.toLowerCase()} y te acompaña.`, gameClockMs(state));
+    const egg = content.nest.creatures.find((c) => c.requiresDragonStage !== undefined && c.requiresDragonStage === boss.stage);
+    addEntry(state, `Has vencido al dragón en la cueva: ahora es ${content.cave.dragon[boss.stage]!.name.toLowerCase()} y te acompaña.${egg ? ` Te ha dejado un ${egg.stages[0]!.name.toLowerCase()} para el nido.` : ''}`, gameClockMs(state));
   }
   return boss.embers;
 }
@@ -498,17 +540,30 @@ export function buyArmory(state: GameState, content: Content, id: string): boole
   return true;
 }
 
+/** Compra un nivel de una mejora de almas (permanente). */
+export function buySoulUpgrade(state: GameState, content: Content, id: string): boolean {
+  const up = content.cave.soulUpgrades.find((x) => x.id === id);
+  if (!up || !caveOpen(state, content)) return false;
+  if (up.maxLevel !== null && soulLevel(state, id) >= up.maxLevel) return false;
+  const cost = soulUpgradeCost(state, up);
+  if (state.cave.souls < cost) return false;
+  state.cave.souls -= cost;
+  state.cave.soulUpgrades[id] = soulLevel(state, id) + 1;
+  return true;
+}
+
 /** Renacer: la carrera vuelve a empezar (brasas, armería, metros y jefes) a cambio de almas. Devuelve las almas ganadas. */
 export function caveRebirth(state: GameState, content: Content): number {
   const souls = soulsPending(state, content);
   if (souls <= 0) return 0;
-  state.cave.souls += souls;
+  addSouls(state, souls);
   state.cave.embers = D(0);
   state.cave.runEmbers = D(0);
   state.cave.armory = {};
   state.cave.meters = 0;
   state.cave.bosses = 0;
   state.cave.nextBossAt = content.cave.bossEvery;
+  state.cave.embers = startEmbers(state, content);
   addEntry(state, `El cerdito renace en la cueva con ${souls} alma${souls === 1 ? '' : 's'} de dragón más.`, gameClockMs(state));
   return souls;
 }
@@ -538,6 +593,7 @@ export function harvestFlower(state: GameState, content: Content, cell: number, 
   const seconds = flower.effect.seconds * (shiny ? 2 : 1) * durationFactor(state, content); // la brillante dura (o da) el doble
   if (flower.effect.kind === 'coins') gain(state, content, baseIncomePerSecond(state, content).mul(seconds));
   else if (flower.effect.kind === 'acorns') state.acorns += flower.effect.value * (shiny ? 2 : 1);
+  else if (flower.effect.kind === 'embers') addEmbers(state, coinEmbers(state, content, state.cave.bestMeters).mul(flower.effect.value * (shiny ? 2 : 1)));
   else state.garden.buffs[flower.id] = Math.max(state.garden.buffs[flower.id] ?? 0, state.time) + seconds; // si ya hay una igual activa, la nueva empieza cuando acabe la anterior
   if (before === undefined) addEntry(state, `Has descubierto la flor ${flower.name}.`, gameClockMs(state));
   else if (shiny && !before.shiny) addEntry(state, `¡Ha salido una ${flower.name} brillante!`, gameClockMs(state));

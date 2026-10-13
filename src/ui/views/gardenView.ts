@@ -109,7 +109,7 @@ export function mountGardenView(root: HTMLElement, ctx: UiContext): View {
       const activeNow = view.active.length > 0 ? ` Activo ahora: ${view.active.map((a) => `${a.name} ${formatDuration(a.secondsLeft)}`).join(' · ')}.` : '';
       setText(
         introText,
-        `Elige una semilla y toca las casillas vacías; toca una flor madura para recogerla. Plantar es gratis. Dos flores vecinas maduras pueden cruzarse en una casilla vacía y dar una flor nueva. Al recogerlas dan un bono temporal (si recoges varias iguales, sus efectos van uno detrás de otro); hay un ${view.shinyPercent} % de que salgan brillantes (se ven con una estrellita cuando están maduras; el bono dura el doble).${activeNow}`,
+        `Elige una semilla y toca una casilla vacía para plantarla (es gratis); toca una flor madura para recogerla y una que crece para ver cuánto le queda. Cruces: cuando una flor madura con la otra flor de su receta madura al lado (también en diagonal), puede brotar la flor nueva en una casilla vacía de alrededor; deja huecos libres. A veces brota un hierbajo, que sirve para varias recetas. Las flores de la cueva salen de las semillas que sueltan los monstruos y dan brasas. Al recogerlas dan un bono temporal, monedas, bellotas o brasas (si recoges varias iguales, sus bonos van uno detrás de otro); hay un ${view.shinyPercent} % de que salgan brillantes (se ven con una estrellita al madurar y dan el doble).${activeNow}`,
       );
     }
 

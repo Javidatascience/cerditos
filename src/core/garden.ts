@@ -33,7 +33,9 @@ export function gardenUnlocked(state: GameState, content: Content): boolean {
 /** Una flor se puede plantar si es de las de base o ya se recogió alguna vez (las de cruce y las silvestres hay que encontrarlas). */
 export function flowerAvailable(state: GameState, content: Content, index: number): boolean {
   const flower = content.garden.flowers[index];
-  return flower !== undefined && ((flower.recipe === null && flower.wild !== true) || state.garden.found[flower.id] !== undefined);
+  if (!flower) return false;
+  if (flower.seed) return state.garden.seeds[flower.id] === true || state.garden.found[flower.id] !== undefined; // semilla de la cueva
+  return (flower.recipe === null && flower.wild !== true) || state.garden.found[flower.id] !== undefined;
 }
 
 /** Tiempo de crecimiento de una flor en ms, con las ventajas del árbol (Tierra buena). */

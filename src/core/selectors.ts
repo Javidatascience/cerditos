@@ -1,14 +1,14 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
 // llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import type { AchievementReq, ArmoryItemDef, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
+import type { AchievementReq, ArmoryItemDef, CompanionAbility, CreatureDef, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
 import { basketValue } from './basket.ts';
 import { cellGrownMs, cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, growRate, mutationChance, shinyChance } from './garden.ts';
 import { gameClockMs } from './journal.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
-import { armoryCost, armoryLevel, bossStats, caveAbilities, caveDamage, caveProdMult, caveSpeed, coinEmbers, dragonBonus, embersMult, monstersAt, monsterStats, soulsPending } from './cave.ts';
+import { armoryCost, armoryLevel, bossStats, caveAbilities, caveDamage, caveProdMult, caveSpeed, coinEmbers, dragonBonus, embersMult, monstersAt, monsterStats, soulLevel, soulsPending, soulUpgradeCost } from './cave.ts';
 import {
   accessoryOwned,
   ascendUnlocked,
@@ -391,6 +391,8 @@ export interface NestSlotView {
   feedCost: number | null;
   canFeed: boolean;
   canRemove: boolean;
+  /** Lo que da de adulta en su nido (vacío si aún no lo es). */
+  residentText: string;
   /** Ofrenda a la adulta: bellotas, texto del bono, segundos que le quedan activo y si se puede dar. */
   boost: { cost: number; text: string; secondsLeft: number; canGive: boolean } | null;
 }
@@ -400,11 +402,24 @@ export interface NestView {
   unlockPlumas: number;
   plumas: Decimal;
   slots: NestSlotView[];
-  /** Huevos que se pueden comprar y si hay sitio y bellotas. */
-  eggs: { id: string; name: string; stageName: string; cost: number; canBuy: boolean }[];
+  /** Huevos que se pueden comprar (el de dragón, solo con el dragón adulto en la cueva) y si hay sitio y bellotas. */
+  eggs: { id: string; name: string; stageName: string; cost: number; canBuy: boolean; residentText: string }[];
   /** Criaturas que ya han llegado a adultas alguna vez. */
   adults: string[];
   freeSlot: number | null;
+}
+
+/** Lo que da una criatura de adulta mientras está en su nido. */
+export function residentText(c: CreatureDef): string {
+  const r = c.resident;
+  switch (r.kind) {
+    case 'embers':
+      return `En su nido da brasas a la cueva (${r.perSecond.toLocaleString('es-ES')} brasas del suelo por segundo)`;
+    case 'prodMult':
+      return `En su nido da ×${r.value.toLocaleString('es-ES')} a la producción de la mina`;
+    case 'acorns':
+      return `En su nido trae 1 bellota cada ${r.everyHours} h`;
+  }
 }
 
 function nestBoostText(b: { kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'; value: number; seconds: number }): string {
@@ -417,7 +432,7 @@ export function nestView(state: GameState, content: Content, now: number): NestV
   const slots: NestSlotView[] = state.nest.slots.map((s, index) => {
     const creature = s ? creatureOf(content, s.creature) : undefined;
     const base = { index, usable: index < count };
-    if (!s || !creature) return { ...base, creatureId: null, name: '', stage: 0, stageName: '', flavor: '', spriteId: null, hatchLeftSeconds: 0, canHatch: false, feedCost: null, canFeed: false, canRemove: false, boost: null };
+    if (!s || !creature) return { ...base, creatureId: null, name: '', stage: 0, stageName: '', flavor: '', spriteId: null, hatchLeftSeconds: 0, canHatch: false, feedCost: null, canFeed: false, canRemove: false, residentText: '', boost: null };
     const left = hatchLeftMs(content, s, now);
     const feedCost = s.stage >= 1 && s.stage <= 2 ? creature.feedCosts[s.stage - 1]! : null;
     return {
@@ -433,6 +448,7 @@ export function nestView(state: GameState, content: Content, now: number): NestV
       feedCost,
       canFeed: feedCost !== null && state.acorns >= feedCost,
       canRemove: s.stage === 3,
+      residentText: s.stage === 3 ? residentText(creature) : '',
       boost: s.stage === 3 ? { cost: creature.boost.cost, text: nestBoostText(creature.boost), secondsLeft: Math.max(0, (state.nest.boosts[creature.id] ?? 0) - state.time), canGive: state.acorns >= creature.boost.cost } : null,
     };
   });
@@ -442,7 +458,9 @@ export function nestView(state: GameState, content: Content, now: number): NestV
     unlockPlumas: content.nest.unlockPlumas,
     plumas: state.plumasTotal,
     slots,
-    eggs: content.nest.creatures.map((c) => ({ id: c.id, name: c.name, stageName: c.stages[0]!.name, cost: c.eggCost, canBuy: freeSlot >= 0 && state.acorns >= c.eggCost })),
+    eggs: content.nest.creatures
+      .filter((c) => c.requiresDragonStage === undefined || state.cave.dragonStage >= c.requiresDragonStage)
+      .map((c) => ({ id: c.id, name: c.name, stageName: c.stages[0]!.name, cost: c.eggCost, canBuy: freeSlot >= 0 && state.acorns >= c.eggCost, residentText: residentText(c) })),
     adults: Object.keys(state.nest.adults),
     freeSlot: freeSlot >= 0 ? freeSlot : null,
   };
@@ -757,6 +775,17 @@ export interface ArmoryView {
   maxed: boolean;
 }
 
+export interface SoulUpgradeView {
+  id: string;
+  name: string;
+  flavor: string;
+  level: number;
+  maxLevel: number | null;
+  cost: number;
+  canBuy: boolean;
+  maxed: boolean;
+}
+
 export interface CaveView {
   unlocked: boolean;
   unlockPlumas: number;
@@ -764,20 +793,23 @@ export interface CaveView {
   embers: Decimal;
   meters: number;
   bestMeters: number;
+  /** Almas para gastar, conseguidas en total y las que darías al renacer. */
   souls: number;
+  soulsTotal: number;
   soulsPending: number;
   /** Lo que la cueva multiplica la producción de la mina (dragón y almas). */
   prodBonus: number;
   embersMult: number;
-  /** Lo que necesita la carrera: daño, golpes por segundo, velocidad (m/s), saltos extra, imán y salto automático. */
-  runner: { damage: number; hitsPerSecond: number; speed: number; extraJumps: number; magnet: number; auto: boolean; bonusEvery: number; bonusSeconds: number };
+  /** Lo que necesita la carrera. */
+  runner: { damage: number; hitsPerSecond: number; speed: number; extraJumps: number; magnet: number; bonusEvery: number; bonusSeconds: number; chestEvery: number; rageKills: number; rageSeconds: number; rageMult: number };
   /** Brasas de cada brasa del suelo ahora. */
   coinEmbers: Decimal;
-  /** Monstruos que pueden salir ahora, con su vida y sus brasas a estos metros. */
-  monsters: { id: string; name: string; hp: number; embers: Decimal }[];
-  boss: { atMeters: number; hp: number; embers: Decimal; stage: number; name: string; seconds: number };
+  /** Monstruos que pueden salir ahora, con sus brasas y almas a estos metros. */
+  monsters: { id: string; name: string; flies: boolean; evolved: boolean; embers: Decimal; souls: number }[];
+  boss: { atMeters: number; hp: number; embers: Decimal; souls: number; stage: number; name: string; seconds: number };
   dragon: { stage: number; name: string; flavor: string; bonusText: string };
   armory: ArmoryView[];
+  soulUpgrades: SoulUpgradeView[];
 }
 
 function armoryEffectText(effect: ArmoryItemDef['effect'], level: number): string {
@@ -793,8 +825,6 @@ function armoryEffectText(effect: ArmoryItemDef['effect'], level: number): strin
       return 'Atrae las brasas cercanas (más alcance por nivel)';
     case 'jumps':
       return 'Un salto más en el aire por nivel';
-    case 'auto':
-      return 'Salta solo: la cueva avanza sin tocar nada';
   }
 }
 
@@ -813,13 +843,14 @@ export function caveView(state: GameState, content: Content): CaveView {
     meters,
     bestMeters: state.cave.bestMeters,
     souls: state.cave.souls,
+    soulsTotal: state.cave.soulsTotal,
     soulsPending: soulsPending(state, content),
     prodBonus: caveProdMult(state, content),
     embersMult: embersMult(state, content),
-    runner: { damage: caveDamage(state, content), hitsPerSecond: c.hitsPerSecond, speed: caveSpeed(state, content), extraJumps: abilities.extraJumps, magnet: abilities.magnet, auto: abilities.auto, bonusEvery: c.bonusEvery, bonusSeconds: c.bonusSeconds },
+    runner: { damage: caveDamage(state, content), hitsPerSecond: c.hitsPerSecond, speed: caveSpeed(state, content), extraJumps: abilities.extraJumps, magnet: abilities.magnet, bonusEvery: c.bonusEvery, bonusSeconds: c.bonusSeconds, chestEvery: abilities.chestEvery, rageKills: c.rageKills, rageSeconds: abilities.rageSeconds, rageMult: c.rageMult },
     coinEmbers: coinEmbers(state, content, meters),
-    monsters: monstersAt(content, meters).map((m) => ({ id: m.id, name: m.name, ...monsterStats(state, content, m, meters) })),
-    boss: { atMeters: state.cave.nextBossAt, hp: boss.hp, embers: boss.embers, stage: boss.stage, name: c.dragon[boss.stage]!.name, seconds: c.bossSeconds },
+    monsters: monstersAt(content, meters).map((m) => ({ id: m.id, name: m.name, flies: m.flies === true, ...monsterStats(state, content, m, meters) })),
+    boss: { atMeters: state.cave.nextBossAt, hp: boss.hp, embers: boss.embers, souls: boss.souls, stage: boss.stage, name: c.dragon[boss.stage]!.name, seconds: abilities.bossSeconds },
     dragon: {
       stage: state.cave.dragonStage,
       name: stage.name,
@@ -831,6 +862,12 @@ export function caveView(state: GameState, content: Content): CaveView {
       const cost = armoryCost(state, content, item);
       const maxed = item.maxLevel !== null && level >= item.maxLevel;
       return { id: item.id, name: item.name, flavor: item.flavor, level, maxLevel: item.maxLevel, effectText: armoryEffectText(item.effect, level), cost, canBuy: !maxed && state.cave.embers.gte(cost), maxed };
+    }),
+    soulUpgrades: c.soulUpgrades.map((u) => {
+      const level = soulLevel(state, u.id);
+      const cost = soulUpgradeCost(state, u);
+      const maxed = u.maxLevel !== null && level >= u.maxLevel;
+      return { id: u.id, name: u.name, flavor: u.flavor, level, maxLevel: u.maxLevel, cost, canBuy: !maxed && state.cave.souls >= cost, maxed };
     }),
   };
 }
@@ -872,6 +909,8 @@ function gardenEffectText(effect: GardenEffect, shiny: boolean, factor = 1): str
       const n = effect.value * (shiny ? 2 : 1);
       return `${n} bellota${n === 1 ? '' : 's'}`;
     }
+    case 'embers':
+      return `${effect.value * (shiny ? 2 : 1)} brasas del suelo de la cueva (al récord de metros)`;
   }
 }
 
@@ -914,7 +953,9 @@ export function gardenView(state: GameState, content: Content, now: number): Gar
         count: got?.count ?? 0,
         shinyCount: got?.shinyCount ?? 0,
         effectText: `${gardenEffectText(f.effect, false, durationFactor(state, content))} (brillante: ${gardenEffectText(f.effect, true, durationFactor(state, content))})`,
-        recipeText: f.wild
+        recipeText: f.seed
+          ? `Semilla que suelta a veces ${content.cave.monsters.find((m) => m.id === f.seed)?.name.toLowerCase() ?? f.seed} en la cueva (o un cofre)${got || state.garden.seeds[f.id] ? '' : ': aún no la tienes'}`
+          : f.wild
           ? `Brota sola, a veces (${Math.round(content.garden.wildChance * 100)} %), junto a una flor que madura si no ha habido cruce`
           : f.recipe
             ? `${p === q ? `Dos ${name(p)?.name.toLowerCase()}s` : `${name(p)?.name} y ${name(q)?.name.toLowerCase()}`} juntas: cuando madura una con la otra madura al lado, ${Math.round(((f.chance ?? 0) + mutationChance(state, content)) * 100)} % de que brote al lado`
