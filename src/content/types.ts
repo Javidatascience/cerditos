@@ -67,11 +67,11 @@ export type PerkEffect =
   | { kind: 'gardenDuration'; perLevel: number }
   /** Jardín: +perLevel a la probabilidad de flor brillante por nivel. */
   | { kind: 'gardenShiny'; perLevel: number }
-  /** Cueva: +perLevel (fracción) a las brasas por segundo por nivel. */
+  /** Cueva: +perLevel (fracción) a las brasas por nivel. */
   | { kind: 'caveEmbers'; perLevel: number }
-  /** Cueva: +perLevel (fracción) a lo que da cada soplido por nivel. */
+  /** Cueva: +perLevel (fracción) al daño del cerdito por nivel. */
   | { kind: 'caveBlow'; perLevel: number }
-  /** Cueva: coste de los hornos ×perLevel^nivel. */
+  /** Cueva: coste de la armería ×perLevel^nivel. */
   | { kind: 'caveCost'; perLevel: number }
   /** Nido: nidos extra (+perLevel por nivel). */
   | { kind: 'nestSlots'; perLevel: number };
@@ -206,8 +206,8 @@ export type AchievementReq =
   | { kind: 'dragonStage'; count: number }
   | { kind: 'creatureAdult'; creature: string }
   | { kind: 'adultCount'; count: number }
-  | { kind: 'furnaces'; count: number }
-  | { kind: 'caveNodes'; count: number };
+  | { kind: 'caveMeters'; count: number }
+  | { kind: 'caveMonsters'; count: number };
 
 export interface AchievementDef {
   id: string;
@@ -216,56 +216,81 @@ export interface AchievementDef {
   requires: AchievementReq;
 }
 
-/** Efecto de una ventaja de la cueva sobre el juego. */
-export interface CaveEffect {
-  kind: 'embers' | 'momentumMax' | 'prodMult' | 'basketSeconds' | 'visitorStay' | 'offlineHours' | 'blow' | 'furnaceCost';
-  value: number;
-}
-
-export interface CaveFurnaceDef {
+/** Monstruo de la cueva: vida y brasas de base; ambas crecen con los metros recorridos. */
+export interface CaveMonsterDef {
   id: string;
   name: string;
-  emoji: string;
+  hp: number;
+  embers: number;
+  /** Metros a partir de los que puede aparecer. */
+  fromMeters: number;
+}
+
+/** Objeto de la armería (se compra con brasas, por niveles; se pierde al renacer). */
+export interface ArmoryItemDef {
+  id: string;
+  name: string;
   flavor: string;
   baseCost: number;
-  baseProd: number;
+  costGrowth: number;
+  /** null = sin tope. */
+  maxLevel: number | null;
+  effect:
+    /** Daño de cada golpe ×perLevel por nivel. */
+    | { kind: 'damage'; perLevel: number }
+    /** Velocidad +perLevel (fracción) por nivel. */
+    | { kind: 'speed'; perLevel: number }
+    /** Radio del imán de brasas +perLevel píxeles por nivel. */
+    | { kind: 'magnet'; perLevel: number }
+    /** Saltos extra en el aire (+perLevel por nivel). */
+    | { kind: 'jumps'; perLevel: number }
+    /** Brasas +perLevel (fracción) por nivel. */
+    | { kind: 'embers'; perLevel: number }
+    /** Salta solo por encima de lo que no puede derrotar rápido y para coger brasas. */
+    | { kind: 'auto'; perLevel: number };
 }
 
-export interface CaveNodeDef {
-  id: string;
-  branch: string;
-  name: string;
-  flavor: string;
-  cost: number;
-  requires: string | null;
-  effect: CaveEffect;
-}
-
-/** Etapa del dragón: se alcanza alimentándolo con brasas (`cost`) y da bonos acumulados a la producción y a las brasas. */
+/** Etapa del dragón: se alcanza derrotándolo como jefe en la carrera y da bonos acumulados a la producción y a las brasas. */
 export interface DragonStageDef {
   id: string;
   name: string;
   flavor: string;
-  cost: number;
   prodMult: number;
   embersMult: number;
 }
 
+/** La Cueva del Dragón: un corredor sin fin (a lo Idle Slayer). */
 export interface CaveDef {
-  /** Plumas en total necesarias para abrir la cueva. */
+  /** Esmeraldas en total necesarias para abrir la cueva. */
   unlockPlumas: number;
-  /** La primera etapa (huevo) es el punto de partida y no cuesta nada; el resto se compran en orden. */
+  /** Etapas del dragón: la 0 es el huevo; cada jefe derrotado (la primera vez) lo hace crecer. */
   dragon: DragonStageDef[];
-  furnaceGrowth: number;
-  /** Al tener tantos hornos de un tipo, ese horno produce el doble (automático, una vez por cifra). */
-  furnaceMilestones: number[];
-  /** Segundos de ausencia que cuentan para las brasas (las monedas usan el tope normal). */
-  offlineEmbersSeconds: number;
-  blowCooldown: number;
-  blowSeconds: number;
-  furnaces: CaveFurnaceDef[];
-  branches: { id: string; name: string; emoji: string }[];
-  nodes: CaveNodeDef[];
+  /** Velocidad de base en metros por segundo. */
+  speed: number;
+  /** Brasas de base de cada brasa recogida del suelo. */
+  coinEmbers: number;
+  /** Cada 100 m, la vida de los monstruos ×hpGrowth y sus brasas (y las del suelo) ×rewardGrowth. */
+  hpGrowth: number;
+  rewardGrowth: number;
+  /** Golpes por segundo del cerdito al pelear. */
+  hitsPerSecond: number;
+  monsters: CaveMonsterDef[];
+  /** Un jefe cada tantos metros: vida = bossHp × bossHpGrowth^jefes derrotados en esta vida; brasas = vida × bossReward. */
+  bossEvery: number;
+  bossHp: number;
+  bossHpGrowth: number;
+  bossReward: number;
+  /** Segundos para derrotar al jefe; si no, se va y vuelve un poco más adelante. */
+  bossSeconds: number;
+  /** Cada cuántos metros sale un portal a la fase de bonus, y cuánto dura. */
+  bonusEvery: number;
+  bonusSeconds: number;
+  armory: ArmoryItemDef[];
+  /** Renacer: almas = floor(sqrt(brasas ganadas en esta vida / soulsDivisor)). */
+  soulsDivisor: number;
+  /** Cada alma: +soulEmbers a las brasas y +soulProd a la producción de la mina. */
+  soulEmbers: number;
+  soulProd: number;
 }
 
 /** Efecto pasivo de una flor del jardín. */
@@ -317,6 +342,14 @@ export interface CreatureDef {
   stages: { name: string; flavor: string }[];
   /** Ofrenda: al ser adulta se le pueden dar bellotas y da este bono durante un rato (tiempo de juego). */
   boost: { kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'; value: number; seconds: number; cost: number };
+  /** Lo que da de adulta mientras está en su nido (también con el juego cerrado, hasta el tope offline). */
+  resident:
+    /** Brasas por segundo: `perSecond` brasas del suelo al récord de metros. */
+    | { kind: 'embers'; perSecond: number }
+    /** Producción de la mina ×value. */
+    | { kind: 'prodMult'; value: number }
+    /** 1 bellota cada `everyHours` horas de juego. */
+    | { kind: 'acorns'; everyHours: number };
 }
 
 export interface NestDef {

@@ -2,8 +2,8 @@
 // herramientas y ventajas: aquí no hay ningún nombre ni constante propia del juego.
 
 import type { AccessoryDef, CompanionAbility, CompanionDef, Content, GlobalUpgradeDef, PerkDef, PerkEffect, RelicDef, SkinDef, SynergyDef, ToolDef } from '../content/types.ts';
-import { caveProduct, caveSum, dragonBonus } from './cave.ts';
-import { nestBoost } from './nest.ts';
+import { caveProdMult } from './cave.ts';
+import { nestBoost, residentProdMult } from './nest.ts';
 import { gardenProduct, gardenSum } from './garden.ts';
 import { bulkCost as bulkCostOf, D, Decimal, maxAffordable as maxAffordableOf } from './num.ts';
 import type { GameState, PerkId, ToolId } from './state.ts';
@@ -137,13 +137,13 @@ export function globalMultiplier(state: GameState, content: Content): number {
 
 /** Multiplicador de la producción: ventajas (Abono y reliquias) × bono de plumas × mejoras globales. */
 export function prodMultiplier(state: GameState, content: Content): number {
-  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod * gardenProduct(state, content, 'prodMult') * nestBoost(state, content, 'prodMult');
+  return perkProduct(state, content, 'prodMult') * plumaBonus(state, content) * globalMultiplier(state, content) * caveProdMult(state, content) * residentProdMult(state, content) * gardenProduct(state, content, 'prodMult') * nestBoost(state, content, 'prodMult');
 }
 
 /** Multiplicador máximo de la inercia (×5 de base, más lo que den las reliquias). */
 export function momentumMaxMult(state: GameState, content: Content): number {
   const bought = content.globalUpgrades.reduce((sum, u) => sum + (state.globalUpgrades[u.id] ? (u.momentumAdd ?? 0) : 0), 0);
-  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax') + caveSum(state, content, 'momentumMax') + nestBoost(state, content, 'momentumMax');
+  return content.game.momentumMax + bought + perkSum(state, content, 'momentumMax') + gardenSum(state, content, 'momentumMax') + nestBoost(state, content, 'momentumMax');
 }
 
 /** Multiplicador de la inercia con la barra en `momentum` (0..1): 1 + (máx − 1) · barra. */
@@ -204,7 +204,7 @@ export function visitorModifiers(state: GameState, content: Content): { speed: n
     const ability = companionAbility(state, c);
     if (ability.kind === 'visitorSpeed' && state.activeCompanions.includes(c.id)) speed *= ability.speed;
   }
-  return { speed, stayBonus: caveSum(state, content, 'visitorStay') };
+  return { speed, stayBonus: 0 };
 }
 
 /** Nivel de mejora de un compañero (0 = sin mejorar). */
@@ -292,7 +292,7 @@ export function startCoins(state: GameState, content: Content): Decimal {
 
 /** Segundos máximos de producción mientras no estás (2 h + Siesta larga). */
 export function offlineCapSeconds(state: GameState, content: Content): number {
-  return (content.game.offlineHours + perkSum(state, content, 'offlineHours') + caveSum(state, content, 'offlineHours')) * 3600;
+  return (content.game.offlineHours + perkSum(state, content, 'offlineHours')) * 3600;
 }
 
 /** Coste de la siguiente mejora de la herramienta (5× el precio de la unidad que la desbloquea); null si no quedan. */

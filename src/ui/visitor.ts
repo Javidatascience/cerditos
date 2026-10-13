@@ -1,4 +1,4 @@
-// Cerdito viajero: cada 1-2 minutos (al azar), mientras el juego está abierto, aparece un visitante
+// Cerdito viajero: cada 2-4 minutos (al azar), mientras el juego está abierto, aparece un visitante
 // con una recompensa (una inyección de moneda o un impulso de producción). Se queda 20
 // segundos: si no lo aceptas, se va y llegará otro más adelante. El azar (cuándo llega y qué
 // trae) vive aquí, fuera de `core`, que solo aplica la recompensa (`actions.claimVisitor`).
@@ -7,8 +7,8 @@
 import type { VisitorKind } from '../core/actions.ts';
 
 /** Espera entre visitantes, en segundos de juego abierto. */
-export const VISITOR_MIN_DELAY = 60;
-export const VISITOR_MAX_DELAY = 120;
+export const VISITOR_MIN_DELAY = 120;
+export const VISITOR_MAX_DELAY = 240;
 /** Probabilidad de que el visitante sea el dorado (recompensa mayor). */
 export const VISITOR_GOLDEN_CHANCE = 0.1;
 /** Segundos que se queda el visitante esperando antes de irse. */

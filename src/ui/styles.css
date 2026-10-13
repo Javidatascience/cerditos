@@ -2575,3 +2575,19 @@ button {
   gap: 4px;
   margin-top: 4px;
 }
+
+/* Carrera de la cueva: lienzo pequeño escalado en pixel art */
+.cave-runner {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  image-rendering: pixelated;
+  border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
+  margin: 4px 0 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}

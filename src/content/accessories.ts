@@ -7,7 +7,7 @@ import type { AccessoryDef } from './types.ts';
 export const ACCESSORIES: AccessoryDef[] = [
   // Gorros
   { id: 'hechicero', slot: 'head', name: 'Gorro de hechicero', flavor: 'Con estrellitas y todo: algo de magia siempre queda.', cost: 6, achievement: null },
-  { id: 'casco', slot: 'head', name: 'Casco de minero', flavor: 'Con su linterna, para ir a lo hondo.', cost: null, achievement: 'hornos-10' },
+  { id: 'casco', slot: 'head', name: 'Casco de minero', flavor: 'Con su linterna, para ir a lo hondo.', cost: null, achievement: 'metros-1000' },
   { id: 'cuerno', slot: 'head', name: 'Cuerno de unicornio', flavor: 'Nadie sabe de dónde ha salido.', cost: null, achievement: 'criaturas-adultas-1' },
   { id: 'corona', slot: 'head', name: 'Corona', flavor: 'Para quien ha subido cinco veces a la superficie.', cost: null, achievement: 'ascender-5' },
   // Ropa

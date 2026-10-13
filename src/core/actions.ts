@@ -29,7 +29,7 @@ import {
   toolMaxAffordable,
   toolOwned,
 } from './formulas.ts';
-import { blowGain, blowReady, caveCostFactor, furnaceCost } from './cave.ts';
+import { armoryCost, armoryLevel, bossStats, coinEmbers, monsterStats, soulsPending } from './cave.ts';
 import { settleGarden, cellMature, cellMatureAt, cellShiny, durationFactor, flowerAvailable, gardenRows, gardenUnlocked, mutationChance, neighbors8, rand01 } from './garden.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
 import { perkSumOf } from './perkEffects.ts';
@@ -163,7 +163,6 @@ export function ascend(state: GameState, content: Content, now: number): number 
   state.synergies = {};
   state.momentum = 0;
   state.coins = startCoins(state, content);
-  state.basketSince = state.time;
   updateReveals(state, content);
 
   addEntry(state, `Subes a la superficie con ${pending} esmeralda${pending === 1 ? '' : 's'}. El cerdito vuelve a empezar, con más ganas.`, now);
@@ -174,11 +173,11 @@ export function ascend(state: GameState, content: Content, now: number): number 
 // Cesta y visitante
 // ---------------------------------------------------------------------------
 
-/** Recoge la cesta: suma su valor a las monedas y la vacía. Devuelve lo recogido. */
+/** Recoge la cesta (lo ganado mientras no estabas): suma su valor a las monedas y la vacía. Devuelve lo recogido. */
 export function collectBasket(state: GameState, content: Content, now: number = gameClockMs(state)): Decimal {
-  const amount = basketValue(state, content);
+  const amount = basketValue(state);
   gain(state, content, amount);
-  state.basketSince = state.time;
+  state.basket = state.basket.sub(amount);
   // Bellotas que ha ido dejando el topo (Topo excavador): se cobran y se conserva lo que sobre de la última.
   const acorns = basketAcornsReady(state, content, now);
   const hours = basketAcornHours(state, content);
@@ -192,9 +191,9 @@ export function collectBasket(state: GameState, content: Content, now: number = 
 export type VisitorKind = 'injection' | 'boost' | 'golden';
 
 /** Segundos de ingresos que da la inyección de un visitante. */
-export const VISITOR_INJECTION_SECONDS = 45;
+export const VISITOR_INJECTION_SECONDS = 30;
 /** Multiplicador y duración del impulso de un visitante. */
-export const VISITOR_BOOST = { mult: 4, seconds: 20 };
+export const VISITOR_BOOST = { mult: 3, seconds: 20 };
 /** El cerdito viajero dorado (raro): ingresos de golpe, un impulso mayor y 6 bellotas. */
 export const VISITOR_GOLDEN = { injectionSeconds: 300, mult: 6, seconds: 30, acorns: 6 };
 /** Bellotas que da siempre el cerdito viajero normal. */
@@ -440,42 +439,78 @@ function caveOpen(state: GameState, content: Content): boolean {
   return state.plumasTotal.gte(content.cave.unlockPlumas);
 }
 
-/** Sopla sobre las brasas: da brasas con un breve enfriamiento. Devuelve lo ganado (0 si no se pudo). */
-export function caveBlow(state: GameState, content: Content): Decimal {
-  if (!caveOpen(state, content) || !blowReady(state, content)) return D(0);
-  const amount = blowGain(state, content);
+function addEmbers(state: GameState, amount: Decimal): void {
   state.cave.embers = state.cave.embers.add(amount);
-  state.cave.blowAt = state.time;
-  return amount;
+  state.cave.runEmbers = state.cave.runEmbers.add(amount);
 }
 
-/** Alimenta al dragón con brasas para que pase a la siguiente etapa (huevo → cría → joven → adulto → anciano). */
-export function feedDragon(state: GameState, content: Content): boolean {
-  const next = content.cave.dragon[state.cave.dragonStage + 1];
-  if (!next || !caveOpen(state, content) || state.cave.embers.lt(next.cost)) return false;
-  state.cave.embers = state.cave.embers.sub(next.cost);
-  state.cave.dragonStage += 1;
-  addEntry(state, `El dragón ha crecido: ahora es ${next.name.toLowerCase()}.`, gameClockMs(state));
-  return true;
+/**
+ * La carrera avanza `meters` metros y el cerdito ha recogido `coins` brasas del suelo (lo manda la UI cada
+ * poco). Devuelve las brasas ganadas.
+ */
+export function caveRun(state: GameState, content: Content, meters: number, coins: number): Decimal {
+  if (!caveOpen(state, content) || !(meters >= 0) || !(coins >= 0)) return D(0);
+  const gained = coinEmbers(state, content, state.cave.meters).mul(Math.floor(coins));
+  addEmbers(state, gained);
+  state.cave.meters += meters;
+  state.cave.bestMeters = Math.max(state.cave.bestMeters, state.cave.meters);
+  return gained;
 }
 
-export function buyFurnace(state: GameState, content: Content, id: string): boolean {
-  const furnace = content.cave.furnaces.find((f) => f.id === id);
-  if (!furnace || !caveOpen(state, content)) return false;
-  const cost = furnaceCost(content.cave, furnace, state.cave.furnaces[id] ?? 0, caveCostFactor(state, content));
+/** El cerdito ha derrotado a un monstruo a los metros actuales. Devuelve las brasas que da. */
+export function caveDefeat(state: GameState, content: Content, monsterId: string): Decimal {
+  const monster = content.cave.monsters.find((m) => m.id === monsterId);
+  if (!monster || !caveOpen(state, content)) return D(0);
+  const { embers } = monsterStats(state, content, monster, state.cave.meters);
+  addEmbers(state, embers);
+  state.cave.monsters += 1;
+  return embers;
+}
+
+/** Jefe derrotado: brasas, el dragón crece (si es la primera vez que se llega a esa etapa) y el siguiente sale más adelante. */
+export function caveBossWin(state: GameState, content: Content): Decimal {
+  if (!caveOpen(state, content)) return D(0);
+  const boss = bossStats(state, content);
+  addEmbers(state, boss.embers);
+  state.cave.bosses += 1;
+  state.cave.nextBossAt = Math.max(state.cave.meters, state.cave.nextBossAt) + content.cave.bossEvery;
+  if (boss.stage > state.cave.dragonStage) {
+    state.cave.dragonStage = boss.stage;
+    addEntry(state, `Has vencido al dragón en la cueva: ahora es ${content.cave.dragon[boss.stage]!.name.toLowerCase()} y te acompaña.`, gameClockMs(state));
+  }
+  return boss.embers;
+}
+
+/** Se acabó el tiempo contra el jefe: se va y vuelve un poco más adelante. */
+export function caveBossLeave(state: GameState, content: Content): void {
+  state.cave.nextBossAt = state.cave.meters + content.cave.bossEvery / 2;
+}
+
+/** Compra un nivel de un objeto de la armería. */
+export function buyArmory(state: GameState, content: Content, id: string): boolean {
+  const item = content.cave.armory.find((x) => x.id === id);
+  if (!item || !caveOpen(state, content)) return false;
+  if (item.maxLevel !== null && armoryLevel(state, id) >= item.maxLevel) return false;
+  const cost = armoryCost(state, content, item);
   if (state.cave.embers.lt(cost)) return false;
   state.cave.embers = state.cave.embers.sub(cost);
-  state.cave.furnaces[id] = (state.cave.furnaces[id] ?? 0) + 1;
+  state.cave.armory[id] = armoryLevel(state, id) + 1;
   return true;
 }
 
-export function buyCaveNode(state: GameState, content: Content, id: string): boolean {
-  const node = content.cave.nodes.find((x) => x.id === id);
-  if (!node || !caveOpen(state, content) || state.cave.nodes[id] || state.cave.embers.lt(node.cost)) return false;
-  if (node.requires !== null && !state.cave.nodes[node.requires]) return false;
-  state.cave.embers = state.cave.embers.sub(node.cost);
-  state.cave.nodes[id] = true;
-  return true;
+/** Renacer: la carrera vuelve a empezar (brasas, armería, metros y jefes) a cambio de almas. Devuelve las almas ganadas. */
+export function caveRebirth(state: GameState, content: Content): number {
+  const souls = soulsPending(state, content);
+  if (souls <= 0) return 0;
+  state.cave.souls += souls;
+  state.cave.embers = D(0);
+  state.cave.runEmbers = D(0);
+  state.cave.armory = {};
+  state.cave.meters = 0;
+  state.cave.bosses = 0;
+  state.cave.nextBossAt = content.cave.bossEvery;
+  addEntry(state, `El cerdito renace en la cueva con ${souls} alma${souls === 1 ? '' : 's'} de dragón más.`, gameClockMs(state));
+  return souls;
 }
 
 // ---------------------------------------------------------------------------

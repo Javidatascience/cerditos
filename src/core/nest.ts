@@ -31,6 +31,24 @@ export function basketAcornHours(state: GameState, content: Content): number | n
   return (state.companionLevels['topo'] ?? 0) >= content.nest.topoLevel ? content.nest.topoHours : null;
 }
 
+/** Criaturas adultas que están ahora en un nido (las que dan su producción de residente). */
+export function residentCreatures(state: GameState, content: Content): CreatureDef[] {
+  const out: CreatureDef[] = [];
+  for (const s of state.nest.slots) {
+    if (!s || s.stage !== 3) continue;
+    const c = creatureOf(content, s.creature);
+    if (c && !out.includes(c)) out.push(c);
+  }
+  return out;
+}
+
+/** Producto de los `prodMult` de las adultas en su nido (el tiburón). */
+export function residentProdMult(state: GameState, content: Content): number {
+  let m = 1;
+  for (const c of residentCreatures(state, content)) if (c.resident.kind === 'prodMult') m *= c.resident.value;
+  return m;
+}
+
 /** Bono temporal de las ofrendas a criaturas adultas: producto (prodMult) o suma (tapMult, momentumMax) de las activas. */
 export function nestBoost(state: GameState, content: Content, kind: 'prodMult' | 'tapMult' | 'momentumMax' | 'embersMult'): number {
   let product = 1;

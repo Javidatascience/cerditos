@@ -4,7 +4,8 @@
 
 import type { Content } from '../content/types.ts';
 import { updateAchievements } from './achievements.ts';
-import { embersPerSecond } from './cave.ts';
+import { coinEmbers } from './cave.ts';
+import { residentCreatures } from './nest.ts';
 import { baseIncomePerSecond, momentumMult } from './formulas.ts';
 import { gameClockMs } from './journal.ts';
 import { updateReveals } from './reveal.ts';
@@ -42,7 +43,21 @@ export function advance(state: GameState, content: Content, dt: number): void {
   state.coins = state.coins.add(gained);
   state.lifetime = state.lifetime.add(gained);
   state.momentum = Math.max(0, m0 - decay * dt);
-  state.cave.embers = state.cave.embers.add(embersPerSecond(state, content).mul(dt));
+  // Criaturas adultas en su nido: el fénix da brasas y el ornitorrinco bellotas (también offline).
+  for (const c of residentCreatures(state, content)) {
+    if (c.resident.kind === 'embers') {
+      const embers = coinEmbers(state, content, state.cave.bestMeters).mul(c.resident.perSecond * dt);
+      state.cave.embers = state.cave.embers.add(embers);
+      state.cave.runEmbers = state.cave.runEmbers.add(embers);
+    } else if (c.resident.kind === 'acorns') {
+      state.nest.acornClock += dt / (c.resident.everyHours * 3600);
+      const whole = Math.floor(state.nest.acornClock);
+      if (whole > 0) {
+        state.acorns += whole;
+        state.nest.acornClock -= whole;
+      }
+    }
+  }
 
   state.time += dt;
   if (buff && state.time >= buff.until) state.buff = null;

@@ -20,7 +20,7 @@ describe('serialize / deserialize', () => {
     state.plumasTotal = D(40);
     state.ascensions = 2;
     state.taps = 5;
-    state.basketSince = 11;
+    state.basket = D(11);
     state.buff = { mult: 5, until: 99 };
     state.achievements['picar-100'] = { at: 1 };
     state.globalUpgrades['comedero-grande'] = true;
@@ -47,7 +47,6 @@ describe('serialize / deserialize', () => {
       perks: { abono: 3 },
       ascensions: 2,
       taps: 5,
-      basketSince: 11,
       buff: { mult: 5, until: 99 },
       achievements: { 'picar-100': { at: 1 } },
       globalUpgrades: { 'comedero-grande': true },

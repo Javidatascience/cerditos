@@ -1,14 +1,14 @@
 // Datos derivados para la UI: toda la aritmética que la UI necesita sale de aquí, nunca de
 // llamar a formulas.ts directamente desde ui/. Ver docs/06-mina.md.
 
-import type { AchievementReq, CaveEffect, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
+import type { AchievementReq, ArmoryItemDef, CompanionAbility, Content, GardenEffect, PerkDef, PerkEffect } from '../content/types.ts';
 import { achievementProgress } from './achievements.ts';
 import { maxActiveCompanions, rabbitWaitSeconds, VISITOR_INJECTION_SECONDS, type BuyAmount } from './actions.ts';
-import { basketCap, basketSeconds, basketValue } from './basket.ts';
+import { basketValue } from './basket.ts';
 import { cellGrownMs, cellShiny, durationFactor, flowerActive, flowerAvailable, gardenMaxRows, gardenUnlocked, growMs, growRate, mutationChance, shinyChance } from './garden.ts';
 import { gameClockMs } from './journal.ts';
 import { basketAcornHours, basketAcornsReady, creatureOf, hatchLeftMs, nestSlotCount, nestUnlocked } from './nest.ts';
-import { blowGain, blowReady, caveCostFactor, caveProduct, dragonBonus, embersFactor, embersPerSecond, furnaceCost, furnaceMilestoneMult } from './cave.ts';
+import { armoryCost, armoryLevel, bossStats, caveAbilities, caveDamage, caveProdMult, caveSpeed, coinEmbers, dragonBonus, embersMult, monstersAt, monsterStats, soulsPending } from './cave.ts';
 import {
   accessoryOwned,
   ascendUnlocked,
@@ -239,11 +239,11 @@ function perkEffectValueText(effect: PerkEffect, level: number): string {
     case 'gardenShiny':
       return `+${Math.round(effect.perLevel * level * 100)} % de probabilidad de flor brillante`;
     case 'caveEmbers':
-      return `+${Math.round(effect.perLevel * level * 100)} % de brasas por segundo`;
+      return `+${Math.round(effect.perLevel * level * 100)} % de brasas en la cueva`;
     case 'caveBlow':
-      return `+${Math.round(effect.perLevel * level * 100)} % de brasas por soplido`;
+      return `+${Math.round(effect.perLevel * level * 100)} % de daño en la cueva`;
     case 'caveCost':
-      return `hornos ×${(effect.perLevel ** level).toFixed(2)} de coste`;
+      return `armería ×${(effect.perLevel ** level).toFixed(2)} de coste`;
     case 'nestSlots':
       return `+${effect.perLevel * level} nido${effect.perLevel * level === 1 ? '' : 's'}`;
   }
@@ -333,11 +333,11 @@ function describeRequirement(content: Content, req: AchievementReq): (format: (n
     case 'adultCount':
       return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'criatura adulta' : 'criaturas adultas'} (se anotan para siempre)`;
     case 'dragonStage':
-      return (f) => `Haz crecer al dragón hasta la etapa ${f(D(req.count))} (${content.cave.dragon[req.count]?.name ?? '?'})`;
-    case 'furnaces':
-      return (f) => `Ten ${f(D(req.count))} ${req.count === 1 ? 'horno' : 'hornos'} en la cueva`;
-    case 'caveNodes':
-      return (f) => `Compra ${f(D(req.count))} ${req.count === 1 ? 'ventaja' : 'ventajas'} del dragón`;
+      return (f) => `Vence al dragón en la cueva hasta la etapa ${f(D(req.count))} (${content.cave.dragon[req.count]?.name ?? '?'})`;
+    case 'caveMeters':
+      return (f) => `Llega a ${f(D(req.count))} metros en la carrera de la cueva`;
+    case 'caveMonsters':
+      return (f) => `Derrota a ${f(D(req.count))} monstruos en la cueva`;
   }
 }
 
@@ -358,11 +358,8 @@ export function achievementViews(state: GameState, content: Content): Achievemen
 }
 
 export interface BasketView {
+  /** Lo ganado mientras no estabas, esperando a que lo recojas. */
   value: Decimal;
-  seconds: number;
-  capSeconds: number;
-  /** 0..1 */
-  fill: number;
   /** Bellotas que el topo ha dejado en la cesta (topo al nivel 3). */
   acorns: number;
   /** Si el topo cava solo: segundos para la siguiente bellota (0 si la cesta de bellotas está llena) y tope. */
@@ -370,13 +367,11 @@ export interface BasketView {
 }
 
 export function basketView(state: GameState, content: Content, now: number = gameClockMs(state)): BasketView {
-  const cap = basketCap(state, content);
-  const seconds = basketSeconds(state, cap);
   const acorns = basketAcornsReady(state, content, now);
   const hours = basketAcornHours(state, content);
   const every = (hours ?? 0) * 3600_000;
   const topo = hours !== null && state.basketAcornsAt > 0 ? { nextSeconds: acorns >= content.nest.basketAcornCap ? 0 : (every - ((now - state.basketAcornsAt) % every)) / 1000, cap: content.nest.basketAcornCap } : null;
-  return { value: basketValue(state, content), seconds, capSeconds: cap, fill: seconds / cap, acorns, topo };
+  return { value: basketValue(state), acorns, topo };
 }
 
 export interface NestSlotView {
@@ -750,86 +745,93 @@ export function companionStatusViews(state: GameState, content: Content, now: nu
   });
 }
 
+export interface ArmoryView {
+  id: string;
+  name: string;
+  flavor: string;
+  level: number;
+  maxLevel: number | null;
+  effectText: string;
+  cost: Decimal;
+  canBuy: boolean;
+  maxed: boolean;
+}
+
 export interface CaveView {
   unlocked: boolean;
   unlockPlumas: number;
   plumas: Decimal;
   embers: Decimal;
-  perSecond: Decimal;
-  blowGain: Decimal;
-  blowReady: boolean;
-  /** Bono total de producción que la cueva da al juego principal. */
+  meters: number;
+  bestMeters: number;
+  souls: number;
+  soulsPending: number;
+  /** Lo que la cueva multiplica la producción de la mina (dragón y almas). */
   prodBonus: number;
-  /** El dragón: etapa actual, la siguiente (null si ya es anciano) y lo que cuesta alimentarlo. */
-  dragon: { stage: number; spriteId: string; name: string; flavor: string; bonusText: string; next: { name: string; cost: Decimal; bonusText: string } | null; canFeed: boolean };
-  furnaces: { id: string; name: string; emoji: string; flavor: string; owned: number; cost: Decimal; each: Decimal; nextMilestone: number | null; canBuy: boolean }[];
-  branches: { id: string; name: string; emoji: string; nodes: { id: string; name: string; flavor: string; effectText: string; cost: number; bought: boolean; lockedBy: string | null; canBuy: boolean }[] }[];
+  embersMult: number;
+  /** Lo que necesita la carrera: daño, golpes por segundo, velocidad (m/s), saltos extra, imán y salto automático. */
+  runner: { damage: number; hitsPerSecond: number; speed: number; extraJumps: number; magnet: number; auto: boolean; bonusEvery: number; bonusSeconds: number };
+  /** Brasas de cada brasa del suelo ahora. */
+  coinEmbers: Decimal;
+  /** Monstruos que pueden salir ahora, con su vida y sus brasas a estos metros. */
+  monsters: { id: string; name: string; hp: number; embers: Decimal }[];
+  boss: { atMeters: number; hp: number; embers: Decimal; stage: number; name: string; seconds: number };
+  dragon: { stage: number; name: string; flavor: string; bonusText: string };
+  armory: ArmoryView[];
 }
 
-/** Qué da una ventaja de la cueva, en una frase. */
-export function caveEffectText(effect: CaveEffect): string {
-  const v = effect.value;
+function armoryEffectText(effect: ArmoryItemDef['effect'], level: number): string {
+  const v = effect.perLevel;
   switch (effect.kind) {
+    case 'damage':
+      return `Daño ×${v} por nivel (ahora ×${(v ** level).toLocaleString('es-ES', { maximumFractionDigits: 1 })})`;
+    case 'speed':
+      return `+${Math.round(v * 100)} % de velocidad por nivel`;
     case 'embers':
-      return `Las brasas se multiplican ×${v}`;
-    case 'momentumMax':
-      return `+${v} al tope de la inercia`;
-    case 'prodMult':
-      return `×${v} a la producción del juego principal`;
-    case 'basketSeconds':
-      return `La cesta aguanta ${Math.round(v / 60)} min más`;
-    case 'visitorStay':
-      return `El cerdito viajero se queda ${v} s más`;
-    case 'offlineHours':
-      return `+${v} h de producción de monedas mientras no estás`;
-    case 'blow':
-      return `Cada soplido da ×${v} brasas`;
-    case 'furnaceCost':
-      return `Los hornos cuestan un ${Math.round((1 - v) * 100)} % menos`;
+      return `+${Math.round(v * 100)} % de brasas por nivel`;
+    case 'magnet':
+      return 'Atrae las brasas cercanas (más alcance por nivel)';
+    case 'jumps':
+      return 'Un salto más en el aire por nivel';
+    case 'auto':
+      return 'Salta solo: la cueva avanza sin tocar nada';
   }
 }
 
 export function caveView(state: GameState, content: Content): CaveView {
-  const mult = embersFactor(state, content);
-  const stage = content.cave.dragon[state.cave.dragonStage]!;
-  const next = content.cave.dragon[state.cave.dragonStage + 1];
-  const bonusText = (s: { prodMult: number; embersMult: number }) => `×${s.prodMult} a la producción y ×${s.embersMult} a las brasas`;
+  const c = content.cave;
+  const meters = state.cave.meters;
+  const stage = c.dragon[state.cave.dragonStage]!;
+  const boss = bossStats(state, content);
+  const abilities = caveAbilities(state, content);
+  const bonus = dragonBonus(state, content);
   return {
-    dragon: {
-      stage: state.cave.dragonStage,
-      spriteId: `dragon-${state.cave.dragonStage}`,
-      name: stage.name,
-      flavor: stage.flavor,
-      bonusText: state.cave.dragonStage === 0 ? 'Aún no da ningún bono.' : `Con él: ×${dragonBonus(state, content).prod.toFixed(2)} a la producción y ×${dragonBonus(state, content).embers.toFixed(2)} a las brasas.`,
-      next: next ? { name: next.name, cost: D(next.cost), bonusText: bonusText(next) } : null,
-      canFeed: next !== undefined && state.cave.embers.gte(next.cost),
-    },
     unlocked: caveUnlocked(state, content),
-    unlockPlumas: content.cave.unlockPlumas,
+    unlockPlumas: c.unlockPlumas,
     plumas: state.plumasTotal,
     embers: state.cave.embers,
-    perSecond: embersPerSecond(state, content),
-    blowGain: blowGain(state, content),
-    blowReady: blowReady(state, content),
-    prodBonus: caveProduct(state, content, 'prodMult') * dragonBonus(state, content).prod,
-    furnaces: content.cave.furnaces.map((f) => {
-      const owned = state.cave.furnaces[f.id] ?? 0;
-      const cost = furnaceCost(content.cave, f, owned, caveCostFactor(state, content));
-      const nextMilestone = content.cave.furnaceMilestones.find((m) => owned < m) ?? null;
-      return { id: f.id, name: f.name, emoji: f.emoji, flavor: f.flavor, owned, cost, each: D(f.baseProd).mul(mult).mul(furnaceMilestoneMult(content.cave, owned)), nextMilestone, canBuy: state.cave.embers.gte(cost) };
+    meters,
+    bestMeters: state.cave.bestMeters,
+    souls: state.cave.souls,
+    soulsPending: soulsPending(state, content),
+    prodBonus: caveProdMult(state, content),
+    embersMult: embersMult(state, content),
+    runner: { damage: caveDamage(state, content), hitsPerSecond: c.hitsPerSecond, speed: caveSpeed(state, content), extraJumps: abilities.extraJumps, magnet: abilities.magnet, auto: abilities.auto, bonusEvery: c.bonusEvery, bonusSeconds: c.bonusSeconds },
+    coinEmbers: coinEmbers(state, content, meters),
+    monsters: monstersAt(content, meters).map((m) => ({ id: m.id, name: m.name, ...monsterStats(state, content, m, meters) })),
+    boss: { atMeters: state.cave.nextBossAt, hp: boss.hp, embers: boss.embers, stage: boss.stage, name: c.dragon[boss.stage]!.name, seconds: c.bossSeconds },
+    dragon: {
+      stage: state.cave.dragonStage,
+      name: stage.name,
+      flavor: stage.flavor,
+      bonusText: state.cave.dragonStage === 0 ? 'Aún no da ningún bono: vence al dragón en la carrera para que crezca.' : `×${bonus.prod.toFixed(2)} a la producción de la mina y ×${bonus.embers.toFixed(2)} a las brasas.`,
+    },
+    armory: c.armory.map((item) => {
+      const level = armoryLevel(state, item.id);
+      const cost = armoryCost(state, content, item);
+      const maxed = item.maxLevel !== null && level >= item.maxLevel;
+      return { id: item.id, name: item.name, flavor: item.flavor, level, maxLevel: item.maxLevel, effectText: armoryEffectText(item.effect, level), cost, canBuy: !maxed && state.cave.embers.gte(cost), maxed };
     }),
-    branches: content.cave.branches.map((b) => ({
-      id: b.id,
-      name: b.name,
-      emoji: b.emoji,
-      nodes: content.cave.nodes
-        .filter((n) => n.branch === b.id)
-        .map((n) => {
-          const bought = state.cave.nodes[n.id] === true;
-          const lockedBy = n.requires !== null && !state.cave.nodes[n.requires] ? (content.cave.nodes.find((x) => x.id === n.requires)?.name ?? n.requires) : null;
-          return { id: n.id, name: n.name, flavor: n.flavor, effectText: caveEffectText(n.effect), cost: n.cost, bought, lockedBy, canBuy: !bought && lockedBy === null && state.cave.embers.gte(n.cost) };
-        }),
-    })),
   };
 }
 

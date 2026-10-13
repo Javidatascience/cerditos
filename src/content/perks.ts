@@ -23,9 +23,9 @@ export const PERKS: PerkDef[] = [
   { id: 'ojo-brillante', name: 'Ojo para lo brillante', flavor: 'Se te dan mejor las flores relucientes.', maxLevel: 5, baseCost: 14, costGrowth: 2.4, requires: ['rocio'], effect: { kind: 'gardenShiny', perLevel: 0.02 }, icon: 'perk-brillo', layout: { col: 1, row: 14, dir: 'right' } },
 
   // --- Cueva (se abre con 3 esmeraldas en total) ---
-  { id: 'brasas', name: 'Más brasas', flavor: 'Los hornos dan más calor.', maxLevel: 5, baseCost: 10, costGrowth: 2, requires: [], requiresPlumasTotal: 3, section: 'Cueva del Dragón', effect: { kind: 'caveEmbers', perLevel: 0.25 }, icon: 'perk-brasas', layout: { col: 1, row: 17, dir: 'right' } },
-  { id: 'soplido', name: 'Soplido potente', flavor: 'Cada soplido da más brasas.', maxLevel: 5, baseCost: 8, costGrowth: 2, requires: ['brasas'], effect: { kind: 'caveBlow', perLevel: 0.5 }, icon: 'perk-soplido', layout: { col: 1, row: 18, dir: 'right' } },
-  { id: 'hornos-baratos', name: 'Hornos de saldo', flavor: 'Construir hornos cuesta menos.', maxLevel: 5, baseCost: 12, costGrowth: 2.2, requires: ['soplido'], effect: { kind: 'caveCost', perLevel: 0.92 }, icon: 'perk-hornos', layout: { col: 1, row: 19, dir: 'right' } },
+  { id: 'brasas', name: 'Más brasas', flavor: 'Cada brasa de la cueva vale más.', maxLevel: 5, baseCost: 10, costGrowth: 2, requires: [], requiresPlumasTotal: 3, section: 'Cueva del Dragón', effect: { kind: 'caveEmbers', perLevel: 0.25 }, icon: 'perk-brasas', layout: { col: 1, row: 17, dir: 'right' } },
+  { id: 'soplido', name: 'Golpe potente', flavor: 'El cerdito pega más fuerte en la cueva.', maxLevel: 5, baseCost: 8, costGrowth: 2, requires: ['brasas'], effect: { kind: 'caveBlow', perLevel: 0.5 }, icon: 'perk-soplido', layout: { col: 1, row: 18, dir: 'right' } },
+  { id: 'hornos-baratos', name: 'Herrero amigo', flavor: 'La armería de la cueva cobra menos.', maxLevel: 5, baseCost: 12, costGrowth: 2.2, requires: ['soplido'], effect: { kind: 'caveCost', perLevel: 0.92 }, icon: 'perk-hornos', layout: { col: 1, row: 19, dir: 'right' } },
   // --- Nido (se abre con 5 esmeraldas en total): baratas y rápidas de conseguir ---
   { id: 'nidos', name: 'Más nidos', flavor: 'Un nido más para criar otra criatura.', maxLevel: 2, baseCost: 3, costGrowth: 2, requires: [], requiresPlumasTotal: 5, section: 'Nido', effect: { kind: 'nestSlots', perLevel: 1 }, icon: 'perk-nidos', layout: { col: 1, row: 23, dir: 'right' } },
 

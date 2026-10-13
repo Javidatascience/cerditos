@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONTENT } from '../content/index.ts';
 import { ascend, buyPerk, buyTool, buyUpgrade, claimVisitor, collectBasket, tap, VISITOR_BOOST, VISITOR_INJECTION_SECONDS } from './actions.ts';
-import { BASKET_CAP_SECONDS, BASKET_RATE, basketSeconds } from './basket.ts';
 import {
   ascendUnlocked,
   baseIncomePerSecond,
@@ -254,19 +253,22 @@ describe('ventajas permanentes', () => {
 });
 
 describe('cesta y visitante', () => {
-  it('la cesta se llena con el tiempo (con tope) y recoger la vacía', () => {
+  it('lo ganado mientras no estás va a la cesta (no a las monedas) y recogerla lo suma', () => {
     const state = fresh();
     state.tools[PICO.id] = 30;
-    advance(state, CONTENT, 100);
-    expect(basketSeconds(state)).toBe(100);
-    const expected = incomePerSecond(state, CONTENT).mul(100 * BASKET_RATE);
-    const before = state.coins;
+    const income = baseIncomePerSecond(state, CONTENT);
+    const coins = state.coins;
+    const lifetime = state.lifetime;
+    const summary = simulateOffline(state, CONTENT, 100);
+    expect(state.coins.toString()).toBe(coins.toString());
+    expect(state.lifetime.toString()).toBe(lifetime.toString());
+    expect(state.basket.toNumber()).toBeCloseTo(income.mul(100).toNumber(), 3);
+    expect(summary.coinsEarned.toNumber()).toBeCloseTo(state.basket.toNumber(), 6);
+    advance(state, CONTENT, 50); // jugando no se llena
+    expect(state.basket.toNumber()).toBeCloseTo(income.mul(100).toNumber(), 3);
     const got = collectBasket(state, CONTENT);
-    expect(got.toNumber()).toBeCloseTo(expected.toNumber(), 6);
-    expect(state.coins.sub(before).toNumber()).toBeCloseTo(got.toNumber(), 6);
-    expect(basketSeconds(state)).toBe(0);
-    state.time += 10 * 3600;
-    expect(basketSeconds(state)).toBe(BASKET_CAP_SECONDS);
+    expect(state.basket.toNumber()).toBe(0);
+    expect(state.lifetime.sub(lifetime).toNumber()).toBeCloseTo(got.toNumber() + income.mul(50).toNumber(), 0);
   });
 
   it('la inyección da 10 min de ingresos', () => {
@@ -286,7 +288,7 @@ describe('offline', () => {
     b.tools[PICO.id] = 20;
     simulateOffline(a, CONTENT, 3600);
     advance(b, CONTENT, 3600);
-    expect(a.coins.toNumber()).toBeCloseTo(b.coins.toNumber(), 6);
+    expect(a.basket.toNumber()).toBeCloseTo(b.coins.toNumber(), 6); // offline va a la cesta
 
     const long = fresh();
     const exact = fresh();
@@ -296,7 +298,7 @@ describe('offline', () => {
     simulateOffline(exact, CONTENT, 2 * 3600);
     expect(summary.awaySeconds).toBe(2 * 3600);
     expect(summary.totalAwaySeconds).toBe(60 * 24 * 3600);
-    expect(long.coins.toNumber()).toBeCloseTo(exact.coins.toNumber(), 3);
+    expect(long.basket.toNumber()).toBeCloseTo(exact.basket.toNumber(), 3);
   });
 
   it('Siesta larga amplía el tope y un tiempo negativo no hace nada', () => {

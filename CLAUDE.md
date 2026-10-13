@@ -46,15 +46,16 @@ npm run calibrate      # simula a un jugador y muestra la curva de progreso (too
 
 Por defecto el juego es tranquilo: sin cajas ni gacha, sin rachas ni recompensas diarias, sin notificaciones push ni badges, sin pantallazos de recompensa (los logros van al Diario), sin monetización ni publicidad, sin comparación social, y toda condición de progreso es visible. **Excepciones decididas por el usuario:**
 
-1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 1-2 min (solo con el juego abierto) con una inyección de ingresos o un impulso de producción y picos, y se va a los 20 s.
+1. Cerdito viajero (`ui/visitor.ts`): llega al azar cada 2-4 min (solo con el juego abierto) con una inyección de ingresos o un impulso de producción y picos, y se va a los 20 s.
 2. Picar da 1 s de producción (y también ×5 con el impulso): es la acción activa.
-3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*).
+3. Producción offline limitada a las primeras 2 horas de ausencia (ampliable con la ventaja *Siesta larga*); lo ganado fuera va a la **cesta** y se recoge con un toque (mientras juegas la cesta no se llena).
 4. Segunda moneda (bellotas): la da el cerdito viajero (siempre 2; el dorado, 6) y el compañero Topo (1 cada 40 picos) y solo sirve para cosméticos; no afecta a la producción. Las reliquias (bonos permanentes) solo se consiguen con logros.
 5. Efectos y animaciones (números que suben) con interruptor en Ajustes; se apagan con `prefers-reduced-motion`.
 6. Al conseguir un logro sale un aviso breve arriba (de uno en uno, sin bloquear nada) para dar sensación de colección; no da premios por sí mismo.
+7. La Cueva es un corredor activo a lo Idle Slayer (`ui/views/caveRunner.ts`): solo avanza con la pestaña abierta; con el *Ojo de lagarto* salta solo y no hace falta tocar.
 
 Si una tarea parece requerir romper otra regla, parar y preguntar.
 
 ## Estado actual
 
-Jugable de punta a punta: picar, 18 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v19, Nido, jardín, compañeros con habilidad y Cueva del Dragón, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.
+Jugable de punta a punta: picar, 18 herramientas con mejoras por cantidad, descubrimiento progresivo, ascensión (herramienta 8), 7 ventajas, 138 logros, cesta, visitante, offline, guardado v20, Nido, jardín, compañeros con habilidad y Cueva del Dragón, PWA y despliegue en GitHub Pages. Pendiente: arte, afinar el equilibrio jugando y el sonido opcional. Ver docs/06-mina.md.

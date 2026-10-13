@@ -32,7 +32,7 @@ Sin mundos, sin recursos y sin mecánicas especiales por herramienta: todas func
 | **Reliquias** | 7 bonos permanentes que da un logro concreto (callo de oro = pico ×2, pico ancestral = producción ×1,1, pluma eterna, reloj de bolsillo…). No se compran. |
 | **Estadísticas** | En la pestaña *Logros*: monedas ganadas, mejor ingreso por segundo, picos, tiempo de juego, ascensiones, plumas, herramientas, mejoras, cerditos viajeros, logros y reliquias. |
 | **Cesta** | Se llena con el 25 % de tus ingresos (tope 30 min); "Recoger" la suma a tus monedas. |
-| **Cerdito viajero** | Aparece al azar cada 1-2 min con el juego abierto: 30 s de ingresos de golpe, o ×3 de producción y de picos durante 15 s (el dorado, 10 %: 3 min de ingresos y ×5 durante 25 s). Se va a los 20 s. Siempre da 1 bellota. |
+| **Cerdito viajero** | Aparece al azar cada 2-4 min con el juego abierto: 30 s de ingresos de golpe, o ×3 de producción y de picos durante 20 s (el dorado, 10 %: 3 min de ingresos y ×5 durante 25 s). Se va a los 20 s. Siempre da 1 bellota. |
 | **Offline** | Al volver cuentan solo las primeras 2 horas de ausencia (más con *Siesta larga*). |
 | **Logros** | 126, sin bonos: generales (picos, ascensiones, plumas, monedas) y uno por herramienta y cantidad (1, 5, 15, 25, 50, 75, 100, 150, 200, 250). |
 
@@ -121,6 +121,16 @@ Fuente **Jersey 10** (OFL, alojada en `public/fonts/`; se probaron otras pixelad
 
 - **Cerdito viajero:** la inyección da 45 s de ingresos, el impulso es ×4 durante 20 s y el dorado da 5 min de ingresos y ×6 durante 30 s (6 bellotas; el normal, 2). Las monedas se calculan con los ingresos de ese momento: incluyen la inercia y cualquier impulso activo. La tarjeta dice solo la recompensa y, al final, las bellotas con su icono.
 - **Desbloqueos:** el Jardín se abre con 1 esmeralda en total y la Cueva con 3 (y sus ramas del árbol igual).
+
+### Cueva corredor, cesta offline, criaturas residentes y economía (guardado v20)
+
+- **Cueva = corredor a lo Idle Slayer** (`content/cave.ts`, `core/cave.ts`, `ui/views/caveRunner.ts`): el cerdito corre solo (6 m/s) en un lienzo pixel art; tocar = saltar (peleando, un golpe más). Brasas en el suelo (crecen ×1,12 cada 100 m), 5 monstruos (babosa, murciélago, seta, araña, gólem; vida ×1,15 cada 100 m) con los que se para a pelear (4 golpes/s; si en 15 s no caen, se apartan). Cada 500 m, el dragón como **jefe** (30 s; vida 150 ×4 por jefe): vencerlo da brasas y, la primera vez, hace crecer al dragón (bonos a la mina como antes). Cada 900 m un **portal** a 15 s de bonus (solo brasas).
+- **Armería** (brasas): espada (daño ×1,5/nivel), botas (+12 % velocidad), mochila (+25 % brasas), imán, alas (saltos extra) y *Ojo de lagarto* (salta solo: la cueva va sin tocar).
+- **Renacer**: almas = ⌊√(brasas de esta vida / 2000)⌋; cada alma +10 % brasas y +1 % producción de la mina. Se pierden brasas, armería y metros; se quedan almas, dragón y récord.
+- Ventajas del árbol (zona cueva): *Más brasas*, *Golpe potente* (+50 % daño/nivel), *Herrero amigo* (armería más barata), *Calor del dragón*.
+- **Cesta = offline**: lo ganado fuera (hasta el tope de horas) va a la cesta y se recoge con un toque; jugando no se llena.
+- **Criaturas residentes**: de adultas, en su nido, el fénix da brasas (0,5 brasas del suelo/s al récord de metros), el tiburón ×1,15 a la producción y el ornitorrinco 1 bellota cada 4 h de juego.
+- **Economía**: cerdito viajero cada 2-4 min con 30 s de ingresos o ×3; las mejoras ×2 de herramientas cuestan 10× (antes 7×).
 
 ### Jardín a lo Cookie Clicker (guardado v19)
 

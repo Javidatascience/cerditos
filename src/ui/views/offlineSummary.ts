@@ -17,7 +17,7 @@ export function showOfflineSummary(root: HTMLElement, summary: OfflineSummary, n
       h('h2', {}, ['Mientras no estabas']),
       h('p', {}, [away]),
       summary.coinsEarned.gt(0)
-        ? h('ul', { className: 'offline-summary-list' }, [h('li', {}, [`+${formatNumber(summary.coinsEarned, notation)} monedas`])])
+        ? h('ul', { className: 'offline-summary-list' }, [h('li', {}, [`+${formatNumber(summary.coinsEarned, notation)} monedas en la cesta: recógela en la pantalla del cerdito`])])
         : h('p', {}, ['El cerdito ha seguido a lo suyo, tranquilo.']),
       dismissButton,
     ]),

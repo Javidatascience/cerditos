@@ -924,11 +924,82 @@ RELICS = {
 RELICS.update(NEW_RELICS)  # noqa: F821 (reliquias de las criaturas, definidas en _gems.py)
 
 
+# ---------------------------------------------------------------- monstruos de la carrera de la cueva
+
+
+def m_babosa(c):
+    c.ell(7, 10, 6, 3, 'O')
+    c.ell(6, 9, 4, 2.5, 'r')
+    c.rect(1, 12, 12, 12, 'R')
+    c.pts('y', (4, 8), (8, 10), (10, 9))
+    c.line(9, 6, 10, 3, 'R')
+    c.line(11, 6, 12, 3, 'R')
+    c.pts('w', (10, 3), (12, 3))
+    c.pts('k', (10, 2), (12, 2))
+
+
+def m_murcielago(c):
+    c.ell(7, 7, 2.5, 2.8, 'M')
+    for x0, sgn in ((4, -1), (10, 1)):
+        c.line(x0, 6, x0 + sgn * 3, 4, 'm')
+        c.line(x0, 7, x0 + sgn * 3, 9, 'm')
+        c.rect(min(x0, x0 + sgn * 3), 5, max(x0, x0 + sgn * 3), 8, 'm')
+    c.pts('M', (1, 5), (12, 5), (2, 9), (11, 9))
+    c.pts('y', (6, 6), (8, 6))
+    c.pts('w', (6, 9), (8, 9))
+    c.pts('M', (5, 3), (9, 3))
+
+
+def m_seta(c):
+    c.rect(4, 8, 9, 12, 'W')
+    c.rect(3, 12, 10, 13, 'w')
+    c.ell(6.5, 5, 6, 3.5, 'R')
+    c.rect(0, 6, 13, 7, 'R')
+    c.pts('w', (3, 3), (7, 2), (10, 4), (5, 5))
+    c.pts('k', (5, 9), (8, 9))
+    c.line(5, 11, 8, 11, 'k')
+    c.pts('k', (4, 8), (9, 8))
+
+
+def m_arana(c):
+    c.ell(7, 6, 3.5, 3, 'c')
+    c.ell(7, 6, 2, 1.6, 'C')
+    for x0, x1 in ((4, 1), (10, 13)):
+        for y0, y1 in ((6, 3), (7, 9), (8, 12)):
+            c.line(x0, y0, x1, y1, 'D')
+    c.pts('r', (6, 5), (8, 5))
+    c.pts('w', (5, 4), (9, 4))
+
+
+def m_golem(c):
+    c.rect(3, 2, 10, 11, 'g')
+    c.rect(1, 5, 2, 10, 'G')
+    c.rect(11, 5, 12, 10, 'G')
+    c.rect(4, 12, 6, 13, 'G')
+    c.rect(8, 12, 10, 13, 'G')
+    c.rect(4, 3, 9, 5, 's')
+    c.pts('O', (5, 4), (8, 4))
+    c.pts('y', (5, 4))
+    c.pts('G', (6, 8), (7, 9), (5, 10), (9, 7))
+    c.pts('n', (3, 2), (10, 3), (4, 11))
+
+
+def m_portal(c):
+    c.ell(7, 7, 6, 6.5, 'M')
+    c.ell(7, 7, 4.5, 5, 'm')
+    c.ell(7, 7, 3, 3.5, 'c')
+    c.ell(7, 7, 1.5, 1.8, 'w')
+    c.pts('y', (1, 1), (12, 2), (0, 11), (13, 12))
+
+
+MONSTERS = {'babosa': m_babosa, 'murcielago': m_murcielago, 'seta': m_seta, 'arana': m_arana, 'golem': m_golem, 'portal': m_portal}
+
+
 def main() -> None:
     args = sys.argv[1:]
     out = Path(args[args.index('--out') + 1]) if '--out' in args else ROOT / 'public' / 'art'
     sheets = []
-    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('ui', GEMS), ('relics', RELICS), ('creatures', CREATURES)):  # noqa: F821
+    for folder, table in (('tools', TOOLS), ('companions', COMPANIONS), ('cave', CAVE), ('flowers', FLOWERS), ('furnaces', FURNACES), ('ui', UI), ('ui', GEMS), ('relics', RELICS), ('creatures', CREATURES), ('monsters', MONSTERS)):  # noqa: F821
         (out / folder).mkdir(parents=True, exist_ok=True)
         for sprite_id, fn in table.items():
             c = Canvas()

@@ -44,10 +44,10 @@ export function achievementProgress(state: GameState, req: AchievementReq): Requ
       return progress(Object.keys(state.nest.adults).length, req.count);
     case 'dragonStage':
       return progress(state.cave.dragonStage, req.count);
-    case 'furnaces':
-      return progress(Object.values(state.cave.furnaces).reduce((a, b) => a + b, 0), req.count);
-    case 'caveNodes':
-      return progress(Object.keys(state.cave.nodes).length, req.count);
+    case 'caveMeters':
+      return progress(Math.floor(state.cave.bestMeters), req.count);
+    case 'caveMonsters':
+      return progress(state.cave.monsters, req.count);
   }
 }
 

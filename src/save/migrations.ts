@@ -148,6 +148,33 @@ function v18ToV19(old: RawSave): RawSave {
   return { ...old, version: 19, state: { ...state, version: 19, garden } };
 }
 
+/**
+ * v19 → v20: la cueva pasa a ser un corredor (se quedan las brasas y la etapa del dragón; los hornos y las
+ * ventajas desaparecen), la producción offline va a la cesta (cesta vacía) y el ornitorrinco da bellotas.
+ */
+function v19ToV20(old: RawSave): RawSave {
+  if (!isPlainObject(old['state'])) return { ...old, version: 20 };
+  const state = { ...old['state'] };
+  const cave = isPlainObject(state['cave']) ? state['cave'] : {};
+  state['cave'] = {
+    embers: typeof cave['embers'] === 'string' ? cave['embers'] : '0',
+    runEmbers: '0',
+    armory: {},
+    meters: 0,
+    bestMeters: 0,
+    bosses: 0,
+    nextBossAt: 500,
+    dragonStage: typeof cave['dragonStage'] === 'number' ? cave['dragonStage'] : 0,
+    souls: 0,
+    monsters: 0,
+  };
+  delete state['basketSince'];
+  state['basket'] = '0';
+  const nest = isPlainObject(state['nest']) ? state['nest'] : { slots: [null, null, null], adults: {}, boosts: {} };
+  state['nest'] = { ...nest, acornClock: 0 };
+  return { ...old, version: 20, state: { ...state, version: 20 } };
+}
+
 /** v(n) → v(n+1). */
 const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   5: v5ToV6,
@@ -164,6 +191,7 @@ const MIGRATIONS: Record<number, (old: RawSave) => RawSave> = {
   16: v16ToV17,
   17: v17ToV18,
   18: v18ToV19,
+  19: v19ToV20,
 };
 
 function isPlainObject(value: unknown): value is RawSave {

@@ -31,10 +31,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   ...[10, 50, 200, 1000].map((n) => ({ id: `cosechar-${n}`, name: `Recoger ×${fmt(n)}`, flavor: 'Con las manos llenas de tierra.', requires: { kind: 'harvests' as const, count: n } })),
   ...[1, 4, 7, 10, 15, 20].map((n) => ({ id: `flores-${n}`, name: n === 1 ? 'Primera flor' : `${n} flores distintas`, flavor: 'El jardín florece.', requires: { kind: 'flowersFound' as const, count: n } })),
   ...[1, 3, 5, 10].map((n) => ({ id: `brillantes-${n}`, name: n === 1 ? 'Primera flor brillante' : `${n} flores brillantes`, flavor: 'Reluce más que una moneda.', requires: { kind: 'shinyFound' as const, count: n } })),
-  ...[1, 10, 25, 50, 100].map((n) => ({ id: `hornos-${n}`, name: n === 1 ? 'Primer horno' : `${n} hornos`, flavor: 'La cueva ya no se enfría.', requires: { kind: 'furnaces' as const, count: n } })),
+  ...[100, 1000, 5000, 20000].map((n) => ({ id: `metros-${n}`, name: `${fmt(n)} metros de cueva`, flavor: 'El cerdito corre sin mirar atrás.', requires: { kind: 'caveMeters' as const, count: n } })),
   ...[1, 2, 3, 4].map((n) => ({ id: `dragon-etapa-${n}`, name: ['Cría de dragón', 'Dragón joven', 'Dragón adulto', 'Dragón anciano'][n - 1]!, flavor: 'Crece bien alimentado.', requires: { kind: 'dragonStage' as const, count: n } })),
   ...NEST.creatures.map((c) => ({ id: `${c.id}-adulto`, name: c.stages[3]!.name, flavor: 'Ha crecido del todo y se queda de recuerdo.', requires: { kind: 'creatureAdult' as const, creature: c.id } })),
   ...[1, 2, 3].map((n) => ({ id: `criaturas-adultas-${n}`, name: n === 1 ? 'Primera criatura adulta' : `${n} criaturas adultas`, flavor: 'El nido está lleno de vida.', requires: { kind: 'adultCount' as const, count: n } })),
-  ...[1, 5, 10].map((n) => ({ id: `ventajas-dragon-${n}`, name: n === 1 ? 'Primera ventaja del dragón' : `${n} ventajas del dragón`, flavor: 'El dragón sonríe, que ya es mucho.', requires: { kind: 'caveNodes' as const, count: n } })),
+  ...[10, 100, 1000].map((n) => ({ id: `monstruos-${n}`, name: `${fmt(n)} monstruos`, flavor: 'Ninguno se ha hecho daño de verdad.', requires: { kind: 'caveMonsters' as const, count: n } })),
   ...TOOLS.flatMap((tool) => TOOL_MILESTONES.map((m) => ({ id: `${tool.id}-${m.count}`, name: `${tool.name} ×${m.count}`, flavor: m.flavor, requires: { kind: 'toolCount' as const, tool: tool.id, count: m.count } }))),
 ];

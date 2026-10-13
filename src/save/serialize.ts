@@ -4,7 +4,7 @@
 import { Decimal } from '../core/num.ts';
 import type { Buff, GameState, JournalEntry, Settings } from '../core/state.ts';
 
-export const CURRENT_VERSION = 19;
+export const CURRENT_VERSION = 20;
 
 export interface SerializedGameState {
   version: number;
@@ -33,12 +33,12 @@ export interface SerializedGameState {
   companionProgress: Record<string, number>;
   companionLevels: Record<string, number>;
   garden: GameState['garden'];
-  cave: { embers: string; furnaces: Record<string, number>; nodes: Record<string, true>; blowAt: number; dragonStage: number };
+  cave: { embers: string; runEmbers: string; armory: Record<string, number>; meters: number; bestMeters: number; bosses: number; nextBossAt: number; dragonStage: number; souls: number; monsters: number };
   stats: { visitors: number; bestIncome: string };
   wardrobe: GameState['wardrobe'];
   nest: GameState['nest'];
   basketAcornsAt: number;
-  basketSince: number;
+  basket: string;
   achievements: Record<string, { at: number }>;
   buff: Buff | null;
   journal: JournalEntry[];
@@ -85,12 +85,12 @@ export function serialize(state: GameState, savedAt: number): SaveData {
       companionProgress: { ...state.companionProgress },
       companionLevels: { ...state.companionLevels },
       garden: { cells: state.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(state.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...state.garden.buffs }, harvests: state.garden.harvests },
-      cave: { embers: state.cave.embers.toString(), furnaces: { ...state.cave.furnaces }, nodes: { ...state.cave.nodes }, blowAt: state.cave.blowAt, dragonStage: state.cave.dragonStage },
+      cave: { ...state.cave, embers: state.cave.embers.toString(), runEmbers: state.cave.runEmbers.toString(), armory: { ...state.cave.armory } },
       stats: { visitors: state.stats.visitors, bestIncome: state.stats.bestIncome.toString() },
       wardrobe: { owned: { ...state.wardrobe.owned }, worn: { ...state.wardrobe.worn } },
-      nest: { slots: state.nest.slots.map((s) => (s ? { ...s } : null)), adults: { ...state.nest.adults }, boosts: { ...state.nest.boosts } },
+      nest: { slots: state.nest.slots.map((s) => (s ? { ...s } : null)), adults: { ...state.nest.adults }, boosts: { ...state.nest.boosts }, acornClock: state.nest.acornClock },
       basketAcornsAt: state.basketAcornsAt,
-      basketSince: state.basketSince,
+      basket: state.basket.toString(),
       achievements: Object.fromEntries(Object.entries(state.achievements).map(([id, v]) => [id, { ...v }])),
       buff: state.buff ? { ...state.buff } : null,
       journal: state.journal.map((e) => ({ ...e })),
@@ -128,12 +128,12 @@ export function deserialize(data: SaveData): GameState {
     companionProgress: { ...s.companionProgress },
     companionLevels: { ...s.companionLevels },
     garden: { cells: s.garden.cells.map((p) => (p ? { ...p } : null)), found: Object.fromEntries(Object.entries(s.garden.found).map(([id, v]) => [id, { ...v }])), buffs: { ...s.garden.buffs }, harvests: s.garden.harvests },
-    cave: { embers: new Decimal(s.cave.embers), furnaces: { ...s.cave.furnaces }, nodes: { ...s.cave.nodes }, blowAt: s.cave.blowAt, dragonStage: s.cave.dragonStage },
+    cave: { ...s.cave, embers: new Decimal(s.cave.embers), runEmbers: new Decimal(s.cave.runEmbers), armory: { ...s.cave.armory } },
     stats: { visitors: s.stats.visitors, bestIncome: new Decimal(s.stats.bestIncome) },
     wardrobe: { owned: { ...s.wardrobe.owned }, worn: { ...s.wardrobe.worn } },
-    nest: { slots: s.nest.slots.map((slot) => (slot ? { ...slot } : null)), adults: { ...s.nest.adults }, boosts: { ...s.nest.boosts } },
+    nest: { slots: s.nest.slots.map((slot) => (slot ? { ...slot } : null)), adults: { ...s.nest.adults }, boosts: { ...s.nest.boosts }, acornClock: s.nest.acornClock },
     basketAcornsAt: s.basketAcornsAt,
-    basketSince: s.basketSince,
+    basket: new Decimal(s.basket),
     achievements: Object.fromEntries(Object.entries(s.achievements).map(([id, v]) => [id, { ...v }])),
     buff: s.buff ? { ...s.buff } : null,
     journal: s.journal.map((e) => ({ ...e })),

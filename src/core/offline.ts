@@ -3,7 +3,6 @@
 // No hay compras de por medio, así que el resultado es exacto, trocee como trocee.
 
 import type { Content } from '../content/types.ts';
-import { embersPerSecond } from './cave.ts';
 import { offlineCapSeconds } from './formulas.ts';
 import type { Decimal } from './num.ts';
 import type { GameState } from './state.ts';
@@ -17,7 +16,7 @@ export interface OfflineSummary {
   awaySeconds: number;
   /** Segundos que duró de verdad la ausencia (puede superar el tope). */
   totalAwaySeconds: number;
-  /** Monedas ganadas durante la ausencia. */
+  /** Monedas ganadas durante la ausencia (están en la cesta). */
   coinsEarned: Decimal;
 }
 
@@ -32,11 +31,13 @@ export function simulateOffline(state: GameState, content: Content, seconds: num
   const capped = Math.min(seconds, offlineCapSeconds(state, content));
   const chunks = Math.min(MAX_CHUNKS, Math.max(1, Math.ceil(capped / CHUNK_SECONDS)));
   const chunkSeconds = capped / chunks;
-  const embersBefore = state.cave.embers;
-  const embersPerSec = embersPerSecond(state, content);
+  const lifetimeBefore = state.lifetime;
   for (let i = 0; i < chunks; i++) advance(state, content, chunkSeconds);
-  // Las brasas solo cuentan la primera hora de ausencia (las compras no cambian el ritmo mientras no estás).
-  state.cave.embers = embersBefore.add(embersPerSec.mul(Math.min(capped, content.cave.offlineEmbersSeconds)));
+  // Lo ganado no va a las monedas: va a la cesta (cuenta para las esmeraldas al recogerla).
+  const earned = state.coins.sub(before);
+  state.coins = before;
+  state.lifetime = lifetimeBefore;
+  state.basket = state.basket.add(earned);
 
-  return { awaySeconds: capped, totalAwaySeconds: seconds, coinsEarned: state.coins.sub(before) };
+  return { awaySeconds: capped, totalAwaySeconds: seconds, coinsEarned: earned };
 }

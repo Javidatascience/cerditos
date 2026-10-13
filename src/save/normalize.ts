@@ -60,15 +60,20 @@ export function normalize(state: GameState, content: Content): GameState {
     const until = state.garden.buffs[id];
     if (!flowerIds.has(id) || typeof until !== 'number' || !Number.isFinite(until)) delete state.garden.buffs[id];
   }
-  const furnaceIds = new Set(content.cave.furnaces.map((f) => f.id));
-  for (const id of Object.keys(state.cave.furnaces)) {
-    if (!furnaceIds.has(id)) delete state.cave.furnaces[id];
-    else state.cave.furnaces[id] = clampInt(state.cave.furnaces[id] ?? 0, 0, Number.MAX_SAFE_INTEGER);
+  const armoryById = new Map(content.cave.armory.map((x) => [x.id, x]));
+  for (const id of Object.keys(state.cave.armory)) {
+    const item = armoryById.get(id);
+    if (!item) delete state.cave.armory[id];
+    else state.cave.armory[id] = clampInt(state.cave.armory[id] ?? 0, 0, item.maxLevel ?? Number.MAX_SAFE_INTEGER);
   }
-  const nodeIds = new Set(content.cave.nodes.map((x) => x.id));
-  for (const id of Object.keys(state.cave.nodes)) if (!nodeIds.has(id)) delete state.cave.nodes[id];
-  if (!Number.isFinite(state.cave.blowAt)) state.cave.blowAt = -1000;
   if (!state.cave.embers.gte(0)) state.cave.embers = state.cave.embers.sub(state.cave.embers);
+  if (!state.cave.runEmbers.gte(0)) state.cave.runEmbers = state.cave.runEmbers.sub(state.cave.runEmbers);
+  state.cave.meters = Number.isFinite(state.cave.meters) && state.cave.meters > 0 ? state.cave.meters : 0;
+  state.cave.bestMeters = Math.max(state.cave.meters, Number.isFinite(state.cave.bestMeters) ? state.cave.bestMeters : 0);
+  state.cave.bosses = clampInt(state.cave.bosses, 0, 1000);
+  state.cave.souls = clampInt(state.cave.souls, 0, Number.MAX_SAFE_INTEGER);
+  state.cave.monsters = clampInt(state.cave.monsters, 0, Number.MAX_SAFE_INTEGER);
+  if (!Number.isFinite(state.cave.nextBossAt) || state.cave.nextBossAt <= 0) state.cave.nextBossAt = state.cave.meters + content.cave.bossEvery;
   state.cave.dragonStage = clampInt(state.cave.dragonStage, 0, content.cave.dragon.length - 1);
   state.stats.visitors = clampInt(state.stats.visitors, 0, Number.MAX_SAFE_INTEGER);
   const creatureById = new Map(content.nest.creatures.map((c) => [c.id, c]));
@@ -79,6 +84,8 @@ export function normalize(state: GameState, content: Content): GameState {
   });
   for (const id of Object.keys(state.nest.adults)) if (!creatureById.has(id)) delete state.nest.adults[id];
   state.nest.boosts = state.nest.boosts && typeof state.nest.boosts === 'object' ? state.nest.boosts : {};
+  state.nest.acornClock = Number.isFinite(state.nest.acornClock) ? Math.min(1, Math.max(0, state.nest.acornClock)) : 0;
+  if (!state.basket.gte(0)) state.basket = state.basket.sub(state.basket);
   for (const id of Object.keys(state.nest.boosts)) if (!creatureById.has(id) || !Number.isFinite(state.nest.boosts[id])) delete state.nest.boosts[id];
   if (!Number.isFinite(state.basketAcornsAt) || state.basketAcornsAt < 0) state.basketAcornsAt = 0;
   // El topo ya estaba al nivel 3 antes de que cavara solo: empieza a contar desde la última vez que se jugó.

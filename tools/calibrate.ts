@@ -1,7 +1,7 @@
 // Calibración rápida de la economía: simula a un jugador que visita cada `STEP` segundos, pica un
 // puñado de veces, compra la herramienta con mejor amortización que pueda pagar, gasta las plumas en
 // ventajas y asciende cuando duplica sus plumas. Uso: node tools/calibrate.ts [segundosPorVisita] [horas] [picosPorVisita]
-// Con VISITOR=1 también cuenta al cerdito viajero (una media de ~50 s de ingresos cada 90 s) y compra sinergias.
+// Con VISITOR=1 también cuenta al cerdito viajero (una media de ~35 s de ingresos cada 180 s) y compra sinergias.
 // Solo imprime una tabla; no forma parte de los tests.
 
 import { CONTENT } from '../src/content/index.ts';
@@ -52,7 +52,7 @@ while (t < hours * 3600) {
   advance(state, CONTENT, step);
   t += step;
   if (withVisitor) {
-    const extra = baseIncomePerSecond(state, CONTENT).mul((50 * step) / 90);
+    const extra = baseIncomePerSecond(state, CONTENT).mul((35 * step) / 180);
     state.coins = state.coins.add(extra);
     state.lifetime = state.lifetime.add(extra);
   }

@@ -3,10 +3,10 @@ import { CONTENT } from '../content/index.ts';
 import { updateAchievements } from './achievements.ts';
 import { basketAcornsReady } from './nest.ts';
 import { cellShiny } from './garden.ts';
-import { buySynergy, boostCreature, buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, feedDragon, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCaveNode, buyCompanion, buyFurnace, caveBlow, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
+import { buySynergy, boostCreature, buyEgg, collectBasket, feedCreature, hatchEgg, removeCreature, buyAccessory, buyPerk, wearAccessory, gardenTick, harvestFlower, plantFlower, upgradeCompanion, VISITOR_ACORNS, VISITOR_GOLDEN, ascend, buyCompanion, caveRun, caveDefeat, caveBossWin, caveBossLeave, buyArmory, caveRebirth, rabbitWaitSeconds, useRabbit, companionTick, buyGlobalUpgrade, buySkin, claimVisitor, equipSkin, MAX_ACTIVE_COMPANIONS, tap, toggleCompanion } from './actions.ts';
 import { synergyMult, synergyUnlocked, tapGain, unitProduction, lifetimeForNextPluma, plumasEntitled, visitorModifiers, baseIncomePerSecond, globalMultiplier, incomePerSecond, momentumMaxMult, momentumMult, prodMultiplier, relicOwned } from './formulas.ts';
 import { D } from './num.ts';
-import { caveCostFactor, embersPerSecond } from './cave.ts';
+import { armoryCost, bossStats, caveDamage, caveSpeed, coinEmbers, embersMult, monsterStats } from './cave.ts';
 import { growMs, mutationChance, shinyChance } from './garden.ts';
 import { cosmeticViews, globalUpgradeViews, headerView, statsView, toolViews } from './selectors.ts';
 import { createInitialState, type GameState } from './state.ts';
@@ -220,56 +220,88 @@ describe('perro, pájaro y conejo', () => {
   });
 });
 
-describe('cueva del dragón', () => {
-  function withDragon(): GameState {
+describe('cueva del dragón (carrera)', () => {
+  function cave(): GameState {
     const state = fresh();
     state.plumasTotal = D(10);
     return state;
   }
 
-  it('está cerrada sin plumas', () => {
+  it('está cerrada sin esmeraldas', () => {
     const state = fresh();
-    expect(caveBlow(state, CONTENT).toNumber()).toBe(0);
-    state.cave.embers = D(1e6);
-    expect(buyFurnace(state, CONTENT, 'brasero')).toBe(false);
+    expect(caveRun(state, CONTENT, 10, 5).toNumber()).toBe(0);
+    expect(state.cave.meters).toBe(0);
   });
 
-  it('soplar da brasas con enfriamiento, los hornos producen y el tiempo las acumula', () => {
-    const state = withDragon();
-    expect(caveBlow(state, CONTENT).toNumber()).toBe(1);
-    expect(caveBlow(state, CONTENT).toNumber()).toBe(0);
-    state.cave.embers = D(100);
-    expect(buyFurnace(state, CONTENT, 'brasero')).toBe(true);
-    expect(state.cave.embers.toNumber()).toBe(85);
-    advance(state, CONTENT, 10);
-    expect(state.cave.embers.toNumber()).toBeCloseTo(85 + 2, 6);
+  it('correr suma metros y las brasas del suelo; el récord se guarda', () => {
+    const state = cave();
+    const got = caveRun(state, CONTENT, 50, 3).toNumber();
+    expect(got).toBeCloseTo(3 * CONTENT.cave.coinEmbers, 9);
+    expect(state.cave.meters).toBe(50);
+    expect(state.cave.bestMeters).toBe(50);
+    expect(state.cave.embers.toNumber()).toBeCloseTo(got, 9);
+    caveRun(state, CONTENT, 100, 0);
+    expect(coinEmbers(state, CONTENT, state.cave.meters).toNumber()).toBeCloseTo(CONTENT.cave.coinEmbers * CONTENT.cave.rewardGrowth, 9); // 150 m: un tramo más
   });
 
-  it('las ventajas piden la anterior y suben la producción del juego principal', () => {
-    const state = withDragon();
-    state.cave.embers = D(1e6);
-    expect(buyCaveNode(state, CONTENT, 'escamas-de-plata')).toBe(false);
+  it('los monstruos dan brasas y cuentan; la vida crece con los metros', () => {
+    const state = cave();
+    const babosa = CONTENT.cave.monsters[0]!;
+    expect(monsterStats(state, CONTENT, babosa, 0).hp).toBe(babosa.hp);
+    expect(monsterStats(state, CONTENT, babosa, 250).hp).toBeCloseTo(babosa.hp * CONTENT.cave.hpGrowth ** 2, 9);
+    const got = caveDefeat(state, CONTENT, babosa.id).toNumber();
+    expect(got).toBeCloseTo(babosa.embers, 9);
+    expect(state.cave.monsters).toBe(1);
+  });
+
+  it('la armería sube el daño y la velocidad y tiene tope donde toca', () => {
+    const state = cave();
+    expect(buyArmory(state, CONTENT, 'espada')).toBe(false); // sin brasas
+    state.cave.embers = D(1e9);
+    expect(caveDamage(state, CONTENT)).toBe(1);
+    expect(buyArmory(state, CONTENT, 'espada')).toBe(true);
+    expect(caveDamage(state, CONTENT)).toBeCloseTo(1.5, 9);
+    buyArmory(state, CONTENT, 'botas');
+    expect(caveSpeed(state, CONTENT)).toBeCloseTo(CONTENT.cave.speed * 1.12, 9);
+    expect(buyArmory(state, CONTENT, 'ojo')).toBe(true);
+    expect(buyArmory(state, CONTENT, 'ojo')).toBe(false); // un solo nivel
+  });
+
+  it('vencer al jefe da brasas, hace crecer al dragón (que sube la producción) y aleja al siguiente', () => {
+    const state = cave();
     const before = prodMultiplier(state, CONTENT);
-    expect(buyCaveNode(state, CONTENT, 'escamas-de-bronce')).toBe(true);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(1.1, 9);
-    expect(buyCaveNode(state, CONTENT, 'escamas-de-bronce')).toBe(false);
-    buyCaveNode(state, CONTENT, 'cesta-honda');
-    buyCaveNode(state, CONTENT, 'ojo-de-dragon');
-    expect(visitorModifiers(state, CONTENT).stayBonus).toBe(5);
+    const boss = bossStats(state, CONTENT);
+    expect(caveBossWin(state, CONTENT).toNumber()).toBeCloseTo(boss.embers.toNumber(), 6);
+    expect(state.cave.dragonStage).toBe(1);
+    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(CONTENT.cave.dragon[1]!.prodMult, 9);
+    expect(state.cave.nextBossAt).toBe(CONTENT.cave.bossEvery * 2);
+    expect(bossStats(state, CONTENT).hp).toBeCloseTo(boss.hp * CONTENT.cave.bossHpGrowth, 9);
+    caveRun(state, CONTENT, 900, 0);
+    caveBossLeave(state, CONTENT);
+    expect(state.cave.nextBossAt).toBe(900 + CONTENT.cave.bossEvery / 2);
   });
 
-  it('el aliento cálido sube el tope de la inercia y ascender no borra la cueva', () => {
-    const state = withDragon();
-    state.cave.embers = D(1e6);
-    const before = momentumMaxMult(state, CONTENT);
-    buyCaveNode(state, CONTENT, 'fuego-interior');
-    buyCaveNode(state, CONTENT, 'aliento-frecuente');
-    expect(momentumMaxMult(state, CONTENT)).toBeCloseTo(before + 0.1, 9);
+  it('renacer cambia la carrera por almas, que suben brasas y producción; ascender no toca la cueva', () => {
+    const state = cave();
+    expect(caveRebirth(state, CONTENT)).toBe(0); // sin brasas, sin almas
+    caveRun(state, CONTENT, 1234, 0);
+    state.cave.runEmbers = D(CONTENT.cave.soulsDivisor * 9);
+    state.cave.embers = D(500);
+    state.cave.armory['espada'] = 3;
+    caveBossWin(state, CONTENT);
+    const prodBefore = prodMultiplier(state, CONTENT);
+    expect(caveRebirth(state, CONTENT)).toBe(3);
+    expect(state.cave.souls).toBe(3);
+    expect(state.cave.embers.toNumber()).toBe(0);
+    expect(state.cave.armory).toEqual({});
+    expect(state.cave.meters).toBe(0);
+    expect(state.cave.bestMeters).toBe(1234);
+    expect(state.cave.dragonStage).toBe(1); // el dragón no se pierde
+    expect(prodMultiplier(state, CONTENT) / prodBefore).toBeCloseTo(1 + 3 * CONTENT.cave.soulProd, 9);
     state.lifetime = D(1e9);
     state.maxOwned[CONTENT.tools[G.ascendTool]!.id] = 1;
     ascend(state, CONTENT, 0);
-    expect(state.cave.nodes['fuego-interior']).toBe(true);
-    expect(state.cave.embers.toNumber()).toBeGreaterThan(0);
+    expect(state.cave.souls).toBe(3);
   });
 });
 
@@ -595,13 +627,16 @@ describe('árbol de ventajas', () => {
     state.garden.found['margarita'] = { count: 1, shiny: false, shinyCount: 0 };
     const flower = CONTENT.garden.flowers[0]!;
     expect(growMs(state, CONTENT, flower)).toBeCloseTo(flower.growSeconds * 1000 * 0.9, 6);
+    const multBefore = embersMult(state, CONTENT);
     buyPerk(state, CONTENT, 'brasas');
-    expect(embersPerSecond(state, CONTENT).toNumber()).toBe(0);
-    state.cave.furnaces['brasero'] = 1;
-    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(0.2 * 1.25, 9);
+    expect(embersMult(state, CONTENT) / multBefore).toBeCloseTo(1.25, 9);
     buyPerk(state, CONTENT, 'soplido');
+    expect(caveDamage(state, CONTENT)).toBeCloseTo(1.5, 9);
+    const espada = CONTENT.cave.armory.find((x) => x.id === 'espada')!;
+    const cost = armoryCost(state, CONTENT, espada).toNumber();
     buyPerk(state, CONTENT, 'hornos-baratos');
-    expect(caveCostFactor(state, CONTENT)).toBeCloseTo(0.92, 9);
+    expect(armoryCost(state, CONTENT, espada).toNumber()).toBe(Math.ceil(espada.baseCost * 0.92));
+    expect(cost).toBe(espada.baseCost);
   });
 });
 
@@ -609,45 +644,25 @@ describe('pato, mariposa y lagarto', () => {
   it('el pato acelera las flores, la mariposa sube cruces y brillantes y el lagarto multiplica las brasas', () => {
     const state = fresh();
     state.plumasTotal = D(10);
-    state.cave.furnaces['brasero'] = 1;
     const flower = CONTENT.garden.flowers[0]!;
     const growBase = growMs(state, CONTENT, flower);
     const mutBase = mutationChance(state, CONTENT);
     const shinyBase = shinyChance(state, CONTENT);
-    const embersBase = embersPerSecond(state, CONTENT).toNumber();
+    const embersBase = embersMult(state, CONTENT);
     state.activeCompanions = ['pato', 'mariposa'];
     expect(growMs(state, CONTENT, flower)).toBeCloseTo(growBase * 0.85, 6);
     expect(mutationChance(state, CONTENT)).toBeCloseTo(mutBase + 0.05, 9);
     expect(shinyChance(state, CONTENT)).toBeCloseTo(shinyBase + 0.02, 9);
     state.activeCompanions = ['lagarto'];
-    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(embersBase * 1.25, 9);
+    expect(embersMult(state, CONTENT)).toBeCloseTo(embersBase * 1.25, 9);
     state.acorns = 100;
     buyCompanion(state, CONTENT, 'lagarto');
     upgradeCompanion(state, CONTENT, 'lagarto');
-    expect(embersPerSecond(state, CONTENT).toNumber()).toBeCloseTo(embersBase * 1.4, 9);
+    expect(embersMult(state, CONTENT)).toBeCloseTo(embersBase * 1.4, 9);
   });
 });
 
-describe('dragón y guardarropa', () => {
-  it('el dragón crece alimentándolo con brasas, en orden, y cada etapa da bonos acumulados', () => {
-    const state = fresh();
-    expect(feedDragon(state, CONTENT)).toBe(false); // cueva cerrada
-    state.plumasTotal = D(10);
-    state.cave.embers = D(100);
-    expect(feedDragon(state, CONTENT)).toBe(false); // cuesta 200
-    state.cave.embers = D(1e12);
-    const before = prodMultiplier(state, CONTENT);
-    expect(feedDragon(state, CONTENT)).toBe(true);
-    expect(state.cave.dragonStage).toBe(1);
-    expect(prodMultiplier(state, CONTENT) / before).toBeCloseTo(CONTENT.cave.dragon[1]!.prodMult, 9);
-    state.cave.furnaces['brasero'] = 1;
-    const e1 = embersPerSecond(state, CONTENT).toNumber();
-    expect(e1).toBeCloseTo(0.2 * CONTENT.cave.dragon[1]!.embersMult, 9);
-    for (let i = 0; i < 5; i++) feedDragon(state, CONTENT);
-    expect(state.cave.dragonStage).toBe(CONTENT.cave.dragon.length - 1);
-    expect(feedDragon(state, CONTENT)).toBe(false); // ya es anciano
-  });
-
+describe('guardarropa', () => {
   it('las prendas se compran con bellotas, se llevan una por hueco y se quitan; las de logro se tienen al conseguirlo', () => {
     const state = fresh();
     state.acorns = 20;
@@ -712,5 +727,35 @@ describe('estadísticas y herramienta siguiente', () => {
     const base = tapGain(state, CONTENT).toNumber();
     state.upgrades[PICO.id] = 2;
     expect(tapGain(state, CONTENT).toNumber()).toBeCloseTo(base * 4, 9);
+  });
+});
+
+describe('criaturas adultas en su nido', () => {
+  function adult(id: string): GameState {
+    const state = fresh();
+    state.plumasTotal = D(10);
+    state.nest.slots[0] = { creature: id, stage: 3, since: 0 };
+    return state;
+  }
+
+  it('el fénix da brasas, el tiburón sube la producción y el ornitorrinco trae bellotas', () => {
+    const fenix = adult('fenix');
+    advance(fenix, CONTENT, 100);
+    expect(fenix.cave.embers.toNumber()).toBeCloseTo(0.5 * 100 * CONTENT.cave.coinEmbers, 6);
+
+    const plain = fresh();
+    plain.plumasTotal = D(10);
+    const tiburon = adult('tiburon');
+    expect(prodMultiplier(tiburon, CONTENT) / prodMultiplier(plain, CONTENT)).toBeCloseTo(1.15, 9);
+
+    const orni = adult('ornitorrinco');
+    const acorns = orni.acorns;
+    advance(orni, CONTENT, 4 * 3600 + 10);
+    expect(orni.acorns - acorns).toBe(1);
+    // solo cuentan las adultas en el nido: un huevo no da nada
+    const egg = fresh();
+    egg.nest.slots[0] = { creature: 'fenix', stage: 0, since: 0 };
+    advance(egg, CONTENT, 100);
+    expect(egg.cave.embers.toNumber()).toBe(0);
   });
 });

@@ -6,7 +6,7 @@ import type { Content } from '../content/types.ts';
 import { D, Decimal } from './num.ts';
 
 /** Versión de la forma del GameState; debe coincidir con CURRENT_VERSION de save/serialize.ts. */
-export const STATE_VERSION = 19;
+export const STATE_VERSION = 20;
 
 export type ToolId = string;
 export type PerkId = string;
@@ -89,18 +89,35 @@ export interface GameState {
     /** Flores recogidas en total. */
     harvests: number;
   };
-  /** La Cueva del Dragón: brasas, hornos y ventajas. Permanente (no se reinicia al ascender). */
-  cave: { embers: Decimal; furnaces: Record<string, number>; nodes: Record<string, true>; /** `time` del último soplido. */ blowAt: number; /** Etapa del dragón (0 = huevo). */ dragonStage: number };
+  /** La Cueva del Dragón (el corredor). No se reinicia al ascender; al renacer se reinicia la carrera (no las almas, el dragón ni el récord). */
+  cave: {
+    /** Brasas para gastar en la armería. */
+    embers: Decimal;
+    /** Brasas ganadas en esta vida (dan las almas al renacer). */
+    runEmbers: Decimal;
+    armory: Record<string, number>;
+    /** Metros de esta vida y récord de siempre. */
+    meters: number;
+    bestMeters: number;
+    /** Jefes derrotados en esta vida y metros a los que sale el siguiente. */
+    bosses: number;
+    nextBossAt: number;
+    /** Etapa del dragón (0 = huevo): la más alta conseguida, para siempre. */
+    dragonStage: number;
+    souls: number;
+    /** Monstruos derrotados en total. */
+    monsters: number;
+  };
   /** Estadísticas sueltas. */
   stats: { visitors: number; /** Mejor ingreso por segundo alcanzado. */ bestIncome: Decimal };
   /** Prendas del cerdito: las compradas y la que lleva puesta en cada hueco (el color son las pieles). */
   wardrobe: { owned: Record<string, true>; worn: { head: string | null; body: string | null; tail: string | null } };
   /** El Nido: hasta 3 casillas con una criatura (etapa 0 = huevo; `since` = epoch ms en que se puso a incubar) y las que ya fueron adultas. */
-  nest: { slots: ({ creature: string; stage: number; since: number } | null)[]; adults: Record<string, true>; /** Criatura → `time` en que acaba su ofrenda (bono temporal). */ boosts: Record<string, number> };
+  nest: { slots: ({ creature: string; stage: number; since: number } | null)[]; adults: Record<string, true>; /** Criatura → `time` en que acaba su ofrenda (bono temporal). */ boosts: Record<string, number>; /** Avance (0..1) hacia la próxima bellota del ornitorrinco, en tiempo de juego. */ acornClock: number };
   /** Epoch ms desde el que se acumulan las bellotas de la cesta (Topo excavador); 0 = aún no cuenta. */
   basketAcornsAt: number;
-  /** Instante (segundos de `time`) desde el que se llena la cesta. */
-  basketSince: number;
+  /** La cesta: lo que el cerdito ha ganado mientras no estabas (se recoge con un toque). */
+  basket: Decimal;
   achievements: Record<string, { at: number }>;
   /** Multiplicador temporal del visitante, o null. */
   buff: Buff | null;
@@ -137,12 +154,12 @@ export function createInitialState(content: Content, now: number): GameState {
     companionProgress: {},
     companionLevels: {},
     garden: { cells: Array.from({ length: content.garden.cols * content.garden.rows }, () => null), found: {}, buffs: {}, harvests: 0 },
-    cave: { embers: D(0), furnaces: {}, nodes: {}, blowAt: -1000, dragonStage: 0 },
+    cave: { embers: D(0), runEmbers: D(0), armory: {}, meters: 0, bestMeters: 0, bosses: 0, nextBossAt: content.cave.bossEvery, dragonStage: 0, souls: 0, monsters: 0 },
     stats: { visitors: 0, bestIncome: D(0) },
     wardrobe: { owned: {}, worn: { head: null, body: null, tail: null } },
-    nest: { slots: [null, null, null], adults: {}, boosts: {} },
+    nest: { slots: [null, null, null], adults: {}, boosts: {}, acornClock: 0 },
     basketAcornsAt: 0,
-    basketSince: 0,
+    basket: D(0),
     achievements: {},
     buff: null,
     journal: [],
